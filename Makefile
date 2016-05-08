@@ -50,9 +50,9 @@ all: dist
 ARCH ?= $(shell arch)
 go-build:
 	@echo "Building novmm"
-	@CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/novmm/
+	@CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/src/novmm/
 	@echo "Building noguest"
-	@CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/noguest/
+	@CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/src/noguest/
 
 test: go-test
 .PHONY: test
@@ -81,7 +81,6 @@ dist:
 	@mv noguest bin/
 	@mkdir -p dist/usr/bin
 	@install -m 0755 novm/scripts/* dist/usr/bin
-	@install -m 0755 scripts/rsinit bin/
 	@rm -rf dist/lib && cp -ar novm/lib/ dist/usr/lib
 	@install -m 0755 bin/* dist/usr/bin/
 	@mkdir -p dist/usr/lib/novm/python
