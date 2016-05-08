@@ -10,7 +10,6 @@ build:
         - go version
         - env
         - make deps
-        - make
         - make deb
         - pkgcld 4 $PACKAGECLOUD_TOKEN rocksolidlabs/novm 
         - sleep 5
