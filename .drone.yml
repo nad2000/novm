@@ -9,6 +9,7 @@ build:
         - git tag -a v0.0.1.`git log --pretty=format:'%h' -n 1` -m 'RSVM v0.0.01.`git log --pretty=format:'%h' -n 1`'
         - go version
         - env
+        - make deps
         - make
         - make deb
         - pkgcld 4 $PACKAGECLOUD_TOKEN rocksolidlabs/novm 
