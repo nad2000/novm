@@ -117,3 +117,7 @@ rpm: dist
 
 packages: deb rpm
 .PHONY: packages
+
+push:
+	@echo "Pushing DEB package to packagecloud.io"
+	@package_cloud push rocksolidlabs/novm/ubuntu/vivid *.deb
