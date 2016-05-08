@@ -68,7 +68,7 @@ deps:
 	@cd noguest && godep restore
 
 clean:
-	@rm -f novmm novm nogeast
+	@rm -f novmm nogeast
 	@rm -rf bin/ pkg/ dist/ doc/ _obj build/
 	@rm -rf debbuild/ rpmbuild/ *.deb *.rpm
 .PHONY: clean
