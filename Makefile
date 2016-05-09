@@ -63,9 +63,9 @@ fmt: go-fmt
 deps:
 	@go get golang.org/x/sys/unix
 	@echo "Getting Deps for NOVM"
-	@cd novm && godep restore
+	@cd src/novmm && godep restore
 	@echo "Getting Deps for NOGUEST"
-	@cd noguest && godep restore
+	@cd src/noguest && godep restore
 
 clean:
 	@rm -f novmm nogeast
