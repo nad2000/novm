@@ -1,0 +1,5 @@
+{
+	"ImportPath": "github.com/rocksolidlabs/novm/src/noguest",
+	"GoVersion": "go1.5",
+	"Deps": []
+}
