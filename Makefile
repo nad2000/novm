@@ -68,7 +68,7 @@ deps:
 	#@cd src/noguest && godep restore
 
 clean:
-	@rm -f novmm nogeast
+	@rm -f novmm noguest
 	@rm -rf bin/ pkg/ dist/ doc/ _obj build/
 	@rm -rf debbuild/ rpmbuild/ *.deb *.rpm
 .PHONY: clean
@@ -80,11 +80,11 @@ dist:
 	@mv novmm bin/
 	@mv noguest bin/
 	@mkdir -p dist/usr/bin
-	@install -m 0755 novm/scripts/* dist/usr/bin
-	@rm -rf dist/lib && cp -ar novm/lib/ dist/usr/lib
+	@install -m 0755 scripts/* dist/usr/bin
+	@rm -rf dist/lib && cp -ar lib/ dist/usr/lib
 	@install -m 0755 bin/* dist/usr/bin/
 	@mkdir -p dist/usr/lib/novm/python
-	@rsync -ru --delete --exclude=*.pyc novm/novm/ dist/usr/lib/novm/python/novm/
+	@rsync -ru --delete --exclude=*.pyc novm/ dist/usr/lib/novm/python/novm/
 
 .PHONY: dist
 
