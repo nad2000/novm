@@ -15,9 +15,10 @@
 package machine
 
 import (
-	"novmm/platform"
 	"sort"
 	"unsafe"
+
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 type MemoryType int

@@ -20,8 +20,9 @@ package machine
 import "C"
 
 import (
-	"novmm/platform"
 	"unsafe"
+
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 type Acpi struct {

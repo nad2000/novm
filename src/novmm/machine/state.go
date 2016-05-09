@@ -17,8 +17,9 @@ package machine
 import (
 	"bytes"
 	"log"
-	"novmm/platform"
-	"novmm/utils"
+
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
+	"github.com/rocksolidlabs/novm/src/novmm/utils"
 )
 
 type DeviceInfo struct {

@@ -17,10 +17,11 @@ package loader
 import (
 	"io/ioutil"
 	"log"
-	"novmm/machine"
-	"novmm/platform"
 	"strconv"
 	"strings"
+
+	"github.com/rocksolidlabs/novm/src/novmm/machine"
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 type LinuxSystemMap struct {

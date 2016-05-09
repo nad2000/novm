@@ -15,8 +15,8 @@
 package control
 
 import (
-	"novmm/machine"
-	"novmm/platform"
+	"github.com/rocksolidlabs/novm/src/novmm/machine"
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 //

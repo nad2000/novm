@@ -30,9 +30,10 @@ import (
 	"encoding/json"
 	"log"
 	"math"
-	"novmm/platform"
 	"sync/atomic"
 	"unsafe"
+
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 //

@@ -20,9 +20,10 @@ package platform
 import "C"
 
 import (
-	"novmm/utils"
 	"sync"
 	"syscall"
+
+	"github.com/rocksolidlabs/novm/src/novmm/utils"
 )
 
 type RunInfo struct {

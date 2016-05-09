@@ -15,7 +15,7 @@
 package loader
 
 import (
-	"novmm/platform"
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 type SystemMap interface {

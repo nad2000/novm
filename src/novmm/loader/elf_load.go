@@ -22,10 +22,11 @@ import "C"
 
 import (
 	"log"
-	"novmm/machine"
-	"novmm/platform"
 	"syscall"
 	"unsafe"
+
+	"github.com/rocksolidlabs/novm/src/novmm/machine"
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 //export doLoad

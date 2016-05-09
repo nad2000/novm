@@ -17,8 +17,9 @@ package loader
 import (
 	"fmt"
 	"log"
-	"novmm/platform"
 	"strings"
+
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 type Tracer struct {

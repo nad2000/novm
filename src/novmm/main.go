@@ -19,15 +19,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"novmm/control"
-	"novmm/loader"
-	"novmm/machine"
-	"novmm/platform"
-	"novmm/utils"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"github.com/rocksolidlabs/novm/src/novmm/control"
+	"github.com/rocksolidlabs/novm/src/novmm/loader"
+	"github.com/rocksolidlabs/novm/src/novmm/machine"
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
+	"github.com/rocksolidlabs/novm/src/novmm/utils"
 )
 
 // Our control server.

@@ -15,8 +15,9 @@
 package machine
 
 import (
-	"novmm/platform"
 	"sync"
+
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 const (

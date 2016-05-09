@@ -16,8 +16,9 @@ package machine
 
 import (
 	"log"
-	"novmm/platform"
 	"sync"
+
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 type IoMap map[MemoryRegion]IoOperations

@@ -16,9 +16,10 @@ package plan9
 
 import (
 	"math"
-	"novmm/platform"
 	"path"
 	"syscall"
+
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 func (fs *Fs) version(

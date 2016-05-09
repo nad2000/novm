@@ -17,14 +17,16 @@ package control
 import (
 	"net/rpc"
 	"net/rpc/jsonrpc"
-	noguest "noguest/rpc"
-	"novmm/loader"
-	"novmm/machine"
-	"novmm/platform"
-	"novmm/utils"
 	"os"
 	"sync"
 	"syscall"
+
+	noguest "github.com/rocksolidlabs/novm/src/noguest/rpc"
+
+	"github.com/rocksolidlabs/novm/src/novmm/loader"
+	"github.com/rocksolidlabs/novm/src/novmm/machine"
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
+	"github.com/rocksolidlabs/novm/src/novmm/utils"
 )
 
 type Control struct {
