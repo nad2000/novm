@@ -65,7 +65,7 @@ deps:
 	@echo "Getting Deps for NOVM"
 	@cd src/novmm && godep restore
 	@echo "Getting Deps for NOGUEST"
-	@cd src/noguest && godep restore
+	#@cd src/noguest && godep restore
 
 clean:
 	@rm -f novmm nogeast
