@@ -7,6 +7,7 @@ build:
         - git config --global user.email "phenixrizen@gmail.com"
         - git config --global user.name "Phenix Rizen"
         - git tag -a v0.0.1 -m 'NOVM v0.0.1'
+        - git describe --tags --match 'v*' | cut -d'v' -f2-
         - go version
         - env
         - make deps
