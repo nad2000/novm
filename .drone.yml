@@ -10,6 +10,7 @@ build:
         - git describe --tags --match 'v*' | cut -d'v' -f2-
         - go version
         - env
+        - git describe
         - make deps
         - make deb
         - pkgcld 4 $PACKAGECLOUD_TOKEN rocksolidlabs/novm 
