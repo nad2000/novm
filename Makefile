@@ -65,18 +65,23 @@ deps:
 	@echo "Getting Deps for NOVM"
 	@cd src/novmm && godep restore
 	@echo "Getting Deps for NOGUEST"
-	#@cd src/noguest && godep restore
+# @cd src/noguest && godep restore
 
 clean:
+	@echo "clean start"
 	@rm -f novmm noguest
 	@rm -rf bin/ pkg/ dist/ doc/ _obj build/
 	@rm -rf debbuild/ rpmbuild/ *.deb *.rpm
-	@echo clean
+	@echo "clean done"
 .PHONY: clean
 
 dist:
+	@echo "dist do clean"
 	@$(MAKE) clean 
+	@echo "dist clean done"
+	@echo "dist do build"
 	@$(MAKE) go-build
+	@echo "dist build done"
 	@mkdir bin
 	@mv novmm bin/
 	@mv noguest bin/
@@ -86,7 +91,7 @@ dist:
 	@install -m 0755 bin/* dist/usr/bin/
 	@mkdir -p dist/usr/lib/novm/python
 	@rsync -ru --delete --exclude=*.pyc novm/ dist/usr/lib/novm/python/novm/
-	@echo dist
+	@echo "dist done"
 
 .PHONY: dist
 
