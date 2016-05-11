@@ -5,9 +5,9 @@ include pkg-info
 
 MAINTAINER := Nathan Rockhold
 DESCRIPTION := $(shell git tag -l 'v*' | cut -d'v' -f2-)
-VERSION ?= $(shell echo $(DESCRIPTION) | cut -d'-' -f1)
-RELEASE ?= $(shell echo $(DESCRIPTION) | cut -d'-' -f2- -s | tr '-' '.')
-ARCH ?= $(shell go env GOARCH)
+VERSION := $(shell echo $(DESCRIPTION) | cut -d'-' -f1)
+RELEASE := $(shell echo $(DESCRIPTION) | cut -d'-' -f2- -s | tr '-' '.')
+ARCH := $(shell go env GOARCH)
 CI_JOB_ID := $(shell echo $(CI_JOB_ID))
 
 ifeq ($(VERSION),)
