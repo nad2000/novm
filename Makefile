@@ -71,6 +71,7 @@ clean:
 	@rm -f novmm noguest
 	@rm -rf bin/ pkg/ dist/ doc/ _obj build/
 	@rm -rf debbuild/ rpmbuild/ *.deb *.rpm
+	@echo clean
 .PHONY: clean
 
 dist:
@@ -85,6 +86,7 @@ dist:
 	@install -m 0755 bin/* dist/usr/bin/
 	@mkdir -p dist/usr/lib/novm/python
 	@rsync -ru --delete --exclude=*.pyc novm/ dist/usr/lib/novm/python/novm/
+	@echo dist
 
 .PHONY: dist
 
@@ -94,7 +96,6 @@ deb: dist
 	@rsync -ruav dist/ debbuild
 	@chmod 755 debbuild/DEBIAN
 	@chmod 755 debbuild/DEBIAN/*
-	@echo test
 	@sed -i "s/VERSION/$(VERSION).$(CI_JOB_ID)-$(RELEASE)/" debbuild/DEBIAN/control
 	@sed -i "s/MAINTAINER/$(MAINTAINER)/" debbuild/DEBIAN/control
 	@sed -i "s/ARCHITECTURE/$(DEB_ARCH)/" debbuild/DEBIAN/control
