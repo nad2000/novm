@@ -1,4 +1,4 @@
 # Basic package information.
-MAINTAINER ?= Adin Scannell <ascannell@google.com>
-SUMMARY ?= A high-performance, next-generation hypervisor written in Go.
-URL ?= https://github.com/google/novm
+MAINTAINER ?= Nathan Rockhold <nate@rocksolidlabs.io>
+SUMMARY ?= NOVM- RockSolid Virtual Machines
+URL ?= https://rocksolidlabs.io
