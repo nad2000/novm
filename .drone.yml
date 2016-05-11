@@ -7,11 +7,9 @@ build:
         - git config --global user.email "phenixrizen@gmail.com"
         - git config --global user.name "Phenix Rizen"
         - git tag -a v0.0.1-$DRONE_COMMIT_SHORT -m 'NOVM v0.0.1-$DRONE_COMMIT_SHORT'
-        - git describe --tags --match 'v*' | cut -d'v' -f2-
         - go version
         - env
-        - git describe
-        - make deps
+          #- make deps
         - make deb
         - pkgcld 4 $PACKAGECLOUD_TOKEN rocksolidlabs/novm 
         - sleep 5
