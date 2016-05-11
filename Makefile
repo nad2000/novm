@@ -94,6 +94,7 @@ deb: dist
 	@rsync -ruav dist/ debbuild
 	@chmod 755 debbuild/DEBIAN
 	@chmod 755 debbuild/DEBIAN/*
+	@echo test
 	@sed -i "s/VERSION/$(VERSION).$(CI_JOB_ID)-$(RELEASE)/" debbuild/DEBIAN/control
 	@sed -i "s/MAINTAINER/$(MAINTAINER)/" debbuild/DEBIAN/control
 	@sed -i "s/ARCHITECTURE/$(DEB_ARCH)/" debbuild/DEBIAN/control
