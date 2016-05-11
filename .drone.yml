@@ -6,7 +6,7 @@ build:
     commands:
         - git config --global user.email "phenixrizen@gmail.com"
         - git config --global user.name "Phenix Rizen"
-        - git tag -a v0.0.1 -m 'NOVM v0.0.1'
+        - git tag -a v0.0.1-$DRONE_COMMIT_SHORT -m 'NOVM v0.0.1-$DRONE_COMMIT_SHORT'
         - git describe --tags --match 'v*' | cut -d'v' -f2-
         - go version
         - env
