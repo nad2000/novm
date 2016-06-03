@@ -16,10 +16,11 @@ package main
 
 import (
 	"log"
-	"novmm/loader"
-	"novmm/machine"
-	"novmm/platform"
 	"runtime"
+
+	"github.com/rocksolidlabs/novm/src/novmm/loader"
+	"github.com/rocksolidlabs/novm/src/novmm/machine"
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 func Loop(

@@ -16,8 +16,9 @@ package machine
 
 import (
 	"log"
-	"novmm/plan9"
-	"novmm/platform"
+
+	"github.com/rocksolidlabs/novm/src/novmm/plan9"
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 const (

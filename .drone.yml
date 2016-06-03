@@ -1,0 +1,26 @@
+build:
+    image: build
+    environment:
+        - PACKAGECLOUD_TOKEN=eee1f3063fd05df504e7790501c81cc19c054ae50f2fbcde
+        - DRONE_COMMIT_SHORT=$${COMMIT:7}
+    commands:
+        - git config --global user.email "phenixrizen@gmail.com"
+        - git config --global user.name "Phenix Rizen"
+        - git tag -a v0.0.1-$DRONE_COMMIT_SHORT -m 'NOVM v0.0.1-$DRONE_COMMIT_SHORT'
+        - go version
+        - env
+        - make deb
+        - pkgcld 4 $PACKAGECLOUD_TOKEN rocksolidlabs/novm 
+        - sleep 5
+        - make push
+        # sleep 5 so that packagecloud can update packages meta before deploy
+        - sleep 5
+
+notify:
+    slack:
+        webhook_url: https://hooks.slack.com/services/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
+        channel: build
+        username: drone
+        on_started: true
+        on_success: true
+        on_failure: true

@@ -1,0 +1,14 @@
+{
+	"ImportPath": "github.com/rocksolidlabs/novm/src/novmm",
+	"GoVersion": "go1.5",
+	"Deps": [
+		{
+			"ImportPath": "github.com/rocksolidlabs/novm/src/noguest/protocol",
+			"Rev": "66d5056da3b07bc249996131f18d93c74ad24674"
+		},
+		{
+			"ImportPath": "github.com/rocksolidlabs/novm/src/noguest/rpc",
+			"Rev": "66d5056da3b07bc249996131f18d93c74ad24674"
+		}
+	]
+}

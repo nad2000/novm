@@ -16,7 +16,8 @@ package machine
 
 import (
 	"math"
-	"novmm/platform"
+
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 const (

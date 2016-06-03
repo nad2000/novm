@@ -17,7 +17,8 @@ package machine
 import (
 	"crypto/rand"
 	"net"
-	"novmm/platform"
+
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 //

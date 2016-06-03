@@ -17,11 +17,12 @@ package main
 import (
 	"flag"
 	"log"
-	"noguest/protocol"
-	"noguest/rpc"
 	"os"
 	"os/exec"
 	"syscall"
+
+	"github.com/rocksolidlabs/novm/src/noguest/protocol"
+	"github.com/rocksolidlabs/novm/src/noguest/rpc"
 )
 
 // The default control file.

@@ -17,7 +17,8 @@ package machine
 import (
 	"encoding/json"
 	"math"
-	"novmm/platform"
+
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 //

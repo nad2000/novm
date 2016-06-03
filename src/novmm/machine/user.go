@@ -15,9 +15,10 @@
 package machine
 
 import (
-	"novmm/platform"
 	"sort"
 	"syscall"
+
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 //

@@ -64,9 +64,10 @@ static inline void set_header(
 import "C"
 
 import (
-	"novmm/machine"
-	"novmm/platform"
 	"unsafe"
+
+	"github.com/rocksolidlabs/novm/src/novmm/machine"
+	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
 func SetupLinuxBootParams(
