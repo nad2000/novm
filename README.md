@@ -1,7 +1,7 @@
 novm
 ====
 
-[![Build Status](http://rslabs.dnsalias.net:8000/api/badges/rocksolidlabs/novm/status.svg)](http://rslabs.dnsalias.net:8000/rocksolidlabs/novm)
+[![Build Status](http://drone.rslabs.net:8000/api/badges/rocksolidlabs/novm/status.svg)](http://drone.rslabs.net:8000/rocksolidlabs/novm)
 
 *novm* is a legacy-free, type 2 hypervisor written in Go. Its goal is to
 provide an alternate, high-performance Linux hypervisor for cloud workloads.
