@@ -25,9 +25,12 @@ _testmain.go
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-Contact GitHub API Training Shop Blog About
 
-.pyc
+*.pyc
 pkg
 bin
-
+.spyderproject
+pyan.py
+venv
+dist
+novm/diag
