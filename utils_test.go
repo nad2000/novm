@@ -1,7 +1,8 @@
-package utils
+package utils_utils
 
 import (
 	"fmt"
+	"github.com/rocksolidlabs/novm/utils"
 	"log"
 	"os"
 	"path"
@@ -36,10 +37,10 @@ func removeTestTree() {
 
 func TestPackdir(t *testing.T) {
 	createTestTree()
-	Packdir(path.Join(rootPath, "packdir"), path.Join(rootPath, "packdir.zip"), nil, nil)
+	utils.Packdir(path.Join(rootPath, "packdir"), path.Join(rootPath, "packdir.zip"), nil, nil)
 	os.RemoveAll(path.Join(rootPath, "packdir"))
 	output_dir := path.Join(rootPath, "packdir", "output")
-	Unpackdir(path.Join(rootPath, "packdir.zip"), output_dir)
+	utils.Unpackdir(path.Join(rootPath, "packdir.zip"), output_dir)
 	for _, dirName := range []string{"aaa", "bbb", "ccc", "ddd"} {
 		name := path.Join(output_dir, rootPath, "packdir", dirName, "test.txt")
 		if !PathExists(name) {
@@ -52,11 +53,11 @@ func TestPackdir(t *testing.T) {
 
 func TestPackdirInclude(t *testing.T) {
 	createTestTree()
-	Packdir(path.Join(rootPath, "packdir"), path.Join(rootPath, "packdir_include.zip"),
+	utils.Packdir(path.Join(rootPath, "packdir"), path.Join(rootPath, "packdir_include.zip"),
 		[]string{path.Join(rootPath, "packdir", "aaa")}, nil)
 	os.RemoveAll(path.Join(rootPath, "packdir"))
 	output_dir := path.Join(rootPath, "packdir", "output_include")
-	Unpackdir(path.Join(rootPath, "packdir_include.zip"), output_dir)
+	utils.Unpackdir(path.Join(rootPath, "packdir_include.zip"), output_dir)
 	for _, dirName := range []string{"aaa", "bbb", "ccc", "ddd"} {
 		name := path.Join(output_dir, rootPath, "packdir", dirName, "test.txt")
 		if !PathExists(name) && dirName == "aaa" {
@@ -73,11 +74,11 @@ func TestPackdirInclude(t *testing.T) {
 
 func TestPackdirExclude(t *testing.T) {
 	createTestTree()
-	Packdir(path.Join(rootPath, "packdir"), path.Join(rootPath, "packdir_exclude.zip"),
+	utils.Packdir(path.Join(rootPath, "packdir"), path.Join(rootPath, "packdir_exclude.zip"),
 		nil, []string{path.Join(rootPath, "packdir", "aaa")})
 	os.RemoveAll(path.Join(rootPath, "packdir"))
 	output_dir := path.Join(rootPath, "packdir", "output_exclude")
-	Unpackdir(path.Join(rootPath, "packdir_exclude.zip"), output_dir)
+	utils.Unpackdir(path.Join(rootPath, "packdir_exclude.zip"), output_dir)
 	for _, dirName := range []string{"aaa", "bbb", "ccc", "ddd"} {
 		name := path.Join(output_dir, rootPath, "packdir", dirName, "test.txt")
 		if !PathExists(name) && dirName != "aaa" {
@@ -95,14 +96,14 @@ func TestPackdirExclude(t *testing.T) {
 func TestAsbool(t *testing.T) {
 	// TRUE:
 	for _, value := range []interface{}{true, "TRUE", "true", 1} {
-		if !Asbool(value) {
+		if !utils.Asbool(value) {
 			t.Errorf("Expected Asbool(%v) == true", value)
 			t.FailNow()
 		}
 	}
 	// FALSE:
 	for _, value := range []interface{}{nil, false, "FALSE", "NOTtrue", 0} {
-		if Asbool(value) {
+		if utils.Asbool(value) {
 			t.Errorf("Expected Asbool(%v) == false", value)
 			t.FailNow()
 		}
