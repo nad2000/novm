@@ -1,8 +1,8 @@
-package utils_utils
+package novm_test
 
 import (
 	"fmt"
-	"github.com/rocksolidlabs/novm/utils"
+	"github.com/rocksolidlabs/novm"
 	"log"
 	"os"
 	"path"
@@ -37,13 +37,13 @@ func removeTestTree() {
 
 func TestPackdir(t *testing.T) {
 	createTestTree()
-	utils.Packdir(path.Join(rootPath, "packdir"), path.Join(rootPath, "packdir.zip"), nil, nil)
+	novm.Packdir(path.Join(rootPath, "packdir"), path.Join(rootPath, "packdir.zip"), nil, nil)
 	os.RemoveAll(path.Join(rootPath, "packdir"))
 	output_dir := path.Join(rootPath, "packdir", "output")
-	utils.Unpackdir(path.Join(rootPath, "packdir.zip"), output_dir)
+	novm.Unpackdir(path.Join(rootPath, "packdir.zip"), output_dir)
 	for _, dirName := range []string{"aaa", "bbb", "ccc", "ddd"} {
 		name := path.Join(output_dir, rootPath, "packdir", dirName, "test.txt")
-		if !PathExists(name) {
+		if !novm.PathExists(name) {
 			t.Errorf("Expected to find '%v'", name)
 			t.FailNow()
 		}
@@ -53,18 +53,18 @@ func TestPackdir(t *testing.T) {
 
 func TestPackdirInclude(t *testing.T) {
 	createTestTree()
-	utils.Packdir(path.Join(rootPath, "packdir"), path.Join(rootPath, "packdir_include.zip"),
+	novm.Packdir(path.Join(rootPath, "packdir"), path.Join(rootPath, "packdir_include.zip"),
 		[]string{path.Join(rootPath, "packdir", "aaa")}, nil)
 	os.RemoveAll(path.Join(rootPath, "packdir"))
 	output_dir := path.Join(rootPath, "packdir", "output_include")
-	utils.Unpackdir(path.Join(rootPath, "packdir_include.zip"), output_dir)
+	novm.Unpackdir(path.Join(rootPath, "packdir_include.zip"), output_dir)
 	for _, dirName := range []string{"aaa", "bbb", "ccc", "ddd"} {
 		name := path.Join(output_dir, rootPath, "packdir", dirName, "test.txt")
-		if !PathExists(name) && dirName == "aaa" {
+		if !novm.PathExists(name) && dirName == "aaa" {
 			t.Errorf("Expected to find '%v'", name)
 			t.FailNow()
 		}
-		if PathExists(name) && dirName != "aaa" {
+		if novm.PathExists(name) && dirName != "aaa" {
 			t.Errorf("Not expected to find '%v'", name)
 			t.FailNow()
 		}
@@ -74,18 +74,18 @@ func TestPackdirInclude(t *testing.T) {
 
 func TestPackdirExclude(t *testing.T) {
 	createTestTree()
-	utils.Packdir(path.Join(rootPath, "packdir"), path.Join(rootPath, "packdir_exclude.zip"),
+	novm.Packdir(path.Join(rootPath, "packdir"), path.Join(rootPath, "packdir_exclude.zip"),
 		nil, []string{path.Join(rootPath, "packdir", "aaa")})
 	os.RemoveAll(path.Join(rootPath, "packdir"))
 	output_dir := path.Join(rootPath, "packdir", "output_exclude")
-	utils.Unpackdir(path.Join(rootPath, "packdir_exclude.zip"), output_dir)
+	novm.Unpackdir(path.Join(rootPath, "packdir_exclude.zip"), output_dir)
 	for _, dirName := range []string{"aaa", "bbb", "ccc", "ddd"} {
 		name := path.Join(output_dir, rootPath, "packdir", dirName, "test.txt")
-		if !PathExists(name) && dirName != "aaa" {
+		if !novm.PathExists(name) && dirName != "aaa" {
 			t.Errorf("Expected to find '%v'", name)
 			t.FailNow()
 		}
-		if PathExists(name) && dirName == "aaa" {
+		if novm.PathExists(name) && dirName == "aaa" {
 			t.Errorf("Not expected to find '%v'", name)
 			t.FailNow()
 		}
@@ -96,14 +96,14 @@ func TestPackdirExclude(t *testing.T) {
 func TestAsbool(t *testing.T) {
 	// TRUE:
 	for _, value := range []interface{}{true, "TRUE", "true", 1} {
-		if !utils.Asbool(value) {
+		if !novm.Asbool(value) {
 			t.Errorf("Expected Asbool(%v) == true", value)
 			t.FailNow()
 		}
 	}
 	// FALSE:
 	for _, value := range []interface{}{nil, false, "FALSE", "NOTtrue", 0} {
-		if utils.Asbool(value) {
+		if novm.Asbool(value) {
 			t.Errorf("Expected Asbool(%v) == false", value)
 			t.FailNow()
 		}
