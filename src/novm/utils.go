@@ -90,3 +90,21 @@ func Unpackdir(input string, output string) error {
 
 	return err
 }
+
+func Asbool(value interface{}) bool {
+
+	if value == nil {
+		return false
+	}
+
+	switch value.(type) {
+	default:
+		return false
+	case bool:
+		return value.(bool)
+	case string:
+		return strings.ToLower(value.(string)) == "true"
+	case int:
+		return value.(int) != 0
+	}
+}

@@ -91,3 +91,20 @@ func TestPackdirExclude(t *testing.T) {
 	}
 	removeTestTree()
 }
+
+func TestAsbool(t *testing.T) {
+	// TRUE:
+	for _, value := range []interface{}{true, "TRUE", "true", 1} {
+		if !Asbool(value) {
+			t.Errorf("Expected Asbool(%v) == true", value)
+			t.FailNow()
+		}
+	}
+	// FALSE:
+	for _, value := range []interface{}{nil, false, "FALSE", "NOTtrue", 0} {
+		if Asbool(value) {
+			t.Errorf("Expected Asbool(%v) == false", value)
+			t.FailNow()
+		}
+	}
+}
