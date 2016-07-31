@@ -20,10 +20,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// controlCmd represents the control command
-var controlCmd = &cobra.Command{
-	Use:   "control",
-	Short: "-- Execute a control command.",
+// runCmd represents the run command
+var runCmd = &cobra.Command{
+	Use:   "run",
+	Short: "-- Execute a command inside a novm.",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
@@ -32,21 +32,26 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO: Work your own magic here
-		fmt.Println("control called")
+		fmt.Println("run called")
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(controlCmd)
+	RootCmd.AddCommand(runCmd)
+	runCmd.Flags().Bool("terminal", false, "Change the terminal mode.")
+	runCmd.Flags().String("id", "", "a virtual machine `ID`.")
+	runCmd.Flags().String("name", "", "a virtual machine `NAME`.")
+	runCmd.Flags().String("env", "", "specify an environment variable `ENV`.")
+	runCmd.Flags().String("cwd", "", "current working directory `CWD`.")
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// controlCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// runCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// controlCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// runCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 }

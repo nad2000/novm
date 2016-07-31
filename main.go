@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/rocksolidlabs/novm/commands"
+import "github.com/rocksolidlabs/novm/cmd"
 
 func main() {
 	cmd.Execute()

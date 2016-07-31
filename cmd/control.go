@@ -20,33 +20,42 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// getpackCmd represents the getpack command
-var getpackCmd = &cobra.Command{
-	Use:   "getpack",
-	Short: "-- Fetch a new pack.",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+// controlCmd represents the control command
+var controlCmd = &cobra.Command{
+	Use:   "control",
+	Short: "-- Execute a control command.",
+	Long: `Execute a control command.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+Available commands depend on the VMM.
+
+For example:
+
+	To pause the first VCPU:
+
+		vcpu id=0 paused=true
+
+	To enable tracing:
+
+		trace enable=true`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO: Work your own magic here
-		fmt.Println("getpack called")
+		fmt.Println("control called")
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(getpackCmd)
+	RootCmd.AddCommand(controlCmd)
+	controlCmd.Flags().String("id", "", "a virtual machine `ID`.")
+	controlCmd.Flags().String("name", "", "a virtual machine `NAME`.")
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// getpackCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// controlCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// getpackCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// controlCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 }

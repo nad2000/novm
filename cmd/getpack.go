@@ -20,33 +20,31 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// listCmd represents the list command
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "-- List running instances.",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+// getpackCmd represents the getpack command
+var getpackCmd = &cobra.Command{
+	Use:   "getpack",
+	Short: "-- Fetch a new pack.",
+	Long:  `Fetch a new pack.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO: Work your own magic here
-		fmt.Println("list called")
+		fmt.Println("getpack called")
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(listCmd)
+	RootCmd.AddCommand(getpackCmd)
+	getpackCmd.Flags().Bool("nocache", false, "Don't use a cached version.")
+	getpackCmd.Flags().String("url", "", "Pack `URL`.")
+	getpackCmd.Flags().String("name", "", "Pack `NAME`")
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// listCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// getpackCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// listCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// getpackCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 }
