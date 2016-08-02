@@ -24,12 +24,7 @@ import (
 var cleanCmd = &cobra.Command{
 	Use:   "clean",
 	Short: "-- Remove stale instance information.",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long:  `Remove stale instance information.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO: Work your own magic here
 		fmt.Println("clean called")
@@ -38,8 +33,8 @@ to quickly create a Cobra application.`,
 
 func init() {
 	RootCmd.AddCommand(cleanCmd)
-	cleanCmd.Flags().String("id", "", "an `ID` of VM to clean.")
-	cleanCmd.Flags().String("name", "", "a `NAME` of VM to clean.")
+	cleanCmd.Flags().String("id", "", "The instance `ID`.")
+	cleanCmd.Flags().String("name", "", "The instance `NAME`.")
 
 	// Here you will define your flags and configuration settings.
 
