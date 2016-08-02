@@ -17,12 +17,16 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var (
+	root    string // DB root directory
+	cfgFile string
+)
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -49,6 +53,8 @@ func Execute() {
 }
 
 func init() {
+
+	root = path.Join(getEnv("HOME", os.TempDir()), ".novm")
 	cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.
@@ -64,15 +70,29 @@ func init() {
 	RootCmd.Flags().BoolP("json", "j", false, "Print result as JSON (where applicable).")
 }
 
+func getEnv(name string, defaultValue string) string {
+	// ruturns environent variable value or it's missing, default fall back value
+
+	value := os.Getenv(name)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
+
+func getDbDir(envVar string, dirName string) string {
+	return getEnv(envVar, path.Join(root, dirName))
+}
+
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	if cfgFile != "" { // enable ability to specify config file via flag
 		viper.SetConfigFile(cfgFile)
 	}
 
-	viper.SetConfigName(".novm") // name of config file (without extension)
-	viper.AddConfigPath("$HOME") // adding home directory as first search path
-	viper.AutomaticEnv()         // read in environment variables that match
+	viper.SetConfigName(".config") // name of config file (without extension)
+	viper.AddConfigPath(root)      // adding home directory as first search path
+	viper.AutomaticEnv()           // read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
