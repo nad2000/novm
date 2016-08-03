@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 	"testing"
 )
 
@@ -107,5 +108,25 @@ func TestAsbool(t *testing.T) {
 			t.Errorf("Expected Asbool(%v) == false", value)
 			t.FailNow()
 		}
+	}
+}
+
+func TestTempFileName(t *testing.T) {
+
+	tempFileName := utils.TempFileName("AAA", "BBB")
+
+	if !strings.HasPrefix(tempFileName, path.Join(os.TempDir(), "AAA")) {
+		t.Errorf("Expected prefix \"AAA\": \"%v\"", tempFileName)
+		t.FailNow()
+	}
+
+	if !strings.HasSuffix(tempFileName, "BBB") {
+		t.Errorf("Expected suffix \"BBB\": \"%v\"", tempFileName)
+		t.FailNow()
+	}
+
+	if expectedLength := len(os.TempDir()) + 6 + 32; len(tempFileName) == expectedLength {
+		t.Errorf("Expected length of \"%v\" %v, but got %v", tempFileName, expectedLength, len(tempFileName))
+		t.FailNow()
 	}
 }

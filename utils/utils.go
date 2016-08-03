@@ -2,8 +2,10 @@ package utils
 
 import (
 	"archive/zip"
+	"encoding/hex"
 	"io"
 	"log"
+	"math/rand"
 	"os"
 	"path"
 	"path/filepath"
@@ -107,4 +109,11 @@ func Asbool(value interface{}) bool {
 	case int:
 		return value.(int) != 0
 	}
+}
+
+// TempFileName generates a temporary filename for use in testing or whatever
+func TempFileName(prefix, suffix string) string {
+	randBytes := make([]byte, 16)
+	rand.Read(randBytes)
+	return filepath.Join(os.TempDir(), prefix+hex.EncodeToString(randBytes)+suffix)
 }
