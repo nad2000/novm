@@ -16,6 +16,9 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/rocksolidlabs/novm/utils"
+	"io/ioutil"
+	"os/exec"
 
 	"github.com/spf13/cobra"
 )
@@ -24,29 +27,73 @@ import (
 var mkkernelCmd = &cobra.Command{
 	Use:   "mkkernel",
 	Short: "-- Make a new kernel from an local kernel.",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long:  `Make a new kernel from an local kernel.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO: Work your own magic here
-		fmt.Println("mkkernel called")
+		output := cmd.Flag("output").Value.String()
+		if output == "" {
+			output = utils.TempFileName("", "")
+		}
+		release := cmd.Flag("release").Value.String()
+		if release == "" {
+			release = utils.SystemRelease()
+		}
+		modules := cmd.Flag("modules").Value.String()
+		if modules == "" {
+			modules = "/lib/modules/" + release
+		}
+		bzimage := cmd.Flag("bzimage").Value.String()
+		if bzimage == "" {
+			bzimage = "/boot/vmlinuz-" + release
+		}
+		vmlinux := cmd.Flag("vmlinux").Value.String()
+		if vmlinux == "" {
+			vmlinuxFile, err := ioutil.TempFile("", "")
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			cmd := exec.Command(utils.LibExec("extract-vmlinux"), bzimage)
+			cmd.Output = vmlinuxFile
+
+			if err := cmd.Run(); err != nil {
+				log.Fatal(err)
+			}
+			if err := vmlinuxFile.Close(); err != nil {
+				log.Fatal(err)
+			}
+
+			vmlinux = vmlinuxFile.Name()
+		}
+		setup := cmd.Flag("setup").Value.String()
+		if setup == "" {
+			setupFile := ioutil.TempFile("", "")
+			bzimageFile, _ := os.Open(bzimage)
+			io.Copy(setupFile, bzimageFile)
+			bzimageFile.Close()
+			setup = setupFile.Name()
+			setupFile.Close()
+		}
+
+		sysmap := cmd.Flag("sysmap").Value.String()
+		if sysmap == "" {
+			sysmap = "/boot/System.map-" + release
+		}
+
+		cmd.DebugFlags()
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(mkkernelCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// mkkernelCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// mkkernelCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	mkkernelCmd.Flags().String("output", "", "The `OUTPUT` file.")
+	mkkernelCmd.Flags().String("release", "", "The kernel `RELEASE` (automated).")
+	mkkernelCmd.Flags().String("modules", "", "Path to the kernel `MODULES`.")
+	mkkernelCmd.Flags().String("vmlinux", "", "Path to the `VMLINUX` file.")
+	mkkernelCmd.Flags().String("bzimage", "", "Path to the compressed image `BZIMAGE`.")
+	mkkernelCmd.Flags().String("setup", "", "Path to the `SETUP` header.")
+	mkkernelCmd.Flags().String("sysmap", "", "Path to the system map `SYSMAP`.")
+	mkkernelCmd.Flags().Bool("nomodules", false, "Don't include modules.")
 
 }

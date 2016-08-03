@@ -82,7 +82,7 @@ func init() {
 	createCmd.Flags().StringSlice("disk", nil, "Define a block device (`DISK`).")
 	createCmd.Flags().StringSlice("pack", nil, "Use a given read `PACK`.")
 	createCmd.Flags().StringSlice("repo", nil, "Use a docker repository `REPO`.")
-	createCmd.Flags().StringSlice("read", nil, "Define a backing filesystem `READ` tree.")
+	createCmd.Flags().StringSlice("read", []string{"/"}, "Define a backing filesystem `READ` tree.")
 	createCmd.Flags().StringSlice("write", nil, "Define a backing filesystem `WRITE` tree.")
 	createCmd.Flags().Bool("nopci", false, "Disable PCI devices?")
 	createCmd.Flags().Bool("com1", false, "Enable COM1 UART?")
