@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"syscall"
 )
 
 func PathExists(path string) bool {
@@ -111,9 +112,35 @@ func Asbool(value interface{}) bool {
 	}
 }
 
-// TempFileName generates a temporary filename for use in testing or whatever
 func TempFileName(prefix, suffix string) string {
+	// TempFileName generates a temporary filename for use in testing or whatever
 	randBytes := make([]byte, 16)
 	rand.Read(randBytes)
 	return filepath.Join(os.TempDir(), prefix+hex.EncodeToString(randBytes)+suffix)
+}
+
+func SystemRelease() string {
+	var u syscall.Utsname
+	_ = syscall.Uname(&u)
+	str := ""
+	for _, c := range u.Release {
+		if c == 0 {
+			break
+		}
+		str += string(byte(c))
+	}
+	return str
+}
+
+func LibExec(name string) string {
+	binDir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	binName := filepath.Base(os.Args[0])
+	libExecDir := path.Join(binDir, "..", "lib", binName, "libexec")
+	libExecPath, _ := filepath.Abs(path.Join(libExecDir, name))
+	if PathExists(libExecPath) {
+		return libExecPath
+	} else {
+		altDir := path.Join(binDir, "..", "bin")
+		return path.Join(altDir, name)
+	}
 }
