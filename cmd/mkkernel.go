@@ -15,10 +15,14 @@
 package cmd
 
 import (
-	"fmt"
-	"github.com/rocksolidlabs/novm/utils"
+	"../utils"
+	"io"
 	"io/ioutil"
+	"log"
+	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -29,7 +33,7 @@ var mkkernelCmd = &cobra.Command{
 	Short: "-- Make a new kernel from an local kernel.",
 	Long:  `Make a new kernel from an local kernel.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
+
 		output := cmd.Flag("output").Value.String()
 		if output == "" {
 			output = utils.TempFileName("", "")
@@ -53,10 +57,10 @@ var mkkernelCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 
-			cmd := exec.Command(utils.LibExec("extract-vmlinux"), bzimage)
-			cmd.Output = vmlinuxFile
+			command := exec.Command(utils.LibExec("extract-vmlinux"), bzimage)
+			command.Stdout = vmlinuxFile
 
-			if err := cmd.Run(); err != nil {
+			if err := command.Run(); err != nil {
 				log.Fatal(err)
 			}
 			if err := vmlinuxFile.Close(); err != nil {
@@ -67,7 +71,7 @@ var mkkernelCmd = &cobra.Command{
 		}
 		setup := cmd.Flag("setup").Value.String()
 		if setup == "" {
-			setupFile := ioutil.TempFile("", "")
+			setupFile, _ := ioutil.TempFile("", "")
 			bzimageFile, _ := os.Open(bzimage)
 			io.Copy(setupFile, bzimageFile)
 			bzimageFile.Close()
@@ -79,6 +83,38 @@ var mkkernelCmd = &cobra.Command{
 		if sysmap == "" {
 			sysmap = "/boot/System.map-" + release
 		}
+
+		// Copy all the files into a single directory.
+		tempDir, _ := ioutil.TempDir(os.TempDir(), "tmp")
+		command := exec.Command(utils.LibExec("mkinitramfs"), release, modules)
+		initrd, _ := os.Create(path.Join(tempDir, "initrd"))
+		command.Stdout = initrd
+
+		if err := command.Run(); err != nil {
+			log.Fatal(err)
+		}
+		if err := initrd.Close(); err != nil {
+			log.Fatal(err)
+		}
+		utils.CopyFile(vmlinux, path.Join(tempDir, "vmlinux"))
+		utils.CopyFile(sysmap, path.Join(tempDir, "sysmap"))
+		utils.CopyFile(setup, path.Join(tempDir, "setup"))
+
+		if nomodules, _ := cmd.Flags().GetBool("nomodules"); nomodules {
+			os.MkdirAll(path.Join(tempDir, "modules"), os.ModeDir|0755)
+		} else {
+			utils.CopyTree(
+				modules,
+				path.Join(tempDir, "modules"),
+				func(name string) bool {
+					return name == "source" || name == "build"
+				})
+		}
+		ioutil.WriteFile(path.Join(tempDir, "release"), []byte(release), 0755)
+		utils.Packdir(tempDir, output, nil, nil)
+
+		absOutput, _ := filepath.Abs(output)
+		printResult(cmd, "file://"+absOutput)
 
 		cmd.DebugFlags()
 	},

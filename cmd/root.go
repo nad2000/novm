@@ -15,7 +15,11 @@
 package cmd
 
 import (
+	"../utils"
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path"
 
@@ -54,7 +58,7 @@ func Execute() {
 
 func init() {
 
-	root = path.Join(getEnv("HOME", os.TempDir()), ".novm")
+	root = path.Join(utils.GetEnv("HOME", os.TempDir()), ".novm")
 	cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.
@@ -64,24 +68,14 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "`CONFIG` file (default is $HOME/.novm.yaml)")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	RootCmd.Flags().BoolP("debug", "d", false, "Show full stack trace on error.")
-	RootCmd.Flags().BoolP("plain", "p", false, "Print result as plain text (where applicable).")
-	RootCmd.Flags().BoolP("json", "j", false, "Print result as JSON (where applicable).")
-}
-
-func getEnv(name string, defaultValue string) string {
-	// ruturns environent variable value or it's missing, default fall back value
-
-	value := os.Getenv(name)
-	if value == "" {
-		return defaultValue
-	}
-	return value
+	RootCmd.PersistentFlags().BoolP("toggle", "t", false, "Help message for toggle")
+	RootCmd.PersistentFlags().BoolP("debug", "d", false, "Show full stack trace on error.")
+	RootCmd.PersistentFlags().BoolP("plain", "p", false, "Print result as plain text (where applicable).")
+	RootCmd.PersistentFlags().BoolP("json", "j", false, "Print result as JSON (where applicable).")
 }
 
 func getDbDir(envVar string, dirName string) string {
-	return getEnv(envVar, path.Join(root, dirName))
+	return utils.GetEnv(envVar, path.Join(root, dirName))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -97,5 +91,31 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	}
+}
+
+func jsonDumps(in interface{}) string {
+	var out bytes.Buffer
+	b, err := json.Marshal(in)
+	if err != nil {
+		log.Fatal(err)
+		return err.Error()
+	}
+	err = json.Indent(&out, b, "", "\t")
+	if err != nil {
+		log.Fatal(err)
+		return err.Error()
+	}
+	return out.String()
+}
+
+// Print the result
+func printResult(cmd *cobra.Command, result interface{}) {
+	if json, _ := cmd.Flags().GetBool("json"); json || cmd.Name() == "control" {
+		fmt.Println(jsonDumps(result))
+	} else if plain, _ := cmd.Flags().GetBool("plain"); plain {
+		fmt.Printf("%v", result)
+	} else {
+		fmt.Printf("%+v", result)
 	}
 }
