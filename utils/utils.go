@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -146,62 +147,77 @@ func LibExec(name string) string {
 	}
 }
 
-func CopyFile(src, dst string) (err error) {
-	// CopyFile copies a file from src to dst. If src and dst files exist, and are
-	// the same, then return success. Otherise, attempt to create a hard link
-	// between the two files. If that fail, copy the file contents from src to dst.
-	sfi, err := os.Stat(src)
+// Copies file source to destination dest.
+func CopyFile(source string, dest string) (err error) {
+	sf, err := os.Open(source)
 	if err != nil {
-		return
+		return err
 	}
-	if !sfi.Mode().IsRegular() {
-		// cannot copy non-regular files (e.g., directories,
-		// symlinks, devices, etc.)
-		return fmt.Errorf("CopyFile: non-regular source file %s (%q)", sfi.Name(), sfi.Mode().String())
-	}
-	dfi, err := os.Stat(dst)
+	defer sf.Close()
+	df, err := os.Create(dest)
 	if err != nil {
-		if !os.IsNotExist(err) {
-			return
-		}
-	} else {
-		if !(dfi.Mode().IsRegular()) {
-			return fmt.Errorf("CopyFile: non-regular destination file %s (%q)", dfi.Name(), dfi.Mode().String())
-		}
-		if os.SameFile(sfi, dfi) {
-			return
-		}
+		return err
 	}
-	if err = os.Link(src, dst); err == nil {
-		return
+	defer df.Close()
+	_, err = io.Copy(df, sf)
+	if err == nil {
+		si, err := os.Stat(source)
+		if err != nil {
+			err = os.Chmod(dest, si.Mode())
+		}
+
 	}
-	err = copyFileContents(src, dst)
+
 	return
 }
 
-func copyFileContents(src, dst string) (err error) {
-	// copyFileContents copies the contents of the file named src to the file named
-	// by dst. The file will be created if it does not already exist. If the
-	// destination file exists, all it's contents will be replaced by the contents
-	// of the source file.
-	in, err := os.Open(src)
+func CopyDir(source string, dest string) (err error) {
+	// Recursively copies a directory tree, attempting to preserve permissions.
+	// Source directory must exist, destination directory must *not* exist.
+
+	// get properties of source dir
+	fi, err := os.Stat(source)
 	if err != nil {
-		return
+		return err
 	}
-	defer in.Close()
-	out, err := os.Create(dst)
+
+	if !fi.IsDir() {
+		return fmt.Errorf("Source %#v is not a directory", source)
+	}
+
+	// ensure dest dir does not already exist
+
+	_, err = os.Open(dest)
+	if !os.IsNotExist(err) {
+		return fmt.Errorf("Destination %#v already exists", dest)
+	}
+
+	// create dest dir
+
+	err = os.MkdirAll(dest, fi.Mode())
 	if err != nil {
-		return
+		return err
 	}
-	defer func() {
-		cerr := out.Close()
-		if err == nil {
-			err = cerr
+
+	entries, err := ioutil.ReadDir(source)
+
+	for _, entry := range entries {
+
+		sfp := source + "/" + entry.Name()
+		dfp := dest + "/" + entry.Name()
+		if entry.IsDir() {
+			err = CopyDir(sfp, dfp)
+			if err != nil {
+				log.Println(err)
+			}
+		} else {
+			// perform copy
+			err = CopyFile(sfp, dfp)
+			if err != nil {
+				log.Println(err)
+			}
 		}
-	}()
-	if _, err = io.Copy(out, in); err != nil {
-		return
+
 	}
-	err = out.Sync()
 	return
 }

@@ -1,7 +1,6 @@
 package utils_test
 
 import (
-	"fmt"
 	"github.com/rocksolidlabs/novm/utils"
 	"io/ioutil"
 	"log"
@@ -13,19 +12,23 @@ import (
 
 var rootPath string = path.Join(os.TempDir(), "test_data")
 
-func createTestTree() {
+func createTestTree() string {
+	return createTestTreeWithName("packdir")
+}
+
+func createTestTreeWithName(name string) string {
 	// creates the directory tree for testinging of Packdir/Unpackdir
 	removeTestTree()
-	for idx, dirName := range []string{"aaa", "bbb", "ccc", "ddd"} {
-		name := path.Join(rootPath, "packdir", dirName)
+	for _, dirName := range []string{"aaa", "bbb", "ccc", "ddd"} {
+		name := path.Join(rootPath, name, dirName)
 		os.MkdirAll(name, os.ModeDir|0755)
 		tf, err := os.Create(path.Join(name, "test.txt"))
 		if err != nil {
 			log.Fatalln(err)
 		}
-		fmt.Fprintf(tf, "TEST FILE %v in '%v'", idx, name)
 		tf.Close()
 	}
+	return path.Join(rootPath, name)
 }
 
 func removeTestTree() {
@@ -133,7 +136,7 @@ func TestCopyFile(t *testing.T) {
 	dst := path.Join(rootPath, "packdir", "aaa", "copy_of_test.txt")
 	utils.CopyFile(src, dst)
 	if !utils.PathExists(dst) {
-		t.Errorf("Destination file is missing: %v", dst)
+		t.Errorf("Destination file is missing: %#v", dst)
 		t.FailNow()
 	}
 	buf, err := ioutil.ReadFile(dst)
@@ -149,9 +152,21 @@ func TestCopyFile(t *testing.T) {
 	}
 	input := string(buf)
 	if input != output {
-		t.Errorf("Expected match \"%v\" == \"%v\"", input, output)
+		t.Errorf("Expected match %#v == %#v", input, output)
 		t.FailNow()
 	}
 
+	removeTestTree()
+}
+
+func TestCopyDir(t *testing.T) {
+
+	src := createTestTreeWithName("CopyDir")
+	dst := path.Join(rootPath, "copy_of_CopyDir")
+	utils.CopyDir(src, dst)
+	if !utils.PathExists(dst) {
+		t.Errorf("Destination file is missing: %#v", dst)
+		t.FailNow()
+	}
 	removeTestTree()
 }
