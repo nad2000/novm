@@ -32,7 +32,7 @@ func createTestTreeWithName(name string) string {
 }
 
 func removeTestTree() {
-	os.RemoveAll(rootPath)
+	//os.RemoveAll(rootPath)
 }
 
 func TestPackdir(t *testing.T) {
@@ -166,6 +166,32 @@ func TestCopyDir(t *testing.T) {
 	utils.CopyDir(src, dst)
 	if !utils.PathExists(dst) {
 		t.Errorf("Destination file is missing: %#v", dst)
+		t.FailNow()
+	}
+	if !utils.PathExists(path.Join(dst, "aaa")) {
+		t.Error("Dir aaa missing.")
+		t.FailNow()
+	}
+	removeTestTree()
+}
+
+func TestCopyTree(t *testing.T) {
+
+	src := createTestTreeWithName("CopyTree")
+	dst := path.Join(rootPath, "copy_of_CopyTree")
+	utils.CopyTree(src, dst, func(name string) bool {
+		return name == "aaa" || name == "bbb"
+	})
+	if !utils.PathExists(dst) {
+		t.Errorf("Destination file is missing: %#v", dst)
+		t.FailNow()
+	}
+	if utils.PathExists(path.Join(dst, "aaa")) {
+		t.Error("Dir aaa wasn't ignored")
+		t.FailNow()
+	}
+	if utils.PathExists(path.Join(dst, "bbb")) {
+		t.Error("Dir bbb wasn't ignored")
 		t.FailNow()
 	}
 	removeTestTree()

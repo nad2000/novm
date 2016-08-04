@@ -172,8 +172,13 @@ func CopyFile(source string, dest string) (err error) {
 }
 
 func CopyDir(source string, dest string) (err error) {
+	return CopyTree(source, dest, nil)
+}
+
+func CopyTree(source string, dest string, ignore func(string) bool) (err error) {
 	// Recursively copies a directory tree, attempting to preserve permissions.
 	// Source directory must exist, destination directory must *not* exist.
+	// The matching directories with any in the list are ignored.
 
 	// get properties of source dir
 	fi, err := os.Stat(source)
@@ -202,11 +207,17 @@ func CopyDir(source string, dest string) (err error) {
 	entries, err := ioutil.ReadDir(source)
 
 	for _, entry := range entries {
+		log.Println(entry.Name())
+		if ignore != nil {
+			if ignore(entry.Name()) {
+				continue
+			}
+		}
 
 		sfp := source + "/" + entry.Name()
 		dfp := dest + "/" + entry.Name()
 		if entry.IsDir() {
-			err = CopyDir(sfp, dfp)
+			err = CopyTree(sfp, dfp, ignore)
 			if err != nil {
 				log.Println(err)
 			}
