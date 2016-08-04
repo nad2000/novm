@@ -232,3 +232,13 @@ func CopyTree(source string, dest string, ignore func(string) bool) (err error) 
 	}
 	return
 }
+
+func GetEnv(name string, defaultValue string) (value string) {
+	// ruturns environent variable value or it's missing, default fall back value
+
+	value = os.Getenv(name)
+	if value == "" {
+		return defaultValue
+	}
+	return
+}

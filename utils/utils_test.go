@@ -1,7 +1,7 @@
 package utils_test
 
 import (
-	"github.com/rocksolidlabs/novm/utils"
+	"../utils"
 	"io/ioutil"
 	"log"
 	"os"
