@@ -3,6 +3,7 @@ package utils_test
 import (
 	"fmt"
 	"github.com/rocksolidlabs/novm/utils"
+	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -10,12 +11,7 @@ import (
 	"testing"
 )
 
-var rootPath string
-
-func TestMain(m *testing.M) {
-	rootPath = path.Join(os.TempDir(), "test_data")
-	os.Exit(m.Run())
-}
+var rootPath string = path.Join(os.TempDir(), "test_data")
 
 func createTestTree() {
 	// creates the directory tree for testinging of Packdir/Unpackdir
@@ -129,4 +125,33 @@ func TestTempFileName(t *testing.T) {
 		t.Errorf("Expected length of \"%v\" %v, but got %v", tempFileName, expectedLength, len(tempFileName))
 		t.FailNow()
 	}
+}
+
+func TestCopyFile(t *testing.T) {
+	createTestTree()
+	src := path.Join(rootPath, "packdir", "aaa", "test.txt")
+	dst := path.Join(rootPath, "packdir", "aaa", "copy_of_test.txt")
+	utils.CopyFile(src, dst)
+	if !utils.PathExists(dst) {
+		t.Errorf("Destination file is missing: %v", dst)
+		t.FailNow()
+	}
+	buf, err := ioutil.ReadFile(dst)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	output := string(buf)
+	buf, err = ioutil.ReadFile(src)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	input := string(buf)
+	if input != output {
+		t.Errorf("Expected match \"%v\" == \"%v\"", input, output)
+		t.FailNow()
+	}
+
+	removeTestTree()
 }
