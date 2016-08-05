@@ -64,9 +64,49 @@ Docker repositories are provided as follows.
 
     You should specify at least username, password.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("create called")
 		cmd.DebugFlags()
+		name := flagString(cmd, "name")
+		kernel := flagString(cmd, "kernel")
+		if kernel == "" {
+			// TODO: choose the latest kernel by default
+		}
+		cmdline := flagString(cmd, "cmdline")
+		if cmdline != "" {
+			cmdline += " "
+		}
+		cpus := flagInt(cmd, "cpus")
+		memsize := flagInt(cmd, "memsize")
+		init := flagBool(cmd, "init")
+		nics := flagStringSlice(cmd, "nic")
+		disks := flagStringSlice(cmd, "disk")
+		packs := flagStringSlice(cmd, "pack")
+		repos := flagStringSlice(cmd, "repo")
+		read := flagStringSlice(cmd, "read")
+		write := flagStringSlice(cmd, "write")
+		vmmopt := flagStringSlice(cmd, "vmmopt")
+		cwd := flagString(cmd, "cwd")
+		nopci := flagBool(cmd, "nopci")
+		com1 := flagBool(cmd, "com1")
+		com2 := flagBool(cmd, "com2")
+		nofork := flagBool(cmd, "nofork")
+		terminal := flagBool(cmd, "terminal")
+
+		cmdArgs := make([]string, 0, 10)
+		if init {
+			cmdArgs = append(cmdArgs, "-init")
+		}
+
+		cmdArgs = append(cmdArgs,
+			"-vmlinux", "TODO",
+			"-sysmap", "TODO",
+			"-initrd", "TODO",
+			"-setup", "TODO")
+
+		fmt.Printf("%v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %#v\n",
+			name, kernel, cmdline, cpus, memsize, init, nics, disks, packs,
+			repos, read, write, vmmopt, cwd, nopci, com1, com2, nofork, terminal,
+			cmdArgs)
+
 	},
 }
 

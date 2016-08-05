@@ -34,23 +34,25 @@ var mkkernelCmd = &cobra.Command{
 	Long:  `Make a new kernel from an local kernel.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		output := cmd.Flag("output").Value.String()
+		cmd.DebugFlags()
+
+		output := flagString(cmd, "output")
 		if output == "" {
 			output = utils.TempFileName("", "")
 		}
-		release := cmd.Flag("release").Value.String()
+		release := flagString(cmd, "release")
 		if release == "" {
 			release = utils.SystemRelease()
 		}
-		modules := cmd.Flag("modules").Value.String()
+		modules := flagString(cmd, "modules")
 		if modules == "" {
 			modules = "/lib/modules/" + release
 		}
-		bzimage := cmd.Flag("bzimage").Value.String()
+		bzimage := flagString(cmd, "bzimage")
 		if bzimage == "" {
 			bzimage = "/boot/vmlinuz-" + release
 		}
-		vmlinux := cmd.Flag("vmlinux").Value.String()
+		vmlinux := flagString(cmd, "vmlinux")
 		if vmlinux == "" {
 			vmlinuxFile, err := ioutil.TempFile("", "")
 			if err != nil {
@@ -69,7 +71,7 @@ var mkkernelCmd = &cobra.Command{
 
 			vmlinux = vmlinuxFile.Name()
 		}
-		setup := cmd.Flag("setup").Value.String()
+		setup := flagString(cmd, "setup")
 		if setup == "" {
 			setupFile, _ := ioutil.TempFile("", "")
 			bzimageFile, _ := os.Open(bzimage)
@@ -79,7 +81,7 @@ var mkkernelCmd = &cobra.Command{
 			setupFile.Close()
 		}
 
-		sysmap := cmd.Flag("sysmap").Value.String()
+		sysmap := flagString(cmd, "sysmap")
 		if sysmap == "" {
 			sysmap = "/boot/System.map-" + release
 		}
@@ -100,7 +102,7 @@ var mkkernelCmd = &cobra.Command{
 		utils.CopyFile(sysmap, path.Join(tempDir, "sysmap"))
 		utils.CopyFile(setup, path.Join(tempDir, "setup"))
 
-		if nomodules, _ := cmd.Flags().GetBool("nomodules"); nomodules {
+		if flagBool(cmd, "nomodules") {
 			os.MkdirAll(path.Join(tempDir, "modules"), os.ModeDir|0755)
 		} else {
 			utils.CopyTree(
@@ -116,7 +118,6 @@ var mkkernelCmd = &cobra.Command{
 		absOutput, _ := filepath.Abs(output)
 		printResult(cmd, "file://"+absOutput)
 
-		cmd.DebugFlags()
 	},
 }
 
