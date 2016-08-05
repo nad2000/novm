@@ -15,13 +15,14 @@
 package cmd
 
 import (
-	"../utils"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path"
+
+	"../utils"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

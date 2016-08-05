@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"../utils"
 	"io"
 	"io/ioutil"
 	"log"
@@ -23,6 +22,8 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+
+	"../utils"
 
 	"github.com/spf13/cobra"
 )

@@ -114,7 +114,6 @@ func init() {
 	RootCmd.AddCommand(createCmd)
 	createCmd.Flags().String("name", "", "The instance `NAME`.")
 	createCmd.Flags().Int("cpus", 1, "The number of `VCPUS`.")
-
 	createCmd.Flags().Int("memsize", 1024, "The memory size `MEMSIZE` (in MB).")
 	createCmd.Flags().String("kernel", "", "The `KERNEL` to use.")
 	createCmd.Flags().Bool("init", false, "Use a real init?")
@@ -133,5 +132,4 @@ func init() {
 	createCmd.Flags().StringSlice("env", nil, "Specify an environment variable `ENV`.")
 	createCmd.Flags().String("cwd", "", "The process working directory `CWD`.")
 	createCmd.Flags().Bool("terminal", false, "Change the terminal mode.")
-
 }
