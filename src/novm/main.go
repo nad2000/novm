@@ -14,7 +14,7 @@
 
 package main
 
-import "./cmd"
+import "novm/cmd"
 
 func main() {
 	cmd.Execute()

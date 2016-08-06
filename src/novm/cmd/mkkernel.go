@@ -18,12 +18,11 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"novm/utils"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
-
-	"../utils"
 
 	"github.com/spf13/cobra"
 )

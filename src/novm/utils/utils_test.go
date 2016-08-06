@@ -1,9 +1,9 @@
 package utils_test
 
 import (
-	"../utils"
 	"io/ioutil"
 	"log"
+	"novm/utils"
 	"os"
 	"path"
 	"strings"
