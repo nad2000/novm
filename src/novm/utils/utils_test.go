@@ -196,3 +196,59 @@ func TestCopyTree(t *testing.T) {
 	}
 	removeTestTree()
 }
+
+func TestJsonDumps(t *testing.T) {
+	type test struct {
+		Name      string   `json:"name" field`
+		Age       int      `json:"age" field`
+		IntString int      `json:"int_sting,string" field`
+		Values    []string `json:"value" fields`
+		Omitted   []string `json:"-" fields`
+	}
+
+	obj := []test{{
+		"test",
+		42,
+		111,
+		[]string{"one", "two", "three"},
+		[]string{"ONE", "TWO", "THREE"},
+	}}
+	outputData := utils.JsonDumps(obj)
+	expectedOutput := `[
+	{
+		"name": "test",
+		"age": 42,
+		"int_sting": "111",
+		"value": [
+			"one",
+			"two",
+			"three"
+		]
+	}
+]`
+	if outputData != expectedOutput {
+		t.Errorf("Object:\n%+v\nserialized into:\n%v\nExpected:\n%v",
+			obj, outputData, expectedOutput)
+	}
+
+	obj2 := []map[string]interface{}{{
+		"aaa": "AAA",
+		"bbb": "BBB",
+		"ccc": "CCC",
+	}}
+	obj2[0]["timestamp"] = int64(1470581110)
+	expectedOutput2 := `[
+	{
+		"aaa": "AAA",
+		"bbb": "BBB",
+		"ccc": "CCC",
+		"timestamp": 1470581110
+	}
+]`
+	outputData2 := utils.JsonDumps(obj2)
+
+	if outputData2 != expectedOutput2 {
+		t.Errorf("Object:\n%+v\nserialized into:\n%v\nExpected:\n%v",
+			obj2, outputData2, expectedOutput2)
+	}
+}

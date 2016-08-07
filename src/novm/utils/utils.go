@@ -2,7 +2,9 @@ package utils
 
 import (
 	"archive/zip"
+	"bytes"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -241,4 +243,32 @@ func GetEnv(name string, defaultValue string) (value string) {
 		return defaultValue
 	}
 	return
+}
+
+func JsonDumps(in interface{}) string {
+	var out bytes.Buffer
+	b, err := json.Marshal(in)
+	if err != nil {
+		log.Fatal(err)
+		return err.Error()
+	}
+	err = json.Indent(&out, b, "", "\t")
+	if err != nil {
+		log.Fatal(err)
+		return err.Error()
+	}
+	return out.String()
+}
+
+func JsonDump(in interface{}, out io.Writer) error {
+	b, err := json.MarshalIndent(in, "", "\t")
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	_, err = out.Write(b)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return err
 }
