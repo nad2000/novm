@@ -4,7 +4,9 @@ import (
 	"log"
 	"os"
 	"path"
+	"strconv"
 	"testing"
+	"time"
 
 	"novm/nodb"
 	"novm/utils"
@@ -47,18 +49,17 @@ func TestNodbList(t *testing.T) {
 		t.Errorf("Expecetd to find `7dd51c310599f6abefbe32cc1635734c` in %s", testDir)
 	}
 	obj := map[string]string{
-		"url":       "file:///TEST",
-		"timestamp": "1470458784",
-		"name":      "TEST1234567890",
+		"url":  "file:///TEST",
+		"name": "TEST1234567890",
 	}
 	db.Add("1234567890", obj)
 	if !utils.PathExists(path.Join(testDir, "1234567890.json")) {
 		t.Errorf("Expecetd to find a JSON file `1234567890.json` in %s", testDir)
 		t.FailNow()
 	}
-	obj, err := db.Get("7dd51c310599f6abefbe32cc1635734c", nil)
-	if err != nil {
-		t.Log(err)
+	obj, ok := db.Get("7dd51c310599f6abefbe32cc1635734c")
+	if !ok {
+		t.Error("Failed to retrieve the document.")
 		t.FailNow()
 	}
 	url, ok := obj["url"]
@@ -67,6 +68,30 @@ func TestNodbList(t *testing.T) {
 	}
 	if url != "file:///KERNEL" {
 		t.Errorf("Expeced to find `url: file:///KERNEL` in %#v", obj)
+	}
+
+	obj, ok = db.Get("1234567890")
+	if !ok {
+		t.Error("Failed to retrieve the document.")
+		t.FailNow()
+	}
+	tsStr, ok := obj["timestamp"]
+	if !ok {
+		t.Errorf("Expeced to find `timestamp` in %#v", obj)
+	}
+	timeLimit := time.Now().Unix() - 1
+	if ts, _ := strconv.ParseInt(tsStr, 10, 64); ts < timeLimit {
+		t.Errorf("Expeced that the object was created before TS: %d got %d in %#v",
+			timeLimit, ts, obj)
+	}
+
+	if fn, ef := db.File("ABCDEFGH"), path.Join(testDir, "ABCDEFGH"); fn != ef {
+		t.Errorf(`File("ABCDEFGH") -> %#v want %#v`, fn, ef)
+	}
+
+	if result := db.Show(); len(result) != 2 {
+		t.Errorf("Expected 2 objects in nodb.Show(...) result %#v, got %d",
+			result, len(result))
 	}
 
 	removeTestTree()
