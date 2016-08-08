@@ -70,12 +70,15 @@ func (db *Nodb) Has(objId string) bool {
 	}
 }
 
-func (db *Nodb) Show() {
-	params := db.List()
+func (db *Nodb) Show() (result map[string]map[string]string) {
 
-	for _, key := range params {
-		_ = key
+	result = make(map[string]map[string]string)
+	for _, key := range db.List() {
+		if value, ok := db.Get(key); ok {
+			result[key] = value
+		}
 	}
+	return
 }
 
 func (db *Nodb) Add(objId string, obj map[string]string) (err error) {
@@ -91,29 +94,40 @@ func (db *Nodb) Add(objId string, obj map[string]string) (err error) {
 	return
 }
 
-func (db *Nodb) Get(objId string, params map[string]string) (obj map[string]string, err error) {
+func (db *Nodb) Get(objId string) (map[string]string, bool) {
+	return db.GetObj(objId, nil)
+}
+
+func (db *Nodb) GetObj(objId string, params map[string]string) (obj map[string]string, ok bool) {
 	objId = db.Find(objId, params)
 	inf, err := os.Open(db.File(objId + ".json"))
 	if err != nil {
-		log.Fatal(err)
-		return
+		return nil, false
 	}
 	//err := json.Unmarshal(...)
 	dec := json.NewDecoder(inf)
 	err = dec.Decode(&obj)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return nil, false
 	}
-	return
+	return obj, true
 }
 
 func (db *Nodb) Remove(objId string, params map[string]string) {
 	objId = db.Find(objId, params)
-	db.list = nil
+	if objId == "" {
+		return
+	}
+
 	err := os.RemoveAll(db.File(objId + ".json"))
 	if err != nil {
 		log.Fatal(err)
+		return
 	}
+
+	db.list = nil
+
 	if fileName := db.File(objId); utils.PathExists(fileName) {
 		err = os.RemoveAll(fileName)
 		if err != nil {
@@ -128,13 +142,15 @@ func (db *Nodb) Find(objId string, params map[string]string) (found string) {
 	}
 
 	var timestamp int64 = 0
+	// found = ""
+
+LoopObjects:
 	for _, objId := range db.List() {
-		obj, _ := db.Get(objId, params)
-	CompareKeys:
+		obj, _ := db.GetObj(objId, params)
 		for k, v := range params {
 			val, ok := obj[k]
 			if !ok || v != val {
-				break CompareKeys
+				continue LoopObjects
 			}
 		}
 		tsStr, ok := obj["timestamp"]

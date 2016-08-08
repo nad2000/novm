@@ -94,5 +94,21 @@ func TestNodbList(t *testing.T) {
 			result, len(result))
 	}
 
+	objId := db.Find("", map[string]string{"name": "TEST1234567890"})
+	if objId == "" {
+		t.Error("Failed to find the object 1234567890")
+	}
+
+	objId = db.Find("", map[string]string{"name": "NON EXISTENT"})
+	if objId != "" {
+		t.Error("Failed to fail to find an object. Found: ", objId)
+	}
+
+	db.Remove("1234567890", nil)
+	_, ok = db.Get("1234567890")
+	if ok {
+		t.Error("Expected to have object removed.")
+	}
+
 	removeTestTree()
 }

@@ -33,4 +33,9 @@ bin
 pyan.py
 venv
 dist
-novm/diag
+ovm/diag
+
+github.com
+golang.org
+gopkg.in
+
