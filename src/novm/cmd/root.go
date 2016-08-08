@@ -15,14 +15,12 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path"
 
-	"../utils"
+	"novm/utils"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -123,25 +121,10 @@ func flagInt(cmd *cobra.Command, name string) (val int) {
 	return
 }
 
-func jsonDumps(in interface{}) string {
-	var out bytes.Buffer
-	b, err := json.Marshal(in)
-	if err != nil {
-		log.Fatal(err)
-		return err.Error()
-	}
-	err = json.Indent(&out, b, "", "\t")
-	if err != nil {
-		log.Fatal(err)
-		return err.Error()
-	}
-	return out.String()
-}
-
 // Print the result
 func printResult(cmd *cobra.Command, result interface{}) {
 	if json, _ := cmd.Flags().GetBool("json"); json || cmd.Name() == "control" {
-		fmt.Println(jsonDumps(result))
+		fmt.Println(utils.JsonDumps(result))
 	} else if plain, _ := cmd.Flags().GetBool("plain"); plain {
 		fmt.Printf("%v", result)
 	} else {
