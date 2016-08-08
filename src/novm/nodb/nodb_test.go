@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"novm/nodb"
+	"novm/utils"
 )
 
 var rootPath string = path.Join(os.TempDir(), "test_data")
@@ -16,7 +17,6 @@ func createTestTree() string {
 }
 
 func createTestTreeWithName(name string) string {
-	// creates the directory tree for testinging of Packdir/Unpackdir
 	removeTestTree()
 	for _, dirName := range []string{"kernels"} {
 		name := path.Join(rootPath, name, dirName)
@@ -27,7 +27,7 @@ func createTestTreeWithName(name string) string {
 		}
 		tf.WriteString(`{
 			"url": "file:///KERNEL", 
-			"timestamp": 1470458784.044678, 
+			"timestamp": "1470458784", 
 			"name": "TEST"
 		}`)
 		tf.Close()
@@ -40,10 +40,34 @@ func removeTestTree() {
 }
 
 func TestNodbList(t *testing.T) {
-	testDir := createTestTree()
+	testDir := path.Join(createTestTree(), "kernels")
 	var db novm.Nodb
-	db.Open(path.Join(testDir, "kernels"))
-	log.Logf("%v\n", db.List())
+	db.Open(testDir)
+	if !db.Has("7dd51c310599f6abefbe32cc1635734c") {
+		t.Errorf("Expecetd to find `7dd51c310599f6abefbe32cc1635734c` in %s", testDir)
+	}
+	obj := map[string]string{
+		"url":       "file:///TEST",
+		"timestamp": "1470458784",
+		"name":      "TEST1234567890",
+	}
+	db.Add("1234567890", obj)
+	if !utils.PathExists(path.Join(testDir, "1234567890.json")) {
+		t.Errorf("Expecetd to find a JSON file `1234567890.json` in %s", testDir)
+		t.FailNow()
+	}
+	obj, err := db.Get("7dd51c310599f6abefbe32cc1635734c", nil)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+	url, ok := obj["url"]
+	if !ok {
+		t.Errorf("Expeced to find `url` in %#v", obj)
+	}
+	if url != "file:///KERNEL" {
+		t.Errorf("Expeced to find `url: file:///KERNEL` in %#v", obj)
+	}
 
 	removeTestTree()
 }
