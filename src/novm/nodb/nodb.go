@@ -1,4 +1,4 @@
-package novm
+package nodb
 
 import (
 	"crypto/sha1"

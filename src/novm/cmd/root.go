@@ -20,6 +20,7 @@ import (
 	"os"
 	"path"
 
+	"novm/nodb"
 	"novm/utils"
 
 	"github.com/spf13/cobra"
@@ -27,8 +28,10 @@ import (
 )
 
 var (
-	root    string // DB root directory
-	cfgFile string
+	// DB root directory
+	root, controls, cfgFile string
+	instances, packs        nodb.Nodb
+	kernels, docker         nodb.Nodb
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -57,14 +60,19 @@ func Execute() {
 
 func init() {
 
-	root = path.Join(utils.GetEnv("HOME", os.TempDir()), ".novm")
+	root = utils.GetEnv(
+		"NOVM_ROOT",
+		path.Join(utils.GetEnv("HOME", os.TempDir()), ".novm"))
+	controls = path.Join(root, "controls")
+	instances.Open(sysDir("NOVM_INSTANCES", "instances"))
+	packs.Open(sysDir("NOVM_PACKS", "packs"))
+	kernels.Open(sysDir("NOVM_KERNELS", "kernels"))
+	docker.Open(sysDir("NOVM_DOCKER", "docker"))
+
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports Persistent Flags, which, if defined here,
-	// will be global for your application.
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "`CONFIG` file (default: $HOME/.novm/.config)")
 
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "`CONFIG` file (default is $HOME/.novm.yaml)")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	RootCmd.PersistentFlags().BoolP("toggle", "t", false, "Help message for toggle")
@@ -73,7 +81,7 @@ func init() {
 	RootCmd.PersistentFlags().BoolP("json", "j", false, "Print result as JSON (where applicable).")
 }
 
-func getDbDir(envVar string, dirName string) string {
+func sysDir(envVar string, dirName string) string {
 	return utils.GetEnv(envVar, path.Join(root, dirName))
 }
 

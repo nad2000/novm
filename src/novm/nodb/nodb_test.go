@@ -1,4 +1,4 @@
-package novm_test
+package nodb_test
 
 import (
 	"log"
@@ -43,7 +43,7 @@ func removeTestTree() {
 
 func TestNodbList(t *testing.T) {
 	testDir := path.Join(createTestTree(), "kernels")
-	var db novm.Nodb
+	var db nodb.Nodb
 	db.Open(testDir)
 	if !db.Has("7dd51c310599f6abefbe32cc1635734c") {
 		t.Errorf("Expecetd to find `7dd51c310599f6abefbe32cc1635734c` in %s", testDir)
