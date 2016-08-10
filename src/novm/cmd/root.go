@@ -19,6 +19,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 
 	"novm/nodb"
 	"novm/utils"
@@ -32,6 +33,7 @@ var (
 	root, controls, cfgFile string
 	instances, packs        nodb.Nodb
 	kernels, docker         nodb.Nodb
+	debug                   bool
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -46,7 +48,9 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	Run: func(cmd *cobra.Command, args []string) {
+		debugCmd(cmd)
+	},
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -55,6 +59,16 @@ func Execute() {
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
+	}
+}
+
+func debugCmd(cmd *cobra.Command) {
+	debug = flagBool(cmd, "debug")
+	if debug {
+		title := fmt.Sprintf("Command %q called with flags:", cmd.Name())
+		fmt.Println(title)
+		fmt.Println(strings.Repeat("=", len(title)))
+		cmd.DebugFlags()
 	}
 }
 
@@ -137,5 +151,18 @@ func printResult(cmd *cobra.Command, result interface{}) {
 		fmt.Printf("%v", result)
 	} else {
 		fmt.Printf("%+v", result)
+	}
+}
+
+// Is this process still around?
+func isAlive(pid interface{}) bool {
+	switch pid.(type) {
+	default:
+		log.Panicf("Incorrect PID type: %#v", pid)
+		return false
+	case int:
+		return utils.PathExists(fmt.Sprintf("/proc/%d", pid.(int)))
+	case string:
+		return utils.PathExists(fmt.Sprintf("/proc/%s", pid.(string)))
 	}
 }

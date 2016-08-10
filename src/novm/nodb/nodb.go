@@ -22,6 +22,18 @@ type Nodb struct {
 	list []string
 }
 
+func toObjId(id interface{}) string {
+	switch id.(type) {
+	default:
+		log.Panicf("Incorrect ID (%#v) type: %T", id, id)
+		return ""
+	case int:
+		return fmt.Sprintln("%d", id)
+	case string:
+		return id.(string)
+	}
+}
+
 func (db *Nodb) Open(dbPath string) {
 	db.root = dbPath
 	db.list = nil
@@ -114,35 +126,40 @@ func (db *Nodb) GetObj(objId string, params map[string]string) (obj map[string]s
 	return obj, true
 }
 
-func (db *Nodb) Remove(objId string, params map[string]string) {
-	objId = db.Find(objId, params)
-	if objId == "" {
-		return
+func (db *Nodb) Remove(objId interface{}, params map[string]string) (ok bool) {
+	id := db.Find(toObjId(objId), params)
+	if id == "" {
+		return false
 	}
 
-	err := os.RemoveAll(db.File(objId + ".json"))
+	err := os.RemoveAll(db.File(id + ".json"))
 	if err != nil {
 		log.Fatal(err)
-		return
+		return false
 	}
 
 	db.list = nil
-
-	if fileName := db.File(objId); utils.PathExists(fileName) {
+	if fileName := db.File(id); utils.PathExists(fileName) {
 		err = os.RemoveAll(fileName)
 		if err != nil {
 			log.Fatal(err)
+			return false
 		}
 	}
+	return true
 }
 
-func (db *Nodb) Find(objId string, params map[string]string) (found string) {
+func (db *Nodb) Find(id interface{}, params map[string]string) (found string) {
+	objId := toObjId(id)
 	if objId != "" {
-		return objId
+		if !utils.PathExists(db.File(objId + ".json")) {
+			return ""
+		} else {
+			return objId
+		}
 	}
 
 	var timestamp int64 = 0
-	// found = ""
 
 LoopObjects:
 	for _, objId := range db.List() {
