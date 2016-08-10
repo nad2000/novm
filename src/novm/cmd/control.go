@@ -16,9 +16,15 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"novm/control"
+	"path"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
+
+type dict map[string]string
 
 // controlCmd represents the control command
 var controlCmd = &cobra.Command{
@@ -38,24 +44,35 @@ For example:
 
 		trace enable=true`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("control called")
+		cmd.DebugFlags()
+		id := flagString(cmd, "id")
+		name := flagString(cmd, "name")
+		if args == nil {
+			log.Fatal("Invalid command. Expected a VMM command.")
+			return
+		}
+		command := args[0]
+		params := make(map[string]string)
+		for _, arg := range args[1:] {
+			splitArg := strings.Split(arg, "=")
+			if len(splitArg) != 2 {
+				log.Fatalf("Arguments should be key=value instead of %v.", arg)
+				return
+			}
+			params[splitArg[0]] = splitArg[1]
+		}
+
+		objId := instances.Find(id, dict{"name": name})
+		ctrlPath := path.Join(controls, objId+".ctrl")
+		control.Setup(ctrlPath)
+
+		fmt.Printf("control called: %#v, %#v, %#v, %#v", name, objId, params, command)
+
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(controlCmd)
 	controlCmd.Flags().String("id", "", "a virtual machine `ID`.")
-	controlCmd.Flags().String("name", "", "a virtual machine `NAME`.")
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// controlCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// controlCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
+	controlCmd.Flags().String("name", "", "The instance `NAME`.")
 }
