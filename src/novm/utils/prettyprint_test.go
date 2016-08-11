@@ -71,3 +71,29 @@ func TestPrettyPrintStringMap(t *testing.T) {
 	}
 
 }
+
+func TestPrettyPrintMapMap(t *testing.T) {
+
+	var b bytes.Buffer
+
+	data := map[string]map[string]string{
+		"id1":   {"name": "A1", "value": "1"},
+		"id22":  {"name": "B12", "value": "2222222"},
+		"id333": {"name": "C123", "value": "333"},
+	}
+	utils.FprettyPrint(&b, data)
+	output := b.String()
+	expected := `--------------------------
+|  Id   | Name |  Value  |
+--------------------------
+| id1   | A1   |       1 |
+| id22  | B12  | 2222222 |
+| id333 | C123 |     333 |
+--------------------------
+`
+	if output != expected {
+		t.Errorf("%#v rendered as \n%s\nexpected:\n%s", data, output, expected)
+		t.FailNow()
+	}
+
+}

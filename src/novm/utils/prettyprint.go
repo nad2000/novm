@@ -154,6 +154,7 @@ func FprettyPrint(output io.Writer, values interface{}) {
 			return
 		}
 		formatedValues = make(map[string][]string)
+		maxWidths = make(map[string]int)
 		sortedKeys := mapKeys(values)
 		sort.Strings(sortedKeys)
 		intSortedKeys := make([]interface{}, len(sortedKeys))
@@ -169,22 +170,20 @@ func FprettyPrint(output io.Writer, values interface{}) {
 				vals[i] = values.(map[string]string)[k]
 			}
 			fields = []string{"id", "value"}
-			formatedValues = make(map[string][]string)
-			maxWidths = make(map[string]int)
 			formatedValues["id"], maxWidths["id"] = formatEntryList("id", sortedKeys)
 			formatedValues["value"], maxWidths["value"] = formatEntryList("value", vals)
-		case map[string]map[string]interface{}, map[string]map[string]string:
-			firstRow := values.(map[string]map[string]interface{})[sortedKeys[0]]
+		case map[string]map[string]string:
+			firstRow := values.(map[string]map[string]string)[sortedKeys[0]]
 			fields = append([]string{"id"}, mapKeys(firstRow)...)
 
 			for _, f := range fields {
 				if f == "id" {
 					formatedValues[f], maxWidths["id"] = formatEntryList("id", sortedKeys)
 				} else {
-					vals := make([]interface{}, len(values.(map[string]interface{})))
+					vals := make([]interface{}, len(values.(map[string]map[string]string)))
 
 					for i, k := range sortedKeys {
-						vals[i] = values.(map[string]map[string]interface{})[k][f]
+						vals[i] = values.(map[string]map[string]string)[k][f]
 					}
 
 					formatedValues[f], maxWidths[f] = formatEntryList(f, vals)
