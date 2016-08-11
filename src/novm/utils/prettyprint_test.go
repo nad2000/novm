@@ -95,5 +95,4 @@ func TestPrettyPrintMapMap(t *testing.T) {
 		t.Errorf("%#v rendered as \n%s\nexpected:\n%s", data, output, expected)
 		t.FailNow()
 	}
-
 }
