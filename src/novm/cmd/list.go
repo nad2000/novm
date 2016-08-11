@@ -15,7 +15,7 @@
 package cmd
 
 import (
-	"fmt"
+	. "novm/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -26,24 +26,18 @@ var listCmd = &cobra.Command{
 	Short: "-- List running instances.",
 	Long:  `List running instances.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("list called")
+		debugCmd(cmd)
+		List(flagBool(cmd, "full"), flagBool(cmd, "alive"))
 	},
+}
+
+func List(full bool, alive bool) {
+	rval := instances.Show()
+	PrettyPrint(rval)
 }
 
 func init() {
 	RootCmd.AddCommand(listCmd)
 	listCmd.Flags().Bool("full", false, "Include device info?")
 	listCmd.Flags().Bool("alive", false, "Include only alive instances?")
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// listCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// listCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 }

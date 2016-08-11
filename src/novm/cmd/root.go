@@ -30,10 +30,11 @@ import (
 
 var (
 	// DB root directory
-	root, controls, cfgFile string
-	instances, packs        nodb.Nodb
-	kernels, docker         nodb.Nodb
-	debug                   bool
+	root              string
+	controls, cfgFile string
+	instances, packs  nodb.Nodb
+	kernels, docker   nodb.Nodb
+	debug             bool
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -72,17 +73,24 @@ func debugCmd(cmd *cobra.Command) {
 	}
 }
 
-func init() {
-
-	root = utils.GetEnv(
-		"NOVM_ROOT",
-		path.Join(utils.GetEnv("HOME", os.TempDir()), ".novm"))
+func SetRootDir(dirName string) {
+	if dirName == "" {
+		root = utils.GetEnv(
+			"NOVM_ROOT",
+			path.Join(utils.GetEnv("HOME", os.TempDir()), ".novm"))
+	} else {
+		root = dirName
+	}
 	controls = path.Join(root, "controls")
 	instances.Open(sysDir("NOVM_INSTANCES", "instances"))
 	packs.Open(sysDir("NOVM_PACKS", "packs"))
 	kernels.Open(sysDir("NOVM_KERNELS", "kernels"))
 	docker.Open(sysDir("NOVM_DOCKER", "docker"))
+}
 
+func init() {
+
+	SetRootDir("")
 	cobra.OnInitialize(initConfig)
 
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "`CONFIG` file (default: $HOME/.novm/.config)")
