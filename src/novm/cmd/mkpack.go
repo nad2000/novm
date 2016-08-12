@@ -15,7 +15,7 @@
 package cmd
 
 import (
-	"fmt"
+	"novm/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -24,29 +24,40 @@ import (
 var mkpackCmd = &cobra.Command{
 	Use:   "mkpack",
 	Short: "-- Create a pack from a tree.",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long:  `Create a pack from a tree.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("mkpack called")
+		debugCmd(cmd)
+		objId := flagString(cmd, "id")
+		name := flagString(cmd, "name")
+		dirPath := flagString(cmd, "path")
+		include := flagStringSlice(cmd, "include")
+		exclude := flagStringSlice(cmd, "exclude")
+		output := utils.TempFileName("tmp", ".zip")
+
+		if dirPath == "" {
+			if objId != "" || name != "" {
+				objId = instances.Find(objId, dict{"name": name})
+				dirPath = instances.File(objId)
+			} else {
+				dirPath = "."
+			}
+		}
+
+		err := utils.Packdir(dirPath, output, include, exclude)
+		if err != nil {
+			panic(err)
+		} else {
+			printResult(cmd, "file://"+output)
+		}
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(mkpackCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// mkpackCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// mkpackCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
+	mkpackCmd.Flags().String("id", "", "The instance id.")
+	mkpackCmd.Flags().String("name", "", "The instance name.")
+	mkpackCmd.Flags().String("output", "", "The output file.")
+	mkpackCmd.Flags().String("path", "", "The input path.")
+	mkpackCmd.Flags().StringSlice("exclude", nil, "Subpaths to exclude.")
+	mkpackCmd.Flags().StringSlice("include", nil, "Subpaths to include.")
 }
