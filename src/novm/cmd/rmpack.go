@@ -14,39 +14,25 @@
 
 package cmd
 
-import (
-	"fmt"
-
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 // rmpackCmd represents the rmpack command
 var rmpackCmd = &cobra.Command{
 	Use:   "rmpack",
 	Short: "-- Remove an existing pack.",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long:  `Remove an existing pack.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("rmpack called")
+		debugCmd(cmd)
+		id := flagString(cmd, "id")
+		url := flagString(cmd, "url")
+		name := flagString(cmd, "name")
+		packs.Remove(id, dict{"url": url, "name": name})
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(rmpackCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// rmpackCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// rmpackCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
+	rmpackCmd.Flags().String("id", "", "The pack `ID`.")
+	rmpackCmd.Flags().String("name", "", "The pack `NAME`.")
+	rmpackCmd.Flags().String("url", "", "The pack `URL`")
 }
