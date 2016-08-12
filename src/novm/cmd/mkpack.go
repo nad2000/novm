@@ -54,10 +54,10 @@ var mkpackCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(mkpackCmd)
-	mkpackCmd.Flags().String("id", "", "The instance id.")
-	mkpackCmd.Flags().String("name", "", "The instance name.")
-	mkpackCmd.Flags().String("output", "", "The output file.")
-	mkpackCmd.Flags().String("path", "", "The input path.")
-	mkpackCmd.Flags().StringSlice("exclude", nil, "Subpaths to exclude.")
-	mkpackCmd.Flags().StringSlice("include", nil, "Subpaths to include.")
+	mkpackCmd.Flags().String("id", "", "The instance `ID`.")
+	mkpackCmd.Flags().String("name", "", "The instance `NAME`.")
+	mkpackCmd.Flags().String("output", "", "The `OUTPUT` file.")
+	mkpackCmd.Flags().String("path", "", "The input `PATH`.")
+	mkpackCmd.Flags().StringSlice("exclude", nil, "Subpaths to `EXCLUDE`.")
+	mkpackCmd.Flags().StringSlice("include", nil, "Subpaths to `INCLUDE`.")
 }
