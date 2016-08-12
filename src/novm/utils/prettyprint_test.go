@@ -96,3 +96,35 @@ func TestPrettyPrintMapMap(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestPrettyPrintStringSliceWithTs(t *testing.T) {
+
+	var b bytes.Buffer
+
+	tsData := [][2]int64{
+		{1470581110, 100000000}, {1470581410, 200000000},
+		{1470581910, 111111111}, {1470591110, 900000000}}
+
+	data := map[string]map[string]string{
+		"AAA": {"timestamp": "1470581110.1"},
+		"BBB": {"timestamp": "1470581410.2"},
+		"CCC": {"timestamp": "1470581910.111111111"},
+		"DDD": {"timestamp": "1470591110.9"}}
+	utils.FprettyPrint(&b, data)
+	_ = tsData
+	output := b.String()
+	expected := `-------------------------------------------------
+| Id  |                Timestamp                |
+-------------------------------------------------
+| AAA | 2016-08-07 14:45:10.1 +0000 UTC         |
+| BBB | 2016-08-07 14:50:10.2 +0000 UTC         |
+| CCC | 2016-08-07 14:58:30.111111111 +0000 UTC |
+| DDD | 2016-08-07 17:31:50.9 +0000 UTC         |
+-------------------------------------------------
+`
+	if output != expected {
+		t.Errorf("%#v rendered as \n%s\nexpected:\n%s\n\nNB! make sure you run the test with TZ=UTC!", data, output, expected)
+		t.FailNow()
+	}
+
+}

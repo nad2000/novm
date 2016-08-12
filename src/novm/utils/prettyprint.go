@@ -47,9 +47,19 @@ func IsNumber(val interface{}) bool {
 
 // Format Unix timestamp into readable timestamp,
 // eg, Fri Aug 12 19:22:00 2016
-func Str2TsStr(value string) string {
+func Str2TsStr(value interface{}) string {
 	var sec, nsec int64
-	split := strings.Split(value, ".")
+	var strVal string
+	switch value.(type) {
+	default:
+		strVal = fmt.Sprint(value)
+	case string:
+		strVal = value.(string)
+	}
+	if !IsNumber(strVal) {
+		return strVal
+	}
+	split := strings.Split(strVal, ".")
 	sec, _ = strconv.ParseInt(split[0], 10, 64)
 	if len(split) > 1 {
 		strNsec := split[1]
@@ -63,13 +73,18 @@ func Str2TsStr(value string) string {
 	return fmt.Sprint(time.Unix(sec, nsec))
 }
 
-func formatEntry(k string, value interface{}, fieldWidth int) string {
+func formatEntry(field string, value interface{}, fieldWidth int) string {
 	switch value.(type) {
 	default:
-		if IsNumber(value) {
-			return rightJust(fmt.Sprintf("%v", value), fieldWidth, " ")
+		v := fmt.Sprint(value)
+		if IsNumber(v) {
+			if strings.Contains(field, "time") {
+				v = Str2TsStr(v)
+				return leftJust(v, fieldWidth, " ")
+			}
+			return rightJust(v, fieldWidth, " ")
 		} else {
-			return leftJust(fmt.Sprintf("%v", value), fieldWidth, " ")
+			return leftJust(v, fieldWidth, " ")
 		}
 	case float32, float64:
 		return rightJust(fmt.Sprintf("%.5f", value), fieldWidth, " ")
@@ -90,18 +105,28 @@ func formatEntry(k string, value interface{}, fieldWidth int) string {
 	}
 }
 
-func formatEntryList(key string, values interface{}) ([]string, int) {
+func formatEntryList(field string, values interface{}) ([]string, int) {
+	var maxWidth int
 	size := reflect.ValueOf(values).Len()
 	formatedValues := make([]string, size)
-	maxWidth := maxLength(values, len(key))
+	if strings.Contains(field, "time") {
+		maxWidth = 31
+		for _, v := range values.([]interface{}) {
+			if l := len(Str2TsStr(v)); l > maxWidth {
+				maxWidth = l
+			}
+		}
+	} else {
+		maxWidth = maxLength(values, len(field))
+	}
 	switch values.(type) {
 	case []interface{}:
 		for idx, v := range values.([]interface{}) {
-			formatedValues[idx] = formatEntry(key, v, maxWidth)
+			formatedValues[idx] = formatEntry(field, v, maxWidth)
 		}
 	case []string:
 		for idx, v := range values.([]string) {
-			formatedValues[idx] = formatEntry(key, v, maxWidth)
+			formatedValues[idx] = formatEntry(field, v, maxWidth)
 		}
 	}
 	return formatedValues, maxWidth
@@ -158,7 +183,7 @@ func FprettyPrint(output io.Writer, values interface{}) {
 
 	switch values.(type) {
 	default:
-	case []string, []interface{}:
+	case []string, []interface{}, []map[string]string:
 		formatedValues, maxWidth := formatEntryList("value", values.([]interface{}))
 		separator := strings.Repeat("-", maxWidth+4)
 		fmt.Fprint(output,
