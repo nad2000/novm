@@ -153,12 +153,13 @@ func maxLength(values interface{}, initial int) (ml int) {
 
 func mapKeys(values interface{}) []string {
 
+	strKeys := make([]string, reflect.ValueOf(values).Len())
 	keys := reflect.ValueOf(values).MapKeys()
-	strKeys := make([]string, len(keys))
 	for i, k := range keys {
 		strKeys[i] = k.String()
 	}
 	return strKeys
+
 }
 
 func PrettyPrint(values interface{}) {
@@ -245,7 +246,7 @@ func FprettyPrint(output io.Writer, values interface{}) {
 		fmt.Fprint(output, "|")
 		for _, f := range fields {
 			fmt.Fprint(output,
-				center(strings.Title(strings.Reader(f, "_", " ")),
+				center(strings.Title(strings.Replace(f, "_", " ", -1)),
 					maxWidths[f]+2, " "), "|")
 		}
 		fmt.Fprint(output, "\n", separator, "\n")

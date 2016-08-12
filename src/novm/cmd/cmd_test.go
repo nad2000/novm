@@ -54,9 +54,10 @@ func createTestTreeWithName(name string) string {
 }
 
 func removeTestTree() {
-	//os.RemoveAll(rootPath)
+	os.RemoveAll(rootPath)
 }
 
+// NB! don't forget TZ=UTC!
 func ExampleListCommand() {
 	cmd.SetRootDir(createTestTree())
 	cmd.List(true, true)
@@ -70,12 +71,13 @@ func ExampleListCommand() {
 	// --------------------------------------------------------------------------------------------------
 }
 
+// NB! don't forget TZ=UTC!
 func ExamplePacksCommand() {
 	cmd.SetRootDir(createTestTree())
 	cmd.Packs()
 	// Output:
 	// ------------------------------------------------------------------------------------------------------------
-	// |     Id     |             Url             |              Timestamp               |   Name   | Some_number |
+	// |     Id     |             Url             |              Timestamp               |   Name   | Some Number |
 	// ------------------------------------------------------------------------------------------------------------
 	// | 1a1a1a1a1a | file:///tmp/pack/1a1a1a1a1a | 2016-08-12 07:22:00.589082 +0000 UTC | TEST_0   |           0 |
 	// | 2b2b2b2b2b | file:///tmp/pack/2b2b2b2b2b | 2016-08-12 07:22:01.589082 +0000 UTC | TEST_57  |          57 |
