@@ -6,7 +6,6 @@ import (
 	"novm/cmd"
 	"os"
 	"path"
-	"testing"
 )
 
 var rootPath string = path.Join(os.TempDir(), "test_data")
@@ -35,6 +34,22 @@ func createTestTreeWithName(name string) string {
 }`, fn, idx, 57*idx, 57*idx)
 		tf.Close()
 	}
+
+	dirName = path.Join(rootPath, name, "packs")
+	os.MkdirAll(dirName, os.ModeDir|0755)
+	for idx, fn := range []string{"1a1a1a1a1a", "2b2b2b2b2b", "3b3b3b3b3b"} {
+		tf, err := os.Create(path.Join(dirName, fn+".json"))
+		if err != nil {
+			log.Fatalln(err)
+		}
+		fmt.Fprintf(tf, `{
+	"url": "file:///tmp/pack/%s",
+	"timestamp": 147098652%d.5890825,
+	"name": "TEST_%d",
+	"some_number": "%d"
+}`, fn, idx, 57*idx, 57*idx)
+		tf.Close()
+	}
 	return path.Join(rootPath, name)
 }
 
@@ -42,13 +57,15 @@ func removeTestTree() {
 	//os.RemoveAll(rootPath)
 }
 
-func TestListCommand(t *testing.T) {
-	//var b bytes.Buffer
+func ExampleListCommand() {
 	cmd.SetRootDir(createTestTree())
-	//old := os.Stdout
-	//os.Stdout = b
 	cmd.List(true, true)
-	//output := b.String()
-	//t.Log(output)
-	//os.Stdout = old
+	// Output:
+	// -----------------------------------------------------------------------------
+	// |     Id     | Number |             Url             | Timestamp  |   Name   |
+	// -----------------------------------------------------------------------------
+	// | 1a1a1a1a1a |      0 | file:///instance/1a1a1a1a1a | 1470458780 | TEST_0   |
+	// | 2b2b2b2b2b |     57 | file:///instance/2b2b2b2b2b | 1470458781 | TEST_57  |
+	// | 3b3b3b3b3b |    114 | file:///instance/3b3b3b3b3b | 1470458782 | TEST_114 |
+	// -----------------------------------------------------------------------------
 }
