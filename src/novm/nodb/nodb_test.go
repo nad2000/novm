@@ -33,12 +33,37 @@ func createTestTreeWithName(name string) string {
 			"name": "TEST"
 		}`)
 		tf.Close()
+
+		tf, err = os.Create(path.Join(name, "1a2b3c4d.json"))
+		if err != nil {
+			log.Fatalln(err)
+		}
+		tf.WriteString(`{
+			"url": "file:///KERNEL", 
+			"timestamp": 1470997843,
+			"a_number": 12345.6789,
+			"name": "TEST"
+		}`)
+		tf.Close()
 	}
 	return path.Join(rootPath, name)
 }
 
 func removeTestTree() {
 	//os.RemoveAll(rootPath)
+}
+
+func TestNodbNumericValue(t *testing.T) {
+	testDir := path.Join(createTestTree(), "kernels")
+	var db nodb.Nodb
+	db.Open(testDir)
+	if !db.Has("1a2b3c4d") {
+		t.Errorf("Expecetd to find `1a2b3c4d` in %s", testDir)
+	}
+	obj, _ := db.Get("1a2b3c4d")
+	if obj["timestamp"] != "1470997843" || obj["a_number"] != "12345.6789" {
+		t.Fatalf("Expected to load numeric 1470997843 and 12345.6789 values got %#v", obj)
+	}
 }
 
 func TestNodbList(t *testing.T) {
@@ -89,8 +114,8 @@ func TestNodbList(t *testing.T) {
 		t.Errorf(`File("ABCDEFGH") -> %#v want %#v`, fn, ef)
 	}
 
-	if result := db.Show(); len(result) != 2 {
-		t.Errorf("Expected 2 objects in nodb.Show(...) result %#v, got %d",
+	if result := db.Show(); len(result) != 3 {
+		t.Errorf("Expected 3 objects in nodb.Show(...) result %#v, got %d",
 			result, len(result))
 	}
 

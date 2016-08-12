@@ -111,6 +111,7 @@ func (db *Nodb) Get(objId string) (map[string]string, bool) {
 }
 
 func (db *Nodb) GetObj(objId string, params map[string]string) (obj map[string]string, ok bool) {
+	var _obj map[string]interface{}
 	objId = db.Find(objId, params)
 	inf, err := os.Open(db.File(objId + ".json"))
 	if err != nil {
@@ -118,10 +119,25 @@ func (db *Nodb) GetObj(objId string, params map[string]string) (obj map[string]s
 	}
 	//err := json.Unmarshal(...)
 	dec := json.NewDecoder(inf)
-	err = dec.Decode(&obj)
+
+	err = dec.Decode(&_obj)
 	if err != nil {
 		log.Print(err)
 		return nil, false
+	}
+	obj = make(map[string]string)
+	for k, v := range _obj {
+		switch v.(type) {
+		default:
+			obj[k] = fmt.Sprint(v)
+		case float32, float64:
+			// remove trailing zeros and '.'
+			obj[k] = strings.TrimRight(fmt.Sprintf("%f", v), ".0")
+		case int, int64, int32:
+			obj[k] = fmt.Sprintf("%d", v)
+		case string:
+			obj[k] = v.(string)
+		}
 	}
 	return obj, true
 }
