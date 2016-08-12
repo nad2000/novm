@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -200,23 +201,36 @@ LoopObjects:
 
 func (db *Nodb) Fetch(url string, params map[string]string) (objId string) {
 
+	var (
+		inf io.ReadCloser
+		err error
+	)
 	obj := make(map[string]string)
 	for k, v := range params {
 		obj[k] = v
 	}
 	obj["url"] = url
 
-	resp, err := http.Get(url)
+	if strings.HasPrefix(url, "file://") {
+		inf, err = os.Open(url[7:])
+	} else {
+		resp, err := http.Get(url)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		inf = resp.Body
+	}
 	if err != nil {
 		log.Fatal(err)
 	} else {
-		defer resp.Body.Close()
+		defer inf.Close()
 
 		// TODO: support for "large" files
-		content, err := ioutil.ReadAll(resp.Body)
+		content, err := ioutil.ReadAll(inf)
 		objId = fmt.Sprintf("%x", sha1.Sum(content))
 		if db.Has(objId) {
-			return objId
+			return
 		}
 
 		tf, err := ioutil.TempFile(os.TempDir(), "")

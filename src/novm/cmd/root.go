@@ -156,9 +156,9 @@ func printResult(cmd *cobra.Command, result interface{}) {
 	if json, _ := cmd.Flags().GetBool("json"); json || cmd.Name() == "control" {
 		fmt.Println(utils.JsonDumps(result))
 	} else if plain, _ := cmd.Flags().GetBool("plain"); plain {
-		fmt.Printf("%v", result)
+		fmt.Printf("%v\n", result)
 	} else {
-		fmt.Printf("%+v", result)
+		fmt.Printf("%+v\n", result)
 	}
 }
 

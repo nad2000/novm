@@ -14,11 +14,7 @@
 
 package cmd
 
-import (
-	"fmt"
-
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 // getpackCmd represents the getpack command
 var getpackCmd = &cobra.Command{
@@ -26,8 +22,15 @@ var getpackCmd = &cobra.Command{
 	Short: "-- Fetch a new pack.",
 	Long:  `Fetch a new pack.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("getpack called")
+		debugCmd(cmd)
+		url := flagString(cmd, "url")
+		name := flagString(cmd, "name")
+		if result := packs.Find("", dict{"url": url, "name": name}); result != "" {
+			printResult(cmd, result)
+		} else {
+			result = packs.Fetch(url, dict{"name": name})
+			printResult(cmd, result)
+		}
 	},
 }
 
@@ -36,15 +39,4 @@ func init() {
 	getpackCmd.Flags().Bool("nocache", false, "Don't use a cached version.")
 	getpackCmd.Flags().String("url", "", "Pack `URL`.")
 	getpackCmd.Flags().String("name", "", "Pack `NAME`")
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// getpackCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// getpackCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 }
