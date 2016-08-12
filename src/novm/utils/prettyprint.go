@@ -244,7 +244,9 @@ func FprettyPrint(output io.Writer, values interface{}) {
 		fmt.Fprintln(output, separator)
 		fmt.Fprint(output, "|")
 		for _, f := range fields {
-			fmt.Fprint(output, center(strings.Title(f), maxWidths[f]+2, " "), "|")
+			fmt.Fprint(output,
+				center(strings.Title(strings.Reader(f, "_", " ")),
+					maxWidths[f]+2, " "), "|")
 		}
 		fmt.Fprint(output, "\n", separator, "\n")
 		for i := 0; i < len(sortedKeys); i++ {
@@ -256,7 +258,4 @@ func FprettyPrint(output io.Writer, values interface{}) {
 		}
 		fmt.Fprintln(output, separator)
 	}
-	_ = maxWidths
-	_ = formatedValues
-
 }
