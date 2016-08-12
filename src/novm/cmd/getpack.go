@@ -28,6 +28,14 @@ var getpackCmd = &cobra.Command{
 		if result := packs.Find("", dict{"url": url, "name": name}); result != "" {
 			printResult(cmd, result)
 		} else {
+			if url == "" {
+				if len(args) > 0 {
+					url = args[0]
+				} else {
+					panic("Missing URL.")
+					return
+				}
+			}
 			result = packs.Fetch(url, dict{"name": name})
 			printResult(cmd, result)
 		}
