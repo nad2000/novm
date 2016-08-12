@@ -33,6 +33,7 @@ func PathExists(path string) bool {
 
 func Packdir(input string, output string, include []string, exclude []string) error {
 
+	var fh *zip.FileHeader
 	output_file, _ := os.Create(output)
 	zipf := zip.NewWriter(output_file)
 	defer zipf.Close()
@@ -48,7 +49,7 @@ func Packdir(input string, output string, include []string, exclude []string) er
 				return nil
 			}
 		}
-		if include != nil {
+		if include != nil && len(include) > 0 {
 			for _, include_input := range include {
 				if strings.HasPrefix(input, include_input) {
 					goto Add
@@ -56,17 +57,22 @@ func Packdir(input string, output string, include []string, exclude []string) er
 			}
 			return nil
 		}
+		fh, _ = zip.FileInfoHeader(fileInfo)
+		fh.Name = input
 	Add:
-		f, err := zipf.Create(input)
+		f, err := zipf.CreateHeader(fh)
 		if err != nil {
 			log.Fatal(err)
 		}
 		sf, err := os.Open(input)
-		_, err = io.Copy(f, sf) // f.Write([]byte("TEST"))
+		defer sf.Close()
 		if err != nil {
-			log.Fatal(err)
+			panic(err)
 		}
-		err = sf.Close()
+		_, err = io.Copy(f, sf)
+		if err != nil {
+			panic(err)
+		}
 		return err
 	}
 
@@ -126,7 +132,7 @@ func Asbool(value interface{}) bool {
 
 func TempFileName(prefix, suffix string) string {
 	// TempFileName generates a temporary filename for use in testing or whatever
-	randBytes := make([]byte, 16)
+	randBytes := make([]byte, 4)
 	rand.Read(randBytes)
 	return filepath.Join(os.TempDir(), prefix+hex.EncodeToString(randBytes)+suffix)
 }
