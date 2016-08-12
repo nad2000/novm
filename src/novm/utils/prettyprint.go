@@ -6,7 +6,9 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func rightJust(s string, n int, fill string) string {
@@ -41,6 +43,24 @@ func IsNumber(val interface{}) bool {
 		}
 	}
 	return true
+}
+
+// Format Unix timestamp into readable timestamp,
+// eg, Fri Aug 12 19:22:00 2016
+func Str2TsStr(value string) string {
+	var sec, nsec int64
+	split := strings.Split(value, ".")
+	sec, _ = strconv.ParseInt(split[0], 10, 64)
+	if len(split) > 1 {
+		strNsec := split[1]
+		if l := len(strNsec); l < 9 {
+			strNsec = strNsec + strings.Repeat("0", 9-l)
+		} else {
+			strNsec = strNsec[:9]
+		}
+		nsec, _ = strconv.ParseInt(strNsec, 10, 64)
+	}
+	return fmt.Sprint(time.Unix(sec, nsec))
 }
 
 func formatEntry(k string, value interface{}, fieldWidth int) string {

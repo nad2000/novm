@@ -1,6 +1,7 @@
 package utils_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"novm/utils"
@@ -8,6 +9,7 @@ import (
 	"path"
 	"strings"
 	"testing"
+	"time"
 )
 
 var rootPath string = path.Join(os.TempDir(), "test_data")
@@ -32,7 +34,15 @@ func createTestTreeWithName(name string) string {
 }
 
 func removeTestTree() {
-	//os.RemoveAll(rootPath)
+	os.RemoveAll(rootPath)
+}
+
+func TestStr2TsStr(t *testing.T) {
+	expected := fmt.Sprint(time.Unix(454634382, 100000000))
+	output := utils.Str2TsStr("454634382.10000000")
+	if expected != output {
+		t.Errorf("Mismatch %q != %q", output, expected)
+	}
 }
 
 func TestPackdir(t *testing.T) {
