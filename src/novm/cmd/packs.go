@@ -33,7 +33,8 @@ var packsCmd = &cobra.Command{
 
 func Packs() {
 	rval := packs.Show()
-	utils.PrettyPrint(rval)
+	utils.PrettyPrintFields(rval,
+		[]string{"id", "url", "timestamp", "name"})
 }
 
 func init() {
