@@ -33,7 +33,15 @@ var listCmd = &cobra.Command{
 
 func List(full bool, alive bool) {
 	rval := instances.Show()
-	PrettyPrint(rval)
+	for pid, v := range rval {
+		if isAlive(pid) {
+			v["alive"] = "True"
+		} else {
+			v["alive"] = "False"
+		}
+	}
+	PrettyPrintFields(rval,
+		[]string{"id", "url", "name", "alive"})
 }
 
 func init() {
