@@ -182,6 +182,9 @@ LoopObjects:
 	for _, objId := range db.List() {
 		obj, _ := db.GetObj(objId, params)
 		for k, v := range params {
+			if v == "" {
+				continue
+			}
 			val, ok := obj[k]
 			if !ok || v != val {
 				continue LoopObjects
