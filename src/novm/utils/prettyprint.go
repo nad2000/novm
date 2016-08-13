@@ -166,12 +166,19 @@ func PrettyPrint(values interface{}) {
 	FprettyPrint(os.Stdout, values)
 }
 
-func FprettyPrint(output io.Writer, values interface{}) {
+func PrettyPrintFields(values interface{}, fields []string) {
+	FprettyPrintFields(os.Stdout, values, fields)
+}
 
+func FprettyPrint(output io.Writer, values interface{}) {
+	FprettyPrint(output, values, nil)
+}
+
+// Prettry print with a set field list
+func FprettyPrintFields(output io.Writer, values interface{}, fields []string) {
 	var (
 		maxWidths      map[string]int
 		formatedValues map[string][]string
-		fields         []string
 	)
 
 	if output == nil {
@@ -215,12 +222,16 @@ func FprettyPrint(output io.Writer, values interface{}) {
 			for i, k := range sortedKeys {
 				vals[i] = values.(map[string]string)[k]
 			}
-			fields = []string{"id", "value"}
+			if fields == nil {
+				fields = []string{"id", "value"}
+			}
 			formatedValues["id"], maxWidths["id"] = formatEntryList("id", sortedKeys)
 			formatedValues["value"], maxWidths["value"] = formatEntryList("value", vals)
 		case map[string]map[string]string:
 			firstRow := values.(map[string]map[string]string)[sortedKeys[0]]
-			fields = append([]string{"id"}, mapKeys(firstRow)...)
+			if fields == nil {
+				fields = append([]string{"id"}, mapKeys(firstRow)...)
+			}
 
 			for _, f := range fields {
 				if f == "id" {
