@@ -74,9 +74,16 @@ func Str2TsStr(value interface{}) string {
 }
 
 func formatEntry(field string, value interface{}, fieldWidth int) string {
+	if value == nil {
+		return strings.Repeat(" ", fieldWidth)
+	}
+
 	switch value.(type) {
 	default:
 		v := fmt.Sprint(value)
+		if v == "<nil>" {
+			return strings.Repeat(" ", fieldWidth)
+		}
 		if IsNumber(v) {
 			if strings.Contains(field, "time") {
 				v = Str2TsStr(v)
@@ -163,7 +170,7 @@ func mapKeys(values interface{}) []string {
 }
 
 func PrettyPrint(values interface{}) {
-	FprettyPrint(os.Stdout, values)
+	FprettyPrintFields(os.Stdout, values, nil)
 }
 
 func PrettyPrintFields(values interface{}, fields []string) {
@@ -171,7 +178,7 @@ func PrettyPrintFields(values interface{}, fields []string) {
 }
 
 func FprettyPrint(output io.Writer, values interface{}) {
-	FprettyPrint(output, values, nil)
+	FprettyPrintFields(output, values, nil)
 }
 
 // Prettry print with a set field list
