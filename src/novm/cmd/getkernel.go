@@ -14,11 +14,7 @@
 
 package cmd
 
-import (
-	"fmt"
-
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 // getkernelCmd represents the getkernel command
 var getkernelCmd = &cobra.Command{
@@ -26,22 +22,34 @@ var getkernelCmd = &cobra.Command{
 	Short: "-- Fetch a new kernel.",
 	Long:  `Fetch a new kernel.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("getkernel called")
+		debugCmd(cmd)
+		url := flagString(cmd, "url")
+		nocache := flagBool(cmd, "nocache")
+		name := flagString(cmd, "name")
+		if url == "" {
+			if len(args) > 0 {
+				url = args[0]
+			} else {
+				panic("Missing kernel URL.")
+				return
+			}
+		}
+		printResult(cmd, GetKernel(url, nocache, name))
 	},
+}
+
+func GetKernel(url string, nocache bool, name string) interface{} {
+	_ = nocache
+	if result := kernels.Find("", dict{"url": url, "name": name}); result != "" {
+		return result
+	} else {
+		return kernels.Fetch(url, dict{"name": name})
+	}
 }
 
 func init() {
 	RootCmd.AddCommand(getkernelCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// getkernelCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// getkernelCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
+	getkernelCmd.Flags().String("url", "", "The kernel `URL` (e.g. file: or http:).")
+	getkernelCmd.Flags().Bool("nocache", false, "Don't use a cached version.")
+	getkernelCmd.Flags().String("name", "", "A user-provided `NAME`.")
 }
