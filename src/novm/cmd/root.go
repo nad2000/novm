@@ -65,6 +65,7 @@ func Execute() {
 
 func debugCmd(cmd *cobra.Command) {
 	debug = flagBool(cmd, "debug")
+	utils.Debug = debug
 	if debug {
 		title := fmt.Sprintf("Command %q called with flags:", cmd.Name())
 		fmt.Println(title)

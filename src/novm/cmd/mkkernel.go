@@ -34,91 +34,103 @@ var mkkernelCmd = &cobra.Command{
 	Long:  `Make a new kernel from an local kernel.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		cmd.DebugFlags()
-
+		debugCmd(cmd)
 		output := flagString(cmd, "output")
-		if output == "" {
-			output = utils.TempFileName("", "")
-		}
 		release := flagString(cmd, "release")
-		if release == "" {
-			release = utils.SystemRelease()
-		}
 		modules := flagString(cmd, "modules")
-		if modules == "" {
-			modules = "/lib/modules/" + release
-		}
 		bzimage := flagString(cmd, "bzimage")
-		if bzimage == "" {
-			bzimage = "/boot/vmlinuz-" + release
-		}
 		vmlinux := flagString(cmd, "vmlinux")
-		if vmlinux == "" {
-			vmlinuxFile, err := ioutil.TempFile("", "")
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			command := exec.Command(utils.LibExec("extract-vmlinux"), bzimage)
-			command.Stdout = vmlinuxFile
-
-			if err := command.Run(); err != nil {
-				log.Fatal(err)
-			}
-			if err := vmlinuxFile.Close(); err != nil {
-				log.Fatal(err)
-			}
-
-			vmlinux = vmlinuxFile.Name()
-		}
 		setup := flagString(cmd, "setup")
-		if setup == "" {
-			setupFile, _ := ioutil.TempFile("", "")
-			bzimageFile, _ := os.Open(bzimage)
-			io.Copy(setupFile, bzimageFile)
-			bzimageFile.Close()
-			setup = setupFile.Name()
-			setupFile.Close()
-		}
-
 		sysmap := flagString(cmd, "sysmap")
-		if sysmap == "" {
-			sysmap = "/boot/System.map-" + release
+		nomodules := flagBool(cmd, "nomodules")
+		result := Mkkernel(output, release, modules, bzimage, vmlinux, setup, sysmap, nomodules)
+		printResult(cmd, result)
+	},
+}
+
+func Mkkernel(
+
+	output string, release string, modules string, bzimage string,
+	vmlinux string, setup string, sysmap string, nomodules bool) string {
+	if output == "" {
+		output = utils.TempFileName("", ".ker")
+	}
+	if release == "" {
+		release = utils.SystemRelease()
+	}
+	if modules == "" {
+		modules = "/lib/modules/" + release
+	}
+	if bzimage == "" {
+		bzimage = "/boot/vmlinuz-" + release
+	}
+	if vmlinux == "" {
+		vmlinuxFile, err := ioutil.TempFile("", "ker")
+		if err != nil {
+			log.Fatal(err)
 		}
 
-		// Copy all the files into a single directory.
-		tempDir, _ := ioutil.TempDir(os.TempDir(), "tmp")
-		command := exec.Command(utils.LibExec("mkinitramfs"), release, modules)
-		initrd, _ := os.Create(path.Join(tempDir, "initrd"))
-		command.Stdout = initrd
+		command := exec.Command(utils.LibExec("extract-vmlinux"), bzimage)
+		command.Stdout = vmlinuxFile
+
+		if debug {
+			log.Printf("Runing 'extract-vmlinux' with bzimage=%q to %q\n",
+				bzimage, vmlinuxFile.Name())
+		}
 
 		if err := command.Run(); err != nil {
-			log.Fatal(err)
+			log.Panicln(err)
 		}
-		if err := initrd.Close(); err != nil {
-			log.Fatal(err)
+		if err := vmlinuxFile.Close(); err != nil {
+			log.Panicln(err)
 		}
-		utils.CopyFile(vmlinux, path.Join(tempDir, "vmlinux"))
-		utils.CopyFile(sysmap, path.Join(tempDir, "sysmap"))
-		utils.CopyFile(setup, path.Join(tempDir, "setup"))
+		vmlinux = vmlinuxFile.Name()
 
-		if flagBool(cmd, "nomodules") {
-			os.MkdirAll(path.Join(tempDir, "modules"), os.ModeDir|0755)
-		} else {
-			utils.CopyTree(
-				modules,
-				path.Join(tempDir, "modules"),
-				func(name string) bool {
-					return name == "source" || name == "build"
-				})
-		}
-		ioutil.WriteFile(path.Join(tempDir, "release"), []byte(release), 0755)
-		utils.Packdir(tempDir, output, nil, nil)
+	}
+	if setup == "" {
+		setupFile, _ := ioutil.TempFile("", "")
+		bzimageFile, _ := os.Open(bzimage)
+		io.Copy(setupFile, bzimageFile)
+		bzimageFile.Close()
+		setup = setupFile.Name()
+		setupFile.Close()
+	}
 
-		absOutput, _ := filepath.Abs(output)
-		printResult(cmd, "file://"+absOutput)
+	if sysmap == "" {
+		sysmap = "/boot/System.map-" + release
+	}
 
-	},
+	// Copy all the files into a single directory.
+	tempDir, _ := ioutil.TempDir(os.TempDir(), "tmp")
+	command := exec.Command(utils.LibExec("mkinitramfs"), release, modules)
+	initrd, _ := os.Create(path.Join(tempDir, "initrd"))
+	command.Stdout = initrd
+
+	if err := command.Run(); err != nil {
+		log.Fatal(err)
+	}
+	if err := initrd.Close(); err != nil {
+		log.Fatal(err)
+	}
+	utils.CopyFile(vmlinux, path.Join(tempDir, "vmlinux"))
+	utils.CopyFile(sysmap, path.Join(tempDir, "sysmap"))
+	utils.CopyFile(setup, path.Join(tempDir, "setup"))
+
+	if nomodules {
+		os.MkdirAll(path.Join(tempDir, "modules"), os.ModeDir|0755)
+	} else {
+		utils.CopyTree(
+			modules,
+			path.Join(tempDir, "modules"),
+			func(name string) bool {
+				return name == "source" || name == "build"
+			})
+	}
+	ioutil.WriteFile(path.Join(tempDir, "release"), []byte(release), 0755)
+	utils.Packdir(tempDir, output, nil, nil)
+
+	absOutput, _ := filepath.Abs(path.Clean(output))
+	return "file://" + absOutput
 }
 
 func init() {

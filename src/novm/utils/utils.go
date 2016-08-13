@@ -17,6 +17,8 @@ import (
 	"syscall"
 )
 
+var Debug bool
+
 func Uuid() string {
 	b := make([]byte, 16)
 	rand.Read(b)
@@ -62,7 +64,7 @@ func Packdir(input string, output string, include []string, exclude []string) er
 	Add:
 		f, err := zipf.CreateHeader(fh)
 		if err != nil {
-			log.Fatal(err)
+			log.Panicln(err)
 		}
 		sf, err := os.Open(input)
 		defer sf.Close()
@@ -154,13 +156,19 @@ func LibExec(name string) string {
 	binDir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	binName := filepath.Base(os.Args[0])
 	libExecDir := path.Join(binDir, "..", "lib", binName, "libexec")
-	libExecPath, _ := filepath.Abs(path.Join(libExecDir, name))
-	if PathExists(libExecPath) {
-		return libExecPath
-	} else {
-		altDir := path.Join(binDir, "..", "bin")
-		return path.Join(altDir, name)
+	pwd, _ := os.Getwd()
+	pathList := []string{
+		libExecDir, path.Join(binDir, "..", "bin"),
+		path.Join(pwd, "..", "..", "lib", "novm", "libexec")}
+
+	for _, p := range pathList {
+		libExecPath, _ := filepath.Abs(filepath.Clean(path.Join(p, name)))
+		if PathExists(libExecPath) {
+			return libExecPath
+		}
 	}
+	log.Panicln("Failed to find %q in %v", name, pathList)
+	return ""
 }
 
 // Copies file source to destination dest.
@@ -223,22 +231,23 @@ func CopyTree(source string, dest string, ignore func(string) bool) (err error) 
 	entries, err := ioutil.ReadDir(source)
 
 	for _, entry := range entries {
-		log.Println(entry.Name())
 		if ignore != nil {
 			if ignore(entry.Name()) {
 				continue
 			}
 		}
 
-		sfp := source + "/" + entry.Name()
-		dfp := dest + "/" + entry.Name()
+		sfp := path.Join(source, entry.Name())
+		dfp := path.Join(dest, entry.Name())
 		if entry.IsDir() {
 			err = CopyTree(sfp, dfp, ignore)
 			if err != nil {
 				log.Println(err)
 			}
 		} else {
-			// perform copy
+			if Debug {
+				log.Println(sfp)
+			}
 			err = CopyFile(sfp, dfp)
 			if err != nil {
 				log.Println(err)
