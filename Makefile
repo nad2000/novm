@@ -89,8 +89,13 @@ dist:
 	@install -m 0755 scripts/* dist/usr/bin
 	@rm -rf dist/lib && cp -ar lib/ dist/usr/lib
 	@install -m 0755 bin/* dist/usr/bin/
+	@# Install our libexec directory.
+	@rm -rf dist/lib && cp -ar lib/ dist/usr/lib
+	@install -m 0755 bin/* dist/usr/lib/novm/libexec
+	@# Install our python code.
 	@mkdir -p dist/usr/lib/novm/python
-	@rsync -ru --delete --exclude=*.pyc novm/ dist/usr/lib/novm/python/novm/
+	@rsync -ru --delete --exclude=*.pyc novm \
+	    dist/usr/lib/novm/python/
 	@echo "dist done"
 
 .PHONY: dist
