@@ -49,10 +49,13 @@ all: dist
 	
 ARCH ?= $(shell arch)
 go-build:
-	@echo "Building novmm"
-	@CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/src/novmm/
-	@echo "Building noguest"
-	@CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/src/noguest/
+	@mkdir build
+	@cd build; \
+CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/src/novmm/; \
+echo "Building noguest"; \
+CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/src/noguest/; \
+echo "Building 'novm'"; \
+CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo novm
 
 test: go-test
 .PHONY: test
@@ -69,7 +72,7 @@ deps:
 
 clean:
 	@echo "clean start"
-	@rm -f novmm noguest
+	@rm -f novmm noguest 
 	@rm -rf bin/ pkg/ dist/ doc/ _obj build/
 	@rm -rf debbuild/ rpmbuild/ *.deb *.rpm
 	@echo "clean done"
@@ -83,8 +86,8 @@ dist:
 	@$(MAKE) go-build
 	@echo "dist build done"
 	@mkdir bin
-	@mv novmm bin/
-	@mv noguest bin/
+	@mv build/* bin/
+	@rm -rf build
 	@mkdir -p dist/usr/bin
 	@install -m 0755 scripts/* dist/usr/bin
 	@rm -rf dist/lib && cp -ar lib/ dist/usr/lib
