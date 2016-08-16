@@ -27,11 +27,15 @@ func createTestTreeWithName(name string) string {
 			log.Fatalln(err)
 		}
 		fmt.Fprintf(tf, `{
+	"kernel": "f1%se2",
 	"url": "file:///instance/%s", 
-	"timestamp": "147045878%d", 
+	"timestamp": "147045878%d.817648", 
+	"cpus": 2,
+	"ips": [],
+	"memory": 1024,
 	"name": "TEST_%d",
 	"number": "%d"
-}`, fn, idx, 57*idx, 57*idx)
+}`, fn, fn, idx, 57*idx, 57*idx)
 		tf.Close()
 	}
 
@@ -81,13 +85,13 @@ func ExampleListCommand() {
 	cmd.SetRootDir(createTestTree())
 	cmd.List(true, true)
 	// Output:
-	// ---------------------------------------------------------------
-	// |     Id     |             Url             |   Name   | Alive |
-	// ---------------------------------------------------------------
-	// | 1a1a1a1a1a | file:///instance/1a1a1a1a1a | TEST_0   | False |
-	// | 2b2b2b2b2b | file:///instance/2b2b2b2b2b | TEST_57  | False |
-	// | 3b3b3b3b3b | file:///instance/3b3b3b3b3b | TEST_114 | False |
-	// ---------------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------
+	// |     Id     |   Name   |              Timestamp               | Cpus | Alive | Ips | Memory |
+	// ----------------------------------------------------------------------------------------------
+	// | 1a1a1a1a1a | TEST_0   | 2016-08-06 04:46:20.817648 +0000 UTC |    2 | False |     |   1024 |
+	// | 2b2b2b2b2b | TEST_57  | 2016-08-06 04:46:21.817648 +0000 UTC |    2 | False |     |   1024 |
+	// | 3b3b3b3b3b | TEST_114 | 2016-08-06 04:46:22.817648 +0000 UTC |    2 | False |     |   1024 |
+	// ----------------------------------------------------------------------------------------------
 }
 
 // NB! don't forget TZ=UTC!
