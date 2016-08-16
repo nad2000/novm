@@ -81,7 +81,7 @@ func formatEntry(field string, value interface{}, fieldWidth int) string {
 	switch value.(type) {
 	default:
 		v := fmt.Sprint(value)
-		if v == "<nil>" {
+		if v == "<nil>" || v == "[]" {
 			return strings.Repeat(" ", fieldWidth)
 		}
 		if IsNumber(v) {

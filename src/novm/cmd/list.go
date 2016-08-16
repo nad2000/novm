@@ -41,7 +41,7 @@ func List(full bool, alive bool) {
 		}
 	}
 	PrettyPrintFields(rval,
-		[]string{"id", "url", "name", "alive"})
+		[]string{"id", "name", "timestamp", "cpus", "alive", "ips", "memory"})
 }
 
 func init() {
