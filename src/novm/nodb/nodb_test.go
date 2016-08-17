@@ -1,6 +1,7 @@
 package nodb_test
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path"
@@ -46,11 +47,56 @@ func createTestTreeWithName(name string) string {
 		}`)
 		tf.Close()
 	}
+
+	for idx, pid := range []string{"1234", "8765", "9356"} {
+		name := path.Join(rootPath, name, "instances")
+		os.MkdirAll(name, os.ModeDir|0755)
+		tf, err := os.Create(path.Join(name, pid+".json"))
+		if err != nil {
+			log.Fatalln(err)
+		}
+		fmt.Fprintf(tf, `{
+			"kernel": "1a2b3c4d%s", 
+			"name": "TEST%d", 
+			"timestamp": 147%d449398.501272, 
+			"cpus": 1, 
+			"ips": [], 
+			"memory": 1024
+		}`, pid, idx, idx)
+		tf.Close()
+	}
 	return path.Join(rootPath, name)
 }
 
 func removeTestTree() {
 	//os.RemoveAll(rootPath)
+}
+
+func TestNodbFindInstance(t *testing.T) {
+
+	testDir := path.Join(createTestTree(), "instances")
+	var db nodb.Nodb
+	db.Open(testDir)
+
+	/*objId := db.Find("1234", map[string]string{"name": "TEST0"})
+	if objId == "" {
+		t.Error("Failed to find the instance 1234 with the ID")
+	}
+
+	objId = db.Find("1234", map[string]string{"name": "NON EXISTENT"})
+	if objId == "" {
+		t.Error("Failed to fail to find an object. Found: ", objId)
+	}*/
+
+	objId := db.Find("", map[string]string{"name": "TEST0"})
+	if objId == "" {
+		t.Error("Failed to find the instance 1234 with params: name=TEST0")
+	}
+	/*
+		objId = db.Find("", map[string]string{"name": "NON EXISTENT"})
+		if objId != "" {
+			t.Error("Failed to fail to find an object. Found: ", objId)
+		}*/
 }
 
 func TestNodbNumericValue(t *testing.T) {

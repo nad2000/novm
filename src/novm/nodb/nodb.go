@@ -176,7 +176,7 @@ func (db *Nodb) Find(id interface{}, params map[string]string) (found string) {
 		}
 	}
 
-	var timestamp int64 = 0
+	var timestamp float64 = 0.0
 
 LoopObjects:
 	for _, objId := range db.List() {
@@ -195,7 +195,7 @@ LoopObjects:
 			continue
 		}
 
-		if ts, _ := strconv.ParseInt(tsStr, 10, 64); ts > timestamp {
+		if ts, _ := strconv.ParseFloat(tsStr, 64); ts > timestamp {
 			found, timestamp = objId, ts
 		}
 	}
