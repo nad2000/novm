@@ -43,7 +43,7 @@ func Setup(ctrlPath string) (err error) {
 	return
 }
 
-func rpc(name string, params map[string]string) (interface{}, error) {
+func Rpc(name string, params map[string]string) (interface{}, error) {
 
 	var (
 		buf    [1000]byte
@@ -64,11 +64,10 @@ func rpc(name string, params map[string]string) (interface{}, error) {
 	rpcUuid := utils.Uuid()
 
 	rpcCmd := fmt.Sprintf(`{
-	"method": "Rpc.%s",
-	"params": [%s],
-	"id": %s
-}
-`, strings.Title(name), utils.JsonDumps(params), rpcUuid)
+		"method": "Rpc.%s",
+		"params": [%#v],
+		"id": %#v
+	}`, strings.Title(name), utils.JsonDumps(params), rpcUuid)
 
 	_, err = conn.Write([]byte(rpcCmd))
 	if err != nil {

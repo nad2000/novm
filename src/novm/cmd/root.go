@@ -30,11 +30,11 @@ import (
 
 var (
 	// DB root directory
-	root              string
-	controls, cfgFile string
-	instances, packs  nodb.Nodb
-	kernels, docker   nodb.Nodb
-	debug             bool
+	root                  string
+	control_file, cfgFile string
+	instances, packs      nodb.Nodb
+	kernels, docker       nodb.Nodb
+	debug                 bool
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -82,7 +82,7 @@ func SetRootDir(dirName string) {
 	} else {
 		root = dirName
 	}
-	controls = path.Join(root, "controls")
+	control_file = path.Join(root, "control")
 	instances.Open(sysDir("NOVM_INSTANCES", "instances"))
 	packs.Open(sysDir("NOVM_PACKS", "packs"))
 	kernels.Open(sysDir("NOVM_KERNELS", "kernels"))

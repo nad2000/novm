@@ -63,10 +63,11 @@ For example:
 		}
 
 		objId := instances.Find(id, dict{"name": name})
-		ctrlPath := path.Join(controls, objId+".ctrl")
+		ctrlPath := path.Join(control_file, objId+".ctrl")
 		control.Setup(ctrlPath)
-
 		fmt.Printf("control called: %#v, %#v, %#v, %#v", name, objId, params, command)
+		result, err := control.Rpc(command, params)
+		fmt.Printf("Result: %#v, %#v", result, err)
 
 	},
 }
