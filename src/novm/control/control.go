@@ -8,8 +8,15 @@ import (
 	"novm/utils"
 	"os"
 	filePath "path"
+	"strconv"
 	"strings"
 )
+
+type CommandMessage struct {
+	method string
+	params []string
+	id     string
+}
 
 var (
 	bind     bool
@@ -29,7 +36,6 @@ func Setup(ctrlPath string) (err error) {
 	}
 
 	if bind {
-		//conn, err = net.ListenUnix("unix", &net.UnixAddr{ctrlPath, "unix"})
 		listener, err = net.Listen("unix", ctrlPath)
 		if err != nil {
 			panic(err)
@@ -52,6 +58,21 @@ func Rpc(name string, params map[string]string) (interface{}, error) {
 		err    error
 	)
 
+	param_list := make(map[string]interface{})
+	for n, v := range params {
+		if utils.IsNumber(v) {
+			if strings.Contains(v, ".") {
+				param_list[n], err = strconv.ParseFloat(v, 64)
+			} else {
+				param_list[n], err = strconv.ParseInt(v, 10, 64)
+			}
+		} else if lv := strings.ToLower(v); lv == "true" || lv == "false" {
+			param_list[n] = (lv == "true")
+		} else {
+			param_list[n] = v
+		}
+	}
+
 	if !sendRpc {
 		_, err = conn.Write([]byte("NOVM RPC\n"))
 		if err != nil {
@@ -65,9 +86,10 @@ func Rpc(name string, params map[string]string) (interface{}, error) {
 
 	rpcCmd := fmt.Sprintf(`{
 		"method": "Rpc.%s",
-		"params": [%#v],
-		"id": %#v
-	}`, strings.Title(name), utils.JsonDumps(params), rpcUuid)
+		"params": [%s],
+		"id": "%s"
+	}
+	`, strings.Title(name), utils.JsonDumps(param_list), rpcUuid)
 
 	_, err = conn.Write([]byte(rpcCmd))
 	if err != nil {
@@ -96,18 +118,14 @@ func Rpc(name string, params map[string]string) (interface{}, error) {
 		panic(err)
 		return msg, err
 	}
+
 	errorMsg, ok := msg["error"]
-	if ok {
-		return errorMsg, fmt.Errorf(errorMsg.(string))
+	if ok && errorMsg != nil {
+		log.Fatal(errorMsg)
+		return errorMsg, fmt.Errorf("%#v", errorMsg)
 	}
 
-	result, ok := msg["id"]
-	if !ok {
-		err = fmt.Errorf("%+v", msg)
-		panic(err)
-		return msg, err
-	}
-	return result, nil
+	return respId, nil
 }
 
 func Run(command string, env []string, cwd string, terminal bool) {

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"novm/control"
 	"path"
@@ -30,7 +29,8 @@ For example:
 
 		trace enable=true`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.DebugFlags()
+
+		debugCmd(cmd)
 		id := flagString(cmd, "id")
 		name := flagString(cmd, "name")
 		if args == nil {
@@ -51,10 +51,8 @@ For example:
 		objId := instances.Find(id, dict{"name": name})
 		ctrlPath := path.Join(control_file, objId+".ctrl")
 		control.Setup(ctrlPath)
-		fmt.Printf("control called: %#v, %#v, %#v, %#v", name, objId, params, command)
-		result, err := control.Rpc(command, params)
-		fmt.Printf("Result: %#v, %#v", result, err)
-
+		result, _ := control.Rpc(command, params)
+		printResult(cmd, result)
 	},
 }
 
