@@ -1,6 +1,7 @@
 package control
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -52,7 +53,6 @@ func Setup(ctrlPath string) (err error) {
 func Rpc(name string, params map[string]string) (interface{}, error) {
 
 	var (
-		buf    [1000]byte
 		msg    map[string]interface{}
 		rawMsg interface{}
 		err    error
@@ -96,12 +96,12 @@ func Rpc(name string, params map[string]string) (interface{}, error) {
 		panic(err)
 	}
 
-	n, err := conn.Read(buf[:])
+	buf, err := bufio.NewReader(conn).ReadSlice('\n')
 	if err != nil {
 		panic(err)
 		return nil, err
 	}
-	err = json.Unmarshal(buf[:n], &rawMsg)
+	err = json.Unmarshal(buf, &rawMsg)
 	if err != nil {
 		panic(err)
 		return nil, err
