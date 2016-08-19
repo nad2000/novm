@@ -78,7 +78,7 @@ func TestNodbFindInstance(t *testing.T) {
 	var db nodb.Nodb
 	db.Open(testDir)
 
-	/*objId := db.Find("1234", map[string]string{"name": "TEST0"})
+	objId := db.Find("1234", map[string]string{"name": "TEST0"})
 	if objId == "" {
 		t.Error("Failed to find the instance 1234 with the ID")
 	}
@@ -86,17 +86,17 @@ func TestNodbFindInstance(t *testing.T) {
 	objId = db.Find("1234", map[string]string{"name": "NON EXISTENT"})
 	if objId == "" {
 		t.Error("Failed to fail to find an object. Found: ", objId)
-	}*/
+	}
 
 	objId := db.Find("", map[string]string{"name": "TEST0"})
 	if objId == "" {
 		t.Error("Failed to find the instance 1234 with params: name=TEST0")
 	}
-	/*
-		objId = db.Find("", map[string]string{"name": "NON EXISTENT"})
-		if objId != "" {
-			t.Error("Failed to fail to find an object. Found: ", objId)
-		}*/
+
+	objId = db.Find("", map[string]string{"name": "NON EXISTENT"})
+	if objId != "" {
+		t.Error("Failed to fail to find an object. Found: ", objId)
+	}
 }
 
 func TestNodbNumericValue(t *testing.T) {
