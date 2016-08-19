@@ -88,7 +88,7 @@ func TestNodbFindInstance(t *testing.T) {
 		t.Error("Failed to fail to find an object. Found: ", objId)
 	}
 
-	objId := db.Find("", map[string]string{"name": "TEST0"})
+	objId = db.Find("", map[string]string{"name": "TEST0"})
 	if objId == "" {
 		t.Error("Failed to find the instance 1234 with params: name=TEST0")
 	}
