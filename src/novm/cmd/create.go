@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"novm/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -53,9 +55,18 @@ Docker repositories are provided as follows.
 		cmd.DebugFlags()
 		name := flagString(cmd, "name")
 		kernel := flagString(cmd, "kernel")
+		available_kernels := kernels.List()
 		if kernel == "" {
-			// TODO: choose the latest kernel by default
+			if available_kernels == nil {
+				panic("No kernel found.")
+			}
+			kernel = available_kernels[0]
+		} else {
+			if !utils.StringIsIn(kernel, available_kernels) {
+				log.Panicf("Kernel '%s' not found!", kernel)
+			}
 		}
+
 		cmdline := flagString(cmd, "cmdline")
 		if cmdline != "" {
 			cmdline += " "
@@ -83,15 +94,17 @@ Docker repositories are provided as follows.
 		}
 
 		cmdArgs = append(cmdArgs,
-			"-vmlinux", "TODO",
-			"-sysmap", "TODO",
-			"-initrd", "TODO",
-			"-setup", "TODO")
+			"-vmlinux", kernels.File(kernel, "vmlinux"),
+			"-sysmap", kernels.File(kernel, "sysmap"),
+			"-initrd", kernels.File(kernel, "initrd"),
+			"-setup", kernels.File(kernel, "setup"))
 
 		fmt.Printf("%v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %#v\n",
 			name, kernel, cmdline, cpus, memsize, init, nics, disks, packs,
 			repos, read, write, vmmopt, cwd, nopci, com1, com2, nofork, terminal,
 			cmdArgs)
+
+		fmt.Printf("*****************************************\n%#v", CreateState())
 
 	},
 }
