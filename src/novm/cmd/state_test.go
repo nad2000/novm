@@ -1,30 +1,18 @@
 package cmd_test
 
 import (
+	"novm/cmd"
 	nutils "novm/utils"
 	"strings"
 	"testing"
 
 	"github.com/rocksolidlabs/novm/src/novmm/control"
-	"github.com/rocksolidlabs/novm/src/novmm/machine"
-	"github.com/rocksolidlabs/novm/src/novmm/platform"
 	"github.com/rocksolidlabs/novm/src/novmm/utils"
 )
 
 func TestStateCreation(t *testing.T) {
 
-	devices := make([]machine.DeviceInfo, 1, 10)
-	vcpus := make([]platform.VcpuInfo, 0, 10)
-
-	var di machine.DeviceInfo
-	machine.NewBios(&di)
-
-	devices[0] = di
-
-	state := control.State{
-		Devices: devices,
-		Vcpus:   vcpus,
-	}
+	state := cmd.CreateState(true, true, false, 0)
 	t.Log(nutils.JsonDumps(state))
 }
 

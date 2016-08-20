@@ -304,3 +304,11 @@ func StringIsIn(a string, list []string) bool {
 	}
 	return false
 }
+
+func ClearCloexec(fd int) {
+	// TODO:
+	/*
+			flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+		    fcntl.fcntl(fd, fcntl.F_SETFD, flags & (~fcntl.FD_CLOEXEC))
+	*/
+}
