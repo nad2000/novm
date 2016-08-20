@@ -27,7 +27,8 @@ For example:
 
 	To enable tracing:
 
-		trace enable=true`,
+		trace enable=true
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		debugCmd(cmd)

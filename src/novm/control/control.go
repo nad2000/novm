@@ -1,7 +1,7 @@
 package control
 
 import (
-	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -53,9 +53,11 @@ func Setup(ctrlPath string) (err error) {
 func Rpc(name string, params map[string]string) (interface{}, error) {
 
 	var (
-		msg    map[string]interface{}
-		rawMsg interface{}
-		err    error
+		msg     map[string]interface{}
+		rawMsg  interface{}
+		err     error
+		buf     [bytes.MinRead]byte
+		rawResp []byte
 	)
 
 	param_list := make(map[string]interface{})
@@ -88,20 +90,38 @@ func Rpc(name string, params map[string]string) (interface{}, error) {
 		"method": "Rpc.%s",
 		"params": [%s],
 		"id": "%s"
-	}
-	`, strings.Title(name), utils.JsonDumps(param_list), rpcUuid)
+	}`, strings.Title(name), utils.JsonDumps(param_list), rpcUuid)
 
 	_, err = conn.Write([]byte(rpcCmd))
 	if err != nil {
 		panic(err)
 	}
 
-	buf, err := bufio.NewReader(conn).ReadSlice('\n')
-	if err != nil {
-		panic(err)
-		return nil, err
+	// Read by chuncs the response until '\n' reached
+	for {
+		n, err := conn.Read(buf[:])
+		if err != nil {
+			fmt.Printf("*** %v, %#v\n", n, err)
+			panic(err)
+			return nil, err
+		}
+		if rawResp == nil {
+			if n < bytes.MinRead {
+				rawResp = buf[:n]
+				break
+			} else {
+				rawResp = make([]byte, 0, 2*bytes.MinRead)
+			}
+		}
+		if n > 0 {
+			rawResp = append(rawResp, buf[:n]...)
+		}
+		if n == 0 || buf[n-1] == '\n' {
+			break
+		}
+
 	}
-	err = json.Unmarshal(buf, &rawMsg)
+	err = json.Unmarshal(rawResp, &rawMsg)
 	if err != nil {
 		panic(err)
 		return nil, err
@@ -125,7 +145,7 @@ func Rpc(name string, params map[string]string) (interface{}, error) {
 		return errorMsg, fmt.Errorf("%#v", errorMsg)
 	}
 
-	return respId, nil
+	return msg, nil
 }
 
 func Run(command string, env []string, cwd string, terminal bool) {
