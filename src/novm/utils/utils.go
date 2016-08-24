@@ -40,33 +40,37 @@ func Packdir(input string, output string, include []string, exclude []string) er
 	zipf := zip.NewWriter(output_file)
 	defer zipf.Close()
 
-	addToArchive := func(input string, fileInfo os.FileInfo, err error) error {
+	if !strings.HasSuffix(input, "/") {
+		input = input + "/"
+	}
+
+	addToArchive := func(fileName string, fileInfo os.FileInfo, err error) error {
 
 		if fileInfo.IsDir() {
 			return nil
 		}
 
-		for _, exclude_input := range exclude {
-			if strings.HasPrefix(input, exclude_input) {
+		for _, exclude_fileName := range exclude {
+			if strings.HasPrefix(fileName, exclude_fileName) {
 				return nil
 			}
 		}
 		if include != nil && len(include) > 0 {
-			for _, include_input := range include {
-				if strings.HasPrefix(input, include_input) {
+			for _, include_fileName := range include {
+				if strings.HasPrefix(fileName, include_fileName) {
 					goto Add
 				}
 			}
 			return nil
 		}
-		fh, _ = zip.FileInfoHeader(fileInfo)
-		fh.Name = input
 	Add:
+		fh, _ = zip.FileInfoHeader(fileInfo)
+		fh.Name = strings.TrimPrefix(fileName, input)
 		f, err := zipf.CreateHeader(fh)
 		if err != nil {
 			log.Panicln(err)
 		}
-		sf, err := os.Open(input)
+		sf, err := os.Open(fileName)
 		defer sf.Close()
 		if err != nil {
 			panic(err)

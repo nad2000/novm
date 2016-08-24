@@ -10,6 +10,10 @@ import (
 	"github.com/rocksolidlabs/novm/src/novmm/platform"
 )
 
+func CreateUserMemory(size int, fd int) {
+
+}
+
 func CreateState(
 	com1 bool, com2 bool, nopci bool, memsize int) control.State {
 
