@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"bufio"
 	"novm/utils"
+	"os"
+	"path"
 
 	"github.com/spf13/cobra"
 )
@@ -18,7 +21,18 @@ var kernelsCmd = &cobra.Command{
 }
 
 func Kernels() {
-	utils.PrettyPrintFields(kernels.Show(),
+	items := kernels.Show()
+	for objId, item := range items {
+		rf, err := os.Open(path.Join(kernels.File(objId), "release"))
+		if err != nil {
+			continue
+		}
+		r := bufio.NewReader(rf)
+		relaese, _ := r.ReadString(0x0A)
+		item["release"] = relaese
+		rf.Close()
+	}
+	utils.PrettyPrintFields(items,
 		[]string{"id", "url", "timestamp", "release", "name"})
 }
 
