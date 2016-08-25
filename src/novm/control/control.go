@@ -2,6 +2,7 @@ package control
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -26,7 +27,40 @@ var (
 	conn     net.Conn
 )
 
-func Setup(ctrlPath string) (err error) {
+// Read by chuncs the response until '\n' reached or EOF
+func readLine() (line []byte, err error) {
+
+	var buf [bytes.MinRead]byte
+
+	for {
+		n, err := conn.Read(buf[:])
+		if err != nil {
+			panic(err)
+			if n > 0 {
+				return buf[:n], err
+			} else {
+				return nil, err
+			}
+		}
+		if line == nil {
+			if n < bytes.MinRead {
+				line = buf[:n]
+				break
+			} else {
+				line = make([]byte, 0, 2*bytes.MinRead)
+			}
+		}
+		if n > 0 {
+			line = append(line, buf[:n]...)
+		}
+		if n == 0 || buf[n-1] == '\n' {
+			break
+		}
+	}
+	return line, nil
+}
+
+func Open(ctrlPath string) (err error) {
 	dirName := filePath.Dir(ctrlPath)
 	if !utils.PathExists(dirName) {
 		err = os.MkdirAll(dirName, os.ModeDir|0755)
@@ -56,7 +90,6 @@ func Rpc(name string, params map[string]string) (interface{}, error) {
 		msg     map[string]interface{}
 		rawMsg  interface{}
 		err     error
-		buf     [bytes.MinRead]byte
 		rawResp []byte
 	)
 
@@ -97,35 +130,18 @@ func Rpc(name string, params map[string]string) (interface{}, error) {
 		panic(err)
 	}
 
-	// Read by chuncs the response until '\n' reached
-	for {
-		n, err := conn.Read(buf[:])
-		if err != nil {
-			fmt.Printf("*** %v, %#v\n", n, err)
-			panic(err)
-			return nil, err
-		}
-		if rawResp == nil {
-			if n < bytes.MinRead {
-				rawResp = buf[:n]
-				break
-			} else {
-				rawResp = make([]byte, 0, 2*bytes.MinRead)
-			}
-		}
-		if n > 0 {
-			rawResp = append(rawResp, buf[:n]...)
-		}
-		if n == 0 || buf[n-1] == '\n' {
-			break
-		}
-
+	rawResp, err = readLine()
+	if err != nil {
+		panic(err)
+		return nil, err
 	}
+
 	err = json.Unmarshal(rawResp, &rawMsg)
 	if err != nil {
 		panic(err)
 		return nil, err
 	}
+
 	msg = rawMsg.(map[string]interface{})
 	respId, ok := msg["id"]
 	if !ok {
@@ -148,16 +164,24 @@ func Rpc(name string, params map[string]string) (interface{}, error) {
 	return msg, nil
 }
 
-func Run(command string, env []string, cwd string, terminal bool) {
-	if env == nil {
+func Run(command []string, env []string, cwd string, terminal bool) (interface{}, error) {
+
+	var (
+		rawMsg  interface{}
+		rawResp []byte
+	)
+
+	if env == nil || len(env) == 0 {
 		env = os.Environ()
 	}
 	if cwd == "" {
 		cwd = "/"
 	}
-	_, err := conn.Write([]byte("NOVM RPC\n"))
+
+	_, err := conn.Write([]byte("NOVM RUN\n"))
 	if err != nil {
 		panic(err)
+		return nil, err
 	}
 
 	startCmd := map[string]interface{}{
@@ -167,6 +191,7 @@ func Run(command string, env []string, cwd string, terminal bool) {
 		"cwd":         cwd,
 	}
 	utils.JsonDump(startCmd, conn)
+	conn.Write([]byte("\n"))
 
 	// TODO: setting raw termios
 	isTerminal := false
@@ -194,6 +219,44 @@ func Run(command string, env []string, cwd string, terminal bool) {
 	_ = readSet
 
 	for {
-		break
+		rawResp, err = readLine()
+
+		err = json.Unmarshal(rawResp, &rawMsg)
+
+		if err != nil {
+			panic(err)
+			return nil, err
+		}
+
+		if !started {
+			// See the note above about 'started'
+			if rawMsg != nil {
+				err = fmt.Errorf("%#v: %#v", command)
+				panic(err)
+				return nil, err
+			}
+			started = true
+			continue
+		}
+
+		if rawMsg == nil {
+			// Server is done.
+			os.Exit(exitCode)
+		}
+
+		switch rawMsg.(type) {
+		case string:
+			data, err := base64.StdEncoding.DecodeString(rawMsg.(string))
+			if err != nil {
+				log.Panicf("Failed to decode Base64 message: %v", rawMsg)
+				panic(err)
+			}
+			fmt.Print(string(data))
+		case float64:
+			// remember the exit code
+			exitCode = int(rawMsg.(float64))
+		}
+
 	}
+	return rawMsg, nil
 }
