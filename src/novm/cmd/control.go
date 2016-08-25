@@ -51,7 +51,7 @@ For example:
 
 		objId := instances.Find(id, dict{"name": name})
 		ctrlPath := path.Join(control_file, objId+".ctrl")
-		control.Setup(ctrlPath)
+		control.Open(ctrlPath)
 		result, _ := control.Rpc(command, params)
 		printResult(cmd, result)
 	},
