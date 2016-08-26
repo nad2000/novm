@@ -44,7 +44,7 @@ func readLine() (line []byte, err error) {
 		}
 		if line == nil {
 			if n < bytes.MinRead {
-				line = buf[:n]
+				line = buf[:n] // TODO: shouldn't we make a copy?
 				break
 			} else {
 				line = make([]byte, 0, 2*bytes.MinRead)
@@ -217,6 +217,45 @@ func Run(command []string, env []string, cwd string, terminal bool) (interface{}
 	_ = started
 	_ = seenTitle
 	_ = readSet
+
+	// Read input form terminal
+	go func() {
+
+		var (
+			buf       [4096]byte
+			seenTilde bool
+		)
+
+		for {
+			n, err := os.Stdin.Read(buf[:])
+			if err != nil {
+				log.Panic(err)
+			}
+			if isTerminal {
+				if n == 1 && buf[0] == byte('~') {
+					seenTilde = !seenTitle
+				} else if seenTilde && n == 1 && buf[0] == byte('.') {
+					break // TODO: should break from the loop
+				} else {
+					seenTitle = false
+				}
+			}
+
+			// Server expects JSON encoded value, eg, "ABC...", null, 1, etc.
+			conn.Write([]byte("\""))
+			if n != 0 {
+				conn.Write([]byte(base64.StdEncoding.EncodeToString(buf[:n])))
+			} else {
+
+				conn.Write([]byte("null"))
+			}
+			conn.Write([]byte("\"\n"))
+
+			if n == 0 {
+				break
+			}
+		}
+	}()
 
 	for {
 		rawResp, err = readLine()
