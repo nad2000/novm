@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"novm/utils"
@@ -44,7 +45,9 @@ func readLine() (line []byte, err error) {
 		}
 		if line == nil {
 			if n < bytes.MinRead {
-				line = buf[:n] // TODO: shouldn't we make a copy?
+				line = make([]byte, n)
+				copy(line, buf[:n])
+
 				break
 			} else {
 				line = make([]byte, 0, 2*bytes.MinRead)
@@ -228,7 +231,9 @@ func Run(command []string, env []string, cwd string, terminal bool) (interface{}
 
 		for {
 			n, err := os.Stdin.Read(buf[:])
-			if err != nil {
+			if err == io.EOF {
+				break
+			} else if err != nil {
 				log.Panic(err)
 			}
 			if isTerminal {
