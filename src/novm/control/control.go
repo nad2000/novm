@@ -13,6 +13,8 @@ import (
 	filePath "path"
 	"strconv"
 	"strings"
+
+	termios "github.com/creack/termios/raw"
 )
 
 type CommandMessage struct {
@@ -170,8 +172,10 @@ func Rpc(name string, params map[string]string) (interface{}, error) {
 func Run(command []string, env []string, cwd string, terminal bool) (interface{}, error) {
 
 	var (
-		rawMsg  interface{}
-		rawResp []byte
+		rawMsg      interface{}
+		rawResp     []byte
+		origTcAttrs *termios.Termios
+		isTerminal  bool
 	)
 
 	if env == nil || len(env) == 0 {
@@ -196,8 +200,17 @@ func Run(command []string, env []string, cwd string, terminal bool) (interface{}
 	utils.JsonDump(startCmd, conn)
 	conn.Write([]byte("\n"))
 
-	// TODO: setting raw termios
-	isTerminal := false
+	if terminal {
+		origTcAttrs, err = termios.MakeRaw(0)
+		if err != nil {
+			isTerminal = false
+		} else {
+			isTerminal = true
+			defer termios.TcSetAttr(0, origTcAttrs)
+		}
+	} else {
+		isTerminal = false
+	}
 
 	// Remember our exitcode.
 	exitCode := 1
@@ -257,6 +270,7 @@ func Run(command []string, env []string, cwd string, terminal bool) (interface{}
 			conn.Write([]byte("\"\n"))
 
 			if n == 0 {
+				exitCode = 0 // in order to gracefully exit
 				break
 			}
 		}
