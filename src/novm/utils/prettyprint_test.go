@@ -2,7 +2,7 @@ package utils_test
 
 import (
 	"bytes"
-	"novm/utils"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 	"testing"
 )
 

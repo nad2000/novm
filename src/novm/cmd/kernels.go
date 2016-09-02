@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"bufio"
-	"novm/utils"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 	"os"
 	"path"
 

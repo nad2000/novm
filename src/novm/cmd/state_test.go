@@ -1,8 +1,8 @@
 package cmd_test
 
 import (
-	"novm/cmd"
-	nutils "novm/utils"
+	"github.com/rocksolidlabs/novm/src/novm/cmd"
+	nutils "github.com/rocksolidlabs/novm/src/novm/utils"
 	"strings"
 	"testing"
 

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"novm/nodb"
-	"novm/utils"
+	"github.com/rocksolidlabs/novm/src/novm/nodb"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
 var rootPath string = path.Join(os.TempDir(), "test_data")

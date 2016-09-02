@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"novm/utils"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 
 	"github.com/spf13/cobra"
 )

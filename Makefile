@@ -55,7 +55,7 @@ CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags net
 echo "Building noguest"; \
 CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/src/noguest/; \
 echo "Building 'novm'"; \
-CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo novm
+CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/src/novm
 
 test: go-test
 .PHONY: test

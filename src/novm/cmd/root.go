@@ -7,8 +7,8 @@ import (
 	"path"
 	"strings"
 
-	"novm/nodb"
-	"novm/utils"
+	"github.com/rocksolidlabs/novm/src/novm/nodb"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

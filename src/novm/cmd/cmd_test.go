@@ -3,7 +3,7 @@ package cmd_test
 import (
 	"fmt"
 	"log"
-	"novm/cmd"
+	"github.com/rocksolidlabs/novm/src/novm/cmd"
 	"os"
 	"path"
 )

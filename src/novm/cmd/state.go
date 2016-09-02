@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"io/ioutil"
-	"novm/utils"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 	"syscall"
 
 	"github.com/rocksolidlabs/novm/src/novmm/control"

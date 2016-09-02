@@ -4,7 +4,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"novm/utils"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 	"os"
 	"os/exec"
 	"path"

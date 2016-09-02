@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"log"
-	"novm/control"
+	"github.com/rocksolidlabs/novm/src/novm/control"
 	"path"
 	"strings"
 

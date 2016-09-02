@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"novm/utils"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
 type Nodb struct {

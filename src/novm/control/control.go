@@ -8,7 +8,7 @@ import (
 	"io"
 	"log"
 	"net"
-	"novm/utils"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 	"os"
 	filePath "path"
 	"strconv"
