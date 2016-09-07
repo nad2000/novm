@@ -96,8 +96,7 @@ func CreateState(
 		memsize = 1024
 	}
 
-	devices = append(devices, []machine.DeviceInfo{
-		{
+	devices = append(devices, machine.DeviceInfo{
 			Name:   utils.Uuid(),
 			Driver: "user-memory",
 			Data: map[string]interface{}{
@@ -106,7 +105,7 @@ func CreateState(
 			},
 			Debug: false,
 		},
-		{
+		machine.DeviceInfo{
 			Name:   utils.Uuid(),
 			Driver: "virtio-pci-console",
 			Data:   map[string]interface{}{},
