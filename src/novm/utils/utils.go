@@ -19,6 +19,7 @@ import (
 
 var Debug bool
 
+// Creates a unique UUID
 func Uuid() string {
 	b := make([]byte, 16)
 	rand.Read(b)
