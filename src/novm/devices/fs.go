@@ -3,9 +3,10 @@ package devices
 import (
 	"io/ioutil"
 	"log"
-	"novm/utils"
 	"os"
 	"strings"
+
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
 // State is a shorthand equivalent for Python dictionary used as "state"
@@ -14,25 +15,27 @@ type State map[string]interface{}
 // CreateFs creates FS and returns its "state"
 func CreateFs(index int, tag string, tempDir string, read []string, write []string) State {
 
+	var err error
+
 	if tag == "" {
 		tag = utils.Uuid()
 	}
 
 	if tempDir == "" {
-		tempDir, err := ioutil.TempDir("", "tmp")
+		tempDir, err = ioutil.TempDir("", "tmp")
 		if err != nil {
 			log.Fatal("Can't create temporary directory")
 		}
 		// TODO: add to "cleanup" this dir (utils.cleanup)
 	}
 	if !utils.PathExists(tempDir) {
-		os.MkdirAll(tempDir)
+		os.MkdirAll(tempDir, os.ModeDir|0755)
 	}
 
 	// Append our read mapping:
 	readMap := map[string][]string{"/": {}}
 	for _, path := range read {
-		spec := stings.Split(path, "=>")
+		spec := strings.Split(path, "=>")
 		if len(spec) == 1 {
 			readMap["/"] = append(readMap["/"], spec[0])
 		} else {
@@ -46,13 +49,13 @@ func CreateFs(index int, tag string, tempDir string, read []string, write []stri
 	}
 
 	// Appedn our write mapping:
-	writeMap := map[sting]string{"/": tempDir}
+	writeMap := map[string]string{"/": tempDir}
 	for _, path := range write {
 		spec := strings.Split(path, "=>")
 		if len(spec) == 1 {
 			writeMap["/"] = spec[0]
 		} else {
-			writeMap[spec[0]] = spce[1]
+			writeMap[spec[0]] = spec[1]
 		}
 	}
 

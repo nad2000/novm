@@ -1,9 +1,10 @@
 package devices
 
 import (
-	"novm/utils"
 	"os"
 	"syscall"
+
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
 // CreateDisk craates a disk and returns its state:
@@ -18,8 +19,8 @@ func CreateDisk(index int, fileName string, dev string, name string, pci bool) S
 	}
 
 	// Open the device:
-	f := os.Open(fileName)
-	fd, _ = syscall.Dup(int(f.Fd()))
+	f, _ := os.Open(fileName)
+	fd, _ := syscall.Dup(int(f.Fd()))
 	utils.ClearCloexec(fd)
 
 	driver := "virtio-"
@@ -28,7 +29,7 @@ func CreateDisk(index int, fileName string, dev string, name string, pci bool) S
 	} else {
 		driver += "mmio"
 	}
-	dirver += "-block"
+	driver += "-block"
 
 	if name == "" {
 		name = utils.Uuid()
