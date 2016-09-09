@@ -342,7 +342,7 @@ class NovmManager(object):
 
             # Provide our state by dumping to a temporary file.
             state_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
-            ###os.remove(state_file.name)
+            os.remove(state_file.name)
             state_args, metadata = state(state_file)
             state_file.seek(0, 0)
 
