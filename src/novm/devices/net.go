@@ -2,20 +2,25 @@ package devices
 
 import (
 	"crypto/rand"
+	"encoding/binary"
 	"fmt"
+	"log"
+	"os"
 	"strconv"
 	"strings"
+	"syscall"
+	"unsafe"
 )
 
 // Ioctl numbers are encoded in 32 bits:
 //   1  - 16: command
 //   17 - 30: param struct size
 //   31 - 32: direction
-func iow(cmdType int, nr int, size int) uint32 {
-	return uint32((1 << 30) | (size << 16) | nr | (cmdType << 8))
+func iow(cmdType int, nr int, size int) int {
+	return ((1 << 30) | (size << 16) | nr | (cmdType << 8))
 }
-func ior(cmdType int, nr int, size int) uint32 {
-	return uint32((2 << 30) | (size << 16) | nr | (cmdType << 8))
+func ior(cmdType int, nr int, size int) int {
+	return ((2 << 30) | (size << 16) | nr | (cmdType << 8))
 }
 
 const (
@@ -39,6 +44,24 @@ var (
 	TUNSETOFFLOAD   = iow('T', 208, 4)
 	TUNGETVNETHDRSZ = ior('T', 215, 4)
 )
+
+func fcntl(fd uintptr, cmd int, arg uintptr) (val int, err error) {
+	r, _, e := syscall.Syscall(syscall.SYS_FCNTL, uintptr(fd), uintptr(cmd), arg)
+	val = int(r)
+	if e != 0 {
+		switch e {
+		case 0xb:
+			err = syscall.EAGAIN
+		case 0x16:
+			err = syscall.EINVAL
+		case 0x2:
+			err = syscall.ENOENT
+		default:
+			err = error(e)
+		}
+	}
+	return
+}
 
 // Return a random MAC address
 func randomMac(oui string) string {
@@ -83,4 +106,54 @@ func ParseIpv4mask(ip string) (string, string, string) {
 	endAddr := broadcastAddr - 1
 
 	return addrPart, ItoIpv4(firstAddr), ItoIpv4(endAddr)
+}
+
+// TapDevice creats a TAP device
+func TapDevice(name string) (tap *os.File, vnet int, offload bool) {
+
+	tap, err := os.OpenFile("/dev/net/tun", os.O_RDWR, 0666)
+	if err != nil {
+		log.Fatal("Failed to open '/dev/net/tun':", err)
+	}
+
+	// Figure out if the kernel supports processing vnet headers on tap
+	// devices. This is necessary for forwarding hardware offloading
+	// from the guest virtual nics to the physical nics on the host.
+	features, err := fcntl(tap.Fd(), TUNGETFEATURES, uintptr(0))
+
+	flags := IFF_TAP | IFF_NO_PI | (features & IFF_VNET_HDR)
+
+	// Ctreate the TAP device
+	var ifr [18]byte
+	copy(ifr[:], []byte(name))
+	binary.LittleEndian.PutUint16(ifr[:], uint16(flags))
+	fcntl(tap.Fd(), TUNSETIFF, uintptr(unsafe.Pointer(&ifr)))
+	vnetHdrSz, _ := fcntl(tap.Fd(), TUNGETVNETHDRSZ, uintptr(0))
+
+	// Size of the vnet header expected by the TAP device:
+	if features&IFF_VNET_HDR != 0 {
+		vnet = vnetHdrSz
+		_, err := fcntl(tap.Fd(), TUNSETOFFLOAD,
+			uintptr(TUN_F_CSUM|TUN_F_TSO4|
+				TUN_F_TSO6|TUN_F_TSO_ECN|TUN_F_UFO))
+		if offload = err == nil; !offload {
+			log.Println("Failed to enable offloads:", err)
+		}
+	} // else vnet=0, offload=false
+
+	return tap, vnet, offload
+}
+
+// CreateNic creates a vitio network device.
+func CreateNic(index int, mac string, tapName string, bridge string, ip string, gateway string, mtu int,
+	name string, pci bool) (state State) {
+	if mac == "" {
+		mac = randomMac("")
+	}
+	if tapName == "" {
+		tapName = fmt.Sprintf("novm%d-%d", os.Getpid(), index)
+	}
+
+	return
+
 }
