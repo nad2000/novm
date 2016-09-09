@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"syscall"
@@ -153,7 +154,60 @@ func CreateNic(index int, mac string, tapName string, bridge string, ip string, 
 	if tapName == "" {
 		tapName = fmt.Sprintf("novm%d-%d", os.Getpid(), index)
 	}
+	tap, vnet, offload := TapDevice(tapName)
+	if mtu != 0 {
+		command := exec.Command("/sbin/ip", "link", "set", "dev", tapName, "mtu", strconv.Itoa(mtu))
+		out, err := command.Output()
+		if err != nil {
+			log.Fatal("Failed to set up MTU:", err, "/", out)
+		}
+	}
 
-	return
+	// Enslave to the given bridge. (It will be authomatically removed.)
+	if bridge != "" {
+		command := exec.Command("/sbin/brctl", "addif", bridge, tapName)
+		out, err := command.Output()
+		if err != nil {
+			log.Fatalf("Failed to add interface %#v to bridge %#v: %v (%v)", tapName, bridge, err, out)
+		}
+	}
+
+	// Make sure the interface is up:
+	command := exec.Command("/sbin/ip", "link", "set", "up", "dev", tapName)
+	out, err := command.Output()
+	if err != nil {
+		log.Fatalf("Failed to set up the interface %#v: %v (%v) ", tapName, err, out)
+	} else {
+		log.Println(out)
+	}
+	// Start our dnsmasq.
+	// This is just a simple responded for
+	// DHCP queries and routes that will die
+	// whenever the underlying instance dies.
+	if ip != "" {
+		// TODO:
+	}
+
+	var driver string
+	if pci { //
+		driver = "virtio-pci-net"
+	} else {
+		driver = "virtio-mmio-net"
+	}
+	fd := tap.Fd()
+
+	return State{
+		"cmdline": nil, // TODO!
+		"data": map[string]interface{}{
+			"fd":      fd,
+			"mac":     mac,
+			"vnet":    vnet,
+			"offload": offload,
+			"ip":      ip,
+		},
+		"debug": false,
+		"drive": driver,
+		"name":  name,
+	}
 
 }
