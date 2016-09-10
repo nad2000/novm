@@ -2,12 +2,10 @@ package cmd
 
 import (
 	"io/ioutil"
-	"github.com/rocksolidlabs/novm/src/novm/utils"
 	"syscall"
 
-	"github.com/rocksolidlabs/novm/src/novmm/control"
-	"github.com/rocksolidlabs/novm/src/novmm/machine"
-	"github.com/rocksolidlabs/novm/src/novmm/platform"
+	"github.com/rocksolidlabs/novm/src/novm/devices"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
 func CreateUserMemory(size int, fd int) {
@@ -15,72 +13,72 @@ func CreateUserMemory(size int, fd int) {
 }
 
 func CreateState(
-	com1 bool, com2 bool, nopci bool, memsize int) control.State {
+	com1 bool, com2 bool, nopci bool, memsize int) devices.State {
 
-	devices := []machine.DeviceInfo{
+	devs := []devices.State{
 		{
-			Name:   utils.Uuid(),
-			Driver: "bios",
-			Data:   map[string]interface{}{},
-			Debug:  false,
+			"name":   utils.Uuid(),
+			"driver": "bios",
+			"data":   map[string]interface{}{},
+			"debug":  false,
 		},
 		{
-			Name:   utils.Uuid(),
-			Driver: "acpi",
-			Data:   map[string]interface{}{},
-			Debug:  false,
+			"name":   utils.Uuid(),
+			"driver": "acpi",
+			"data":   map[string]interface{}{},
+			"debug":  false,
 		},
 		{
-			Name:   utils.Uuid(),
-			Driver: "apic",
-			Data:   map[string]interface{}{},
-			Debug:  false,
+			"name":   utils.Uuid(),
+			"driver": "apic",
+			"data":   map[string]interface{}{},
+			"debug":  false,
 		},
 		{
-			Name:   utils.Uuid(),
-			Driver: "pit",
-			Data:   map[string]interface{}{},
-			Debug:  false,
+			"name":   utils.Uuid(),
+			"driver": "pit",
+			"data":   map[string]interface{}{},
+			"debug":  false,
 		},
 	}
 
 	if com1 {
-		devices = append(devices, machine.DeviceInfo{
-			Name:   utils.Uuid(),
-			Driver: "uart",
-			Data: map[string]interface{}{
+		devs = append(devs, devices.State{
+			"name":   utils.Uuid(),
+			"driver": "uart",
+			"data": map[string]interface{}{
 				"base":      0x3f8,
 				"interrupt": 4,
 			},
-			Debug: false,
+			"debug": false,
 		})
 	}
 
 	if com2 {
-		devices = append(devices, machine.DeviceInfo{
-			Name:   utils.Uuid(),
-			Driver: "uart",
-			Data: map[string]interface{}{
+		devs = append(devs, devices.State{
+			"name":   utils.Uuid(),
+			"driver": "uart",
+			"data": map[string]interface{}{
 				"base":      0x2f8,
 				"interrupt": 3,
 			},
-			Debug: false,
+			"debug": false,
 		})
 	}
 
-	devices = append(devices, machine.DeviceInfo{
-		Name:   utils.Uuid(),
-		Driver: "rtc",
-		Data:   map[string]interface{}{},
-		Debug:  false,
+	devs = append(devs, devices.State{
+		"name":   utils.Uuid(),
+		"driver": "rtc",
+		"data":   map[string]interface{}{},
+		"debug":  false,
 	})
 
 	if !nopci {
-		devices = append(devices, machine.DeviceInfo{
-			Name:   utils.Uuid(),
-			Driver: "pci-bus",
-			Data:   map[string]interface{}{},
-			Debug:  false,
+		devs = append(devs, devices.State{
+			"name":   utils.Uuid(),
+			"driver": "pci-bus",
+			"data":   map[string]interface{}{},
+			"debug":  false,
 		})
 	}
 
@@ -96,25 +94,26 @@ func CreateState(
 		memsize = 1024
 	}
 
-	devices = append(devices, machine.DeviceInfo{
-			Name:   utils.Uuid(),
-			Driver: "user-memory",
-			Data: map[string]interface{}{
+	devs = append(devs, []devices.State{
+		{
+			"name":   utils.Uuid(),
+			"driver": "user-memory",
+			"data": map[string]interface{}{
 				"fd":   fd,
 				"size": 1024 * 1024 * memsize,
 			},
-			Debug: false,
-		},
-		machine.DeviceInfo{
-			Name:   utils.Uuid(),
-			Driver: "virtio-pci-console",
-			Data:   map[string]interface{}{},
-			Debug:  false,
+			"debug": false,
 		},
 		{
-			Name:   utils.Uuid(),
-			Driver: "virtio-pci-fs",
-			Data: map[string]interface{}{
+			"name":   utils.Uuid(),
+			"driver": "virtio-pci-console",
+			"data":   map[string]interface{}{},
+			"debug":  false,
+		},
+		{
+			"name":   utils.Uuid(),
+			"driver": "virtio-pci-fs",
+			"data": map[string]interface{}{
 				"fdlimit": "0", "read": map[string]interface{}{
 					"/lib/modules/3.19.0-32-generic": []interface{}{
 						"/home/nad2000/.novm/kernels/172c0b9d54445b91da234acca4f3beb31240f795/modules",
@@ -127,13 +126,13 @@ func CreateState(
 					"/": "/home/nad2000/.novm/instances/14185",
 				},
 			},
-			Debug: false,
+			"debug": false,
 		},
 		{
-			Name: utils.Uuid(),
+			"name": utils.Uuid(),
 
-			Driver: "virtio-pci-fs",
-			Data: map[string]interface{}{
+			"driver": "virtio-pci-fs",
+			"data": map[string]interface{}{
 				"fdlimit": "0",
 				"read": map[string]interface{}{
 					"/": []interface{}{},
@@ -145,13 +144,13 @@ func CreateState(
 					"/": "/tmp/tmpTi8NDV",
 				},
 			},
-			Debug: false,
+			"debug": false,
 		},
 	}...)
 
-	state := control.State{
-		Devices: devices,
-		Vcpus:   []platform.VcpuInfo{{}},
+	state := devices.State{
+		"devices": devs,
+		"vcpus":   []interface{}{}, // TODO: number of vcpus
 	}
 	return state
 }

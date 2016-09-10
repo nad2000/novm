@@ -1,30 +1,16 @@
 package cmd_test
 
 import (
-	"github.com/rocksolidlabs/novm/src/novm/cmd"
-	nutils "github.com/rocksolidlabs/novm/src/novm/utils"
-	"strings"
 	"testing"
 
-	"github.com/rocksolidlabs/novm/src/novmm/control"
-	"github.com/rocksolidlabs/novm/src/novmm/utils"
+	"github.com/rocksolidlabs/novm/src/novm/cmd"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
 func TestStateCreation(t *testing.T) {
 
 	state := cmd.CreateState(true, true, false, 0)
-	t.Log(nutils.JsonDumps(state))
-}
-
-func TestState(t *testing.T) {
-	state_file := strings.NewReader(SAMPLE_STATE)
-	decoder := utils.NewDecoder(state_file)
-	state := new(control.State)
-	err := decoder.Decode(&state)
-	if err != nil {
-		t.Fatal("Err:", err)
-	}
-	t.Logf("%#v", state)
+	t.Log(utils.JsonDumps(state))
 }
 
 var SAMPLE_STATE string = `{
