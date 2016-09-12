@@ -9,9 +9,6 @@ import (
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
-// State is a shorthand equivalent for Python dictionary used as "state"
-type State map[string]interface{}
-
 // CreateFs creates FS and returns its "state"
 func CreateFs(index int, tag string, tempDir string, read []string, write []string) State {
 

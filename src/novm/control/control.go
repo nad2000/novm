@@ -8,11 +8,12 @@ import (
 	"io"
 	"log"
 	"net"
-	"github.com/rocksolidlabs/novm/src/novm/utils"
 	"os"
-	filePath "path"
+	"path"
 	"strconv"
 	"strings"
+
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 
 	termios "github.com/creack/termios/raw"
 )
@@ -66,7 +67,7 @@ func readLine() (line []byte, err error) {
 }
 
 func Open(ctrlPath string) (err error) {
-	dirName := filePath.Dir(ctrlPath)
+	dirName := path.Dir(ctrlPath)
 	if !utils.PathExists(dirName) {
 		err = os.MkdirAll(dirName, os.ModeDir|0755)
 		if err != nil {
