@@ -9,8 +9,12 @@ import (
 )
 
 func CreateState(
-	com1 bool, com2 bool, nopci bool, memsize int,
+	cpus int, com1 bool, com2 bool, nopci bool, memsize int,
 	nics []string, disks []string) devices.State {
+
+	if cpus <= 0 {
+		cpus = 1
+	}
 
 	devices.Pci = !nopci
 
@@ -107,10 +111,13 @@ func CreateState(
 	initFs := devices.CreateFs(2+len(nics)+len(disks),
 		"init", "", []string{"/init=>" + utils.LibExec("noguest")}, nil)
 	devs = append(devs, initFs)
-
+	vcpus := make([]devices.State, cpus)
+	for i := 0; i < cpus; i++ {
+		vcpus[i] = devices.State{}
+	}
 	state := devices.State{
 		"devices": devs,
-		"vcpus":   []interface{}{}, // TODO: number of vcpus
+		"vcpus":   vcpus,
 	}
 	return state
 }

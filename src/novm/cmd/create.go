@@ -105,7 +105,7 @@ Docker repositories are provided as follows.
 			repos, read, write, vmmopt, cwd, nopci, com1, com2, nofork, terminal,
 			cmdArgs)
 
-		fmt.Printf("*****************************************\n%#v", CreateState(com1, com2, nopci, memsize, nil, nil))
+		fmt.Printf("*****************************************\n%#v", CreateState(cpus, com1, com2, nopci, memsize, nil, nil))
 
 	},
 }
