@@ -1,9 +1,6 @@
 package cmd
 
 import (
-	"io/ioutil"
-	"syscall"
-
 	"github.com/rocksolidlabs/novm/src/novm/devices"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
@@ -43,27 +40,11 @@ func CreateState(
 	}
 
 	if com1 {
-		devs = append(devs, devices.State{
-			"name":   utils.Uuid(),
-			"driver": "uart",
-			"data": map[string]interface{}{
-				"base":      0x3f8,
-				"interrupt": 4,
-			},
-			"debug": false,
-		})
+		devs = append(devs, devices.CreateCom1())
 	}
 
 	if com2 {
-		devs = append(devs, devices.State{
-			"name":   utils.Uuid(),
-			"driver": "uart",
-			"data": map[string]interface{}{
-				"base":      0x2f8,
-				"interrupt": 3,
-			},
-			"debug": false,
-		})
+		devs = append(devs, devices.CreateCom2())
 	}
 
 	devs = append(devs, devices.State{
@@ -84,26 +65,8 @@ func CreateState(
 
 	var fd int
 
-	if fd < 4 {
-		tf, _ := ioutil.TempFile("", "tmp")
-		fd, _ = syscall.Dup(int(tf.Fd()))
-		utils.ClearCloexec(fd)
-	}
-
-	if memsize < 128 {
-		memsize = 1024
-	}
-
 	devs = append(devs, []devices.State{
-		{
-			"name":   utils.Uuid(),
-			"driver": "user-memory",
-			"data": map[string]interface{}{
-				"fd":   fd,
-				"size": 1024 * 1024 * memsize,
-			},
-			"debug": false,
-		},
+		devices.CreateUserMemory(memsize, fd),
 		{
 			"name":   utils.Uuid(),
 			"driver": "virtio-pci-console",

@@ -1,6 +1,16 @@
 package devices
 
-import "fmt"
+import (
+	"fmt"
+	"io/ioutil"
+	"syscall"
+
+	"github.com/rocksolidlabs/novm/src/novm/utils"
+)
+
+var (
+	debug bool
+)
 
 // State is a shorthand equivalent for Python dictionary used as "state"
 type State map[string]interface{}
@@ -23,11 +33,13 @@ func createCom(comNo int) State {
 
 	return State{
 		"driver": "uart",
+		"name":   utils.Uuid(),
 		"data": State{
 			"base":      base,
 			"interrupt": irq,
 		},
 		"cmdline": fmt.Sprintf("console=uart,io,0x%03x", base),
+		"debug":   debug,
 	}
 }
 
@@ -39,4 +51,28 @@ func CreateCom1() State {
 // CreateCom2 creats serial port COM2
 func CreateCom2() State {
 	return createCom(2)
+}
+
+// CreateUserMemory create user memory (with size in MiBs)
+func CreateUserMemory(size int, fd int) State {
+
+	if fd < 4 {
+		tf, _ := ioutil.TempFile("", "tmp")
+		fd, _ = syscall.Dup(int(tf.Fd()))
+		utils.ClearCloexec(fd)
+	}
+
+	if size < 128 {
+		size = 1024
+	}
+
+	return State{
+		"name":   utils.Uuid(),
+		"driver": "user-memory",
+		"data": map[string]interface{}{
+			"fd":   fd,
+			"size": 1024 * 1024 * size,
+		},
+		"debug": debug,
+	}
 }
