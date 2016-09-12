@@ -3,17 +3,74 @@ package devices
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"syscall"
 
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
 var (
-	debug bool
+	Debug bool
 )
 
 // State is a shorthand equivalent for Python dictionary used as "state"
 type State map[string]interface{}
+
+func createDevice(driver string, name string, data State, cmdline string) State {
+
+	if data == nil {
+		data = State{}
+	}
+
+	if name == "" {
+		name = utils.Uuid()
+	}
+
+	if driver == "" {
+		log.Fatal("Missing driver for NOVMM.")
+	}
+
+	device := State{
+		"driver": driver,
+		"name":   name,
+		"data":   data,
+		"debug":  Debug,
+	}
+	if cmdline != "" {
+		device["cmdline"] = cmdline
+	}
+
+	return device
+}
+
+func createVirtio(index int, pci bool, data State, virtioDriver string, name string) (device State) {
+
+	var (
+		driver  string
+		cmdline string
+	)
+
+	if data == nil {
+		data = State{}
+	}
+
+	if pci {
+		driver = "virtio-pci-" + virtioDriver
+	} else {
+		driver = "virtio-mmio-" + virtioDriver
+	}
+
+	if index >= 0 && !pci {
+		data["address"] = 0xe0000000 + index*4096
+		data["interrupt"] = 32 + index
+		cmdline = fmt.Sprintf("virtio-mmio.%d@0x%x:%d:%d",
+			index, data["address"], data["interrupt"], index)
+	} else {
+		cmdline = ""
+	}
+
+	return createDevice(driver, name, data, cmdline)
+}
 
 func createCom(comNo int) State {
 	var (
@@ -39,7 +96,7 @@ func createCom(comNo int) State {
 			"interrupt": irq,
 		},
 		"cmdline": fmt.Sprintf("console=uart,io,0x%03x", base),
-		"debug":   debug,
+		"debug":   Debug,
 	}
 }
 
@@ -53,6 +110,11 @@ func CreateCom2() State {
 	return createCom(2)
 }
 
+// CreateConsole creates a virtio serial/console device:
+func CreateConsole(index int, pci bool) State {
+	return createVirtio(index, pci, nil, "console", "")
+}
+
 // CreateUserMemory create user memory (with size in MiBs)
 func CreateUserMemory(size int, fd int) State {
 
@@ -62,17 +124,13 @@ func CreateUserMemory(size int, fd int) State {
 		utils.ClearCloexec(fd)
 	}
 
-	if size < 128 {
-		size = 1024
-	}
-
 	return State{
 		"name":   utils.Uuid(),
 		"driver": "user-memory",
 		"data": map[string]interface{}{
 			"fd":   fd,
-			"size": 1024 * 1024 * size,
+			"size": size,
 		},
-		"debug": debug,
+		"debug": Debug,
 	}
 }

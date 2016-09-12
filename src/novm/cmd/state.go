@@ -5,10 +5,6 @@ import (
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
-func CreateUserMemory(size int, fd int) {
-
-}
-
 func CreateState(
 	com1 bool, com2 bool, nopci bool, memsize int) devices.State {
 
@@ -64,9 +60,12 @@ func CreateState(
 	}
 
 	var fd int
+	if memsize < 128 {
+		memsize = 1024
+	}
 
 	devs = append(devs, []devices.State{
-		devices.CreateUserMemory(memsize, fd),
+		devices.CreateUserMemory(1024*1024*memsize, fd),
 		{
 			"name":   utils.Uuid(),
 			"driver": "virtio-pci-console",

@@ -17,3 +17,10 @@ func TestCreatCom(t *testing.T) {
 		t.Errorf("Failed to create COM2: %#v, want: %#v (%#v)", cmdline, expected, com2)
 	}
 }
+
+func TestCreatConsole(t *testing.T) {
+	console := devices.CreateConsole(0, true)
+	t.Logf("PCI Console:\n%#v", console)
+	console = devices.CreateConsole(0, false)
+	t.Logf("NON-PCI Console:\n%#v", console)
+}
