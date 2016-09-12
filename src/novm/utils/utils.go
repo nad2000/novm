@@ -164,7 +164,9 @@ func LibExec(name string) string {
 	pwd, _ := os.Getwd()
 	pathList := []string{
 		libExecDir, path.Join(binDir, "..", "bin"),
-		path.Join(pwd, "..", "..", "lib", "novm", "libexec")}
+		path.Join(pwd, "..", "..", "lib", "novm", "libexec"),
+		path.Join(pwd, "..", "..", "..", "bin"),
+	}
 
 	for _, p := range pathList {
 		libExecPath, _ := filepath.Abs(filepath.Clean(path.Join(p, name)))
@@ -172,7 +174,7 @@ func LibExec(name string) string {
 			return libExecPath
 		}
 	}
-	log.Panicln("Failed to find %q in %v", name, pathList)
+	log.Panicf("Failed to find %q in %v", name, pathList)
 	return ""
 }
 

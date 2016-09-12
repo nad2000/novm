@@ -8,7 +8,7 @@ import (
 )
 
 // CreateDisk craates a disk and returns its state:
-func CreateDisk(index int, fileName string, dev string, name string, pci bool) State {
+func CreateDisk(index int, fileName string, dev string, name string) State {
 
 	if fileName == "" {
 		fileName = "/dev/null"
@@ -24,7 +24,7 @@ func CreateDisk(index int, fileName string, dev string, name string, pci bool) S
 	utils.ClearCloexec(fd)
 
 	driver := "virtio-"
-	if pci {
+	if Pci {
 		driver += "pci"
 	} else {
 		driver += "mmio"

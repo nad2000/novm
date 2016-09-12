@@ -147,7 +147,7 @@ func TapDevice(name string) (tap *os.File, vnet int, offload bool) {
 
 // CreateNic creates a vitio network device.
 func CreateNic(index int, mac string, tapName string, bridge string, ip string, gateway string, mtu int,
-	name string, pci bool) (state State) {
+	name string) (state State) {
 	if mac == "" {
 		mac = randomMac("")
 	}
@@ -189,7 +189,7 @@ func CreateNic(index int, mac string, tapName string, bridge string, ip string, 
 	}
 
 	var driver string
-	if pci { //
+	if Pci { //
 		driver = "virtio-pci-net"
 	} else {
 		driver = "virtio-mmio-net"

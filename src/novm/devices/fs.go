@@ -23,7 +23,7 @@ func CreateFs(index int, tag string, tempDir string, read []string, write []stri
 		if err != nil {
 			log.Fatal("Can't create temporary directory")
 		}
-		// TODO: add to "cleanup" this dir (utils.cleanup)
+		// TODO: add to "cleanup" after shut-down this dir (utils.cleanup)
 	}
 	if !utils.PathExists(tempDir) {
 		os.MkdirAll(tempDir, os.ModeDir|0755)
@@ -45,7 +45,7 @@ func CreateFs(index int, tag string, tempDir string, read []string, write []stri
 		}
 	}
 
-	// Appedn our write mapping:
+	// Append our write mapping:
 	writeMap := map[string]string{"/": tempDir}
 	for _, path := range write {
 		spec := strings.Split(path, "=>")
@@ -56,10 +56,12 @@ func CreateFs(index int, tag string, tempDir string, read []string, write []stri
 		}
 	}
 
-	return State{
+	data := State{
 		"read":    readMap,
 		"write":   writeMap,
 		"tag":     tag,
 		"fdlimit": 0,
 	}
+
+	return createVirtio(index, data, "fs", "")
 }

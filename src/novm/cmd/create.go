@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 
 	"github.com/spf13/cobra"
@@ -104,7 +105,7 @@ Docker repositories are provided as follows.
 			repos, read, write, vmmopt, cwd, nopci, com1, com2, nofork, terminal,
 			cmdArgs)
 
-		fmt.Printf("*****************************************\n%#v", CreateState(com1, com2, nopci, memsize))
+		fmt.Printf("*****************************************\n%#v", CreateState(com1, com2, nopci, memsize, nil, nil))
 
 	},
 }

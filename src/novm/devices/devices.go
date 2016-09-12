@@ -11,6 +11,7 @@ import (
 
 var (
 	Debug bool
+	Pci   bool
 )
 
 // State is a shorthand equivalent for Python dictionary used as "state"
@@ -43,7 +44,7 @@ func createDevice(driver string, name string, data State, cmdline string) State 
 	return device
 }
 
-func createVirtio(index int, pci bool, data State, virtioDriver string, name string) (device State) {
+func createVirtio(index int, data State, virtioDriver string, name string) (device State) {
 
 	var (
 		driver  string
@@ -54,13 +55,13 @@ func createVirtio(index int, pci bool, data State, virtioDriver string, name str
 		data = State{}
 	}
 
-	if pci {
+	if Pci {
 		driver = "virtio-pci-" + virtioDriver
 	} else {
 		driver = "virtio-mmio-" + virtioDriver
 	}
 
-	if index >= 0 && !pci {
+	if index >= 0 && !Pci {
 		data["address"] = 0xe0000000 + index*4096
 		data["interrupt"] = 32 + index
 		cmdline = fmt.Sprintf("virtio-mmio.%d@0x%x:%d:%d",
@@ -111,8 +112,8 @@ func CreateCom2() State {
 }
 
 // CreateConsole creates a virtio serial/console device:
-func CreateConsole(index int, pci bool) State {
-	return createVirtio(index, pci, nil, "console", "")
+func CreateConsole(index int) State {
+	return createVirtio(index, nil, "console", "")
 }
 
 // CreateUserMemory create user memory (with size in MiBs)
