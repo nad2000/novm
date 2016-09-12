@@ -122,6 +122,14 @@ func flagStringSlice(cmd *cobra.Command, name string) (val []string) {
 	return
 }
 
+func flagStringArray(cmd *cobra.Command, name string) (val []string) {
+	val, err := cmd.Flags().GetStringArray(name)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return
+}
+
 func flagBool(cmd *cobra.Command, name string) (val bool) {
 	val, err := cmd.Flags().GetBool(name)
 	if err != nil {

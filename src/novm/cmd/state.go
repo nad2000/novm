@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/rocksolidlabs/novm/src/novm/devices"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
@@ -82,8 +84,18 @@ func CreateState(
 		devices.CreateConsole(0),
 	}...)
 
-	// TODO:
 	// Build our NICs
+	for index, nic := range nics {
+		options := make(map[string]string)
+		for _, opt := range strings.Split(nic, ",") {
+			parts := strings.SplitN(opt, "=", 1)
+			if len(parts) < 2 {
+				log.Panicf("Malformated NIC option: %q", opt)
+			}
+			options[parts[0]] = parts[1]
+		}
+		devs = append(devs, devices.CreateNic(index, options))
+	}
 
 	// TODO:
 	// Build our disks:

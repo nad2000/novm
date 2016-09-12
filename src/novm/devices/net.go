@@ -11,6 +11,8 @@ import (
 	"strings"
 	"syscall"
 	"unsafe"
+
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
 // Ioctl numbers are encoded in 32 bits:
@@ -146,17 +148,31 @@ func TapDevice(name string) (tap *os.File, vnet int, offload bool) {
 }
 
 // CreateNic creates a vitio network device.
-func CreateNic(index int, mac string, tapName string, bridge string, ip string, gateway string, mtu int,
-	name string) (state State) {
+func CreateNic(index int, options map[string]string) (state State) {
+	var (
+		mac, tapName, bridge, ip, gateway, mtu, name string
+		ok                                           bool
+	)
+
+	_ = gateway
+
+	name, ok = options["name"]
+	if !ok || name == "" {
+		name = utils.Uuid()
+	}
+
+	mac = options["mac"]
 	if mac == "" {
 		mac = randomMac("")
 	}
+	tapName = options["tapname"]
 	if tapName == "" {
 		tapName = fmt.Sprintf("novm%d-%d", os.Getpid(), index)
 	}
 	tap, vnet, offload := TapDevice(tapName)
-	if mtu != 0 {
-		command := exec.Command("/sbin/ip", "link", "set", "dev", tapName, "mtu", strconv.Itoa(mtu))
+	mtu, ok = options["mtu"]
+	if !ok || mtu != "" {
+		command := exec.Command("/sbin/ip", "link", "set", "dev", tapName, "mtu", mtu)
 		out, err := command.Output()
 		if err != nil {
 			log.Fatal("Failed to set up MTU:", err, "/", out)
@@ -164,7 +180,8 @@ func CreateNic(index int, mac string, tapName string, bridge string, ip string, 
 	}
 
 	// Enslave to the given bridge. (It will be authomatically removed.)
-	if bridge != "" {
+	bridge, ok = options["bridge"]
+	if !ok || bridge != "" {
 		command := exec.Command("/sbin/brctl", "addif", bridge, tapName)
 		out, err := command.Output()
 		if err != nil {
@@ -184,6 +201,7 @@ func CreateNic(index int, mac string, tapName string, bridge string, ip string, 
 	// This is just a simple responded for
 	// DHCP queries and routes that will die
 	// whenever the underlying instance dies.
+	ip = options["ip"]
 	if ip != "" {
 		// TODO:
 	}
