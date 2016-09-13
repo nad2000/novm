@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"strings"
 
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 
@@ -67,6 +69,8 @@ Docker repositories are provided as follows.
 				log.Panicf("Kernel '%s' not found!", kernel)
 			}
 		}
+		raw, _ := ioutil.ReadFile(kernels.File(kernel, "release"))
+		release := strings.TrimSpace(string(raw))
 
 		cmdline := flagString(cmd, "cmdline")
 		if cmdline != "" {
@@ -76,9 +80,9 @@ Docker repositories are provided as follows.
 		memsize := flagInt(cmd, "memsize")
 		init := flagBool(cmd, "init")
 		nics := flagStringArray(cmd, "nic")
-		disks := flagStringSlice(cmd, "disk")
+		disks := flagStringArray(cmd, "disk")
 		packs := flagStringSlice(cmd, "pack")
-		repos := flagStringSlice(cmd, "repo")
+		repos := flagStringArray(cmd, "repo")
 		read := flagStringSlice(cmd, "read")
 		write := flagStringSlice(cmd, "write")
 		vmmopt := flagStringSlice(cmd, "vmmopt")
@@ -105,7 +109,8 @@ Docker repositories are provided as follows.
 			repos, read, write, vmmopt, cwd, nopci, com1, com2, nofork, terminal,
 			cmdArgs)
 
-		fmt.Printf("*****************************************\n%#v", CreateState(cpus, com1, com2, nopci, memsize, nil, nil))
+		fmt.Printf("*****************************************\n%#v", CreateState(
+			kernel, release, cpus, com1, com2, nopci, memsize, nics, disks, read, write, packs, repos))
 
 	},
 }
@@ -118,9 +123,9 @@ func init() {
 	createCmd.Flags().String("kernel", "", "The `KERNEL` to use.")
 	createCmd.Flags().Bool("init", false, "Use a real init?")
 	createCmd.Flags().StringArray("nic", nil, "Define a network device (`NIC`).")
-	createCmd.Flags().StringSlice("disk", nil, "Define a block device (`DISK`).")
+	createCmd.Flags().StringArray("disk", nil, "Define a block device (`DISK`).")
 	createCmd.Flags().StringSlice("pack", nil, "Use a given read `PACK`.")
-	createCmd.Flags().StringSlice("repo", nil, "Use a docker repository `REPO`.")
+	createCmd.Flags().StringArray("repo", nil, "Use a docker repository `REPO`.")
 	createCmd.Flags().StringSlice("read", []string{"/"}, "Define a backing filesystem `READ` tree.")
 	createCmd.Flags().StringSlice("write", nil, "Define a backing filesystem `WRITE` tree.")
 	createCmd.Flags().Bool("nopci", false, "Disable PCI devices?")

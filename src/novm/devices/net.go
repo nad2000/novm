@@ -151,10 +151,12 @@ func TapDevice(name string) (tap *os.File, vnet int, offload bool) {
 func CreateNic(index int, options map[string]string) (state State) {
 	var (
 		mac, tapName, bridge, ip, gateway, mtu, name string
-		ok                                           bool
+		ok, debug                                    bool
 	)
 
 	_ = gateway
+
+	debug = utils.Asbool(options["debug"])
 
 	name, ok = options["name"]
 	if !ok || name == "" {
@@ -207,7 +209,7 @@ func CreateNic(index int, options map[string]string) (state State) {
 	}
 
 	var driver string
-	if Pci { //
+	if Pci {
 		driver = "virtio-pci-net"
 	} else {
 		driver = "virtio-mmio-net"
@@ -223,7 +225,7 @@ func CreateNic(index int, options map[string]string) (state State) {
 			"offload": offload,
 			"ip":      ip,
 		},
-		"debug": false,
+		"debug": debug,
 		"drive": driver,
 		"name":  name,
 	}

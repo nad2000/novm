@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -11,11 +12,20 @@ import (
 )
 
 func CreateState(
-	cpus int, com1 bool, com2 bool, nopci bool, memsize int,
-	nics []string, disks []string) devices.State {
+	kernel string, release string, cpus int, com1 bool, com2 bool, nopci bool, memsize int,
+	nics []string, disks []string, read []string, write []string, packList []string,
+	repos []string) devices.State {
 
 	if cpus <= 0 {
 		cpus = 1
+	}
+
+	if read == nil {
+		read = make([]string, 0, 10)
+	}
+
+	if write == nil {
+		write = make([]string, 0, 10)
 	}
 
 	devices.Pci = !nopci
@@ -97,23 +107,43 @@ func CreateState(
 		devs = append(devs, devices.CreateNic(index, options))
 	}
 
-	// TODO:
 	// Build our disks:
+	for index, disk := range disks {
+		options := make(map[string]string)
+		for _, opt := range strings.Split(disk, ",") {
+			parts := strings.SplitN(opt, "=", 1)
+			if len(parts) < 2 {
+				log.Panicf("Malformated disk option: %q", opt)
+			}
+			options[parts[0]] = parts[1]
+		}
+		devs = append(devs, devices.CreateDisk(index+len(nics)+1, options))
+	}
 
-	// TODO:
 	// Add modules:
+	if moduleDir := kernels.File(kernel, "modules"); utils.PathExists(moduleDir) {
+		read = append(read, fmt.Sprintf("/lib/modules/%s=>%s", release, moduleDir))
+	}
 
-	// TODO:
 	// Add our packs.
 	// NOTE: All packs are given relative to root.
+	for _, p := range packList {
+		read = append(read, packs.File(p))
+	}
 
-	// TODO:
 	// Add our docker repositories
 	// NOTE: These are also all relative to root.
+	for _, d := range repos {
+		opts := strings.Split(d, ",")
+		repository := opts[0]
+		options := make(map[string]string)
+		for _, arg := range opts[1:] {
+			parts := strings.SplitN(arg, "=", 1)
+			options[parts[0]] = parts[1]
+		}
+		read = append(read, utils.PullRepository(repository, options)...)
+	}
 
-	// TODO (add all packages, ...):
-	read := []string{}
-	write := []string{}
 	// The root filesystem:
 	rootFs := devices.CreateFs(1+len(nics)+len(disks),
 		"root", instances.File(strconv.Itoa(os.Getpid())), read, write)

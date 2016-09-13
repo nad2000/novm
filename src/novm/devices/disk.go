@@ -8,15 +8,24 @@ import (
 )
 
 // CreateDisk craates a disk and returns its state:
-func CreateDisk(index int, fileName string, dev string, name string) State {
+func CreateDisk(index int, options map[string]string) State {
 
-	if fileName == "" {
+	var (
+		fileName, dev, name string
+		ok, debug           bool
+	)
+
+	fileName, ok = options["filename"]
+	if !ok || fileName == "" {
 		fileName = "/dev/null"
 	}
 
-	if dev == "" {
+	dev, ok = options["dev"]
+	if !ok || dev == "" {
 		dev = "vd" + string('a'+index)
 	}
+
+	debug = utils.Asbool(options["debug"])
 
 	// Open the device:
 	f, _ := os.Open(fileName)
@@ -38,7 +47,7 @@ func CreateDisk(index int, fileName string, dev string, name string) State {
 	return State{
 		"cmdline": nil,
 		"data":    map[string]interface{}{"dev": dev, "fd": fd},
-		"debug":   false,
+		"debug":   debug,
 		"drive":   driver,
 		"name":    name,
 	}
