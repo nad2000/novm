@@ -2,30 +2,59 @@ package docker
 
 import (
 	"encoding/base64"
+	"encoding/json"
+	"io"
+	"log"
+	"math/rand"
 	"net/http"
-	"novm/nodb"
+	"os"
 	"strings"
+
+	"github.com/rocksolidlabs/novm/src/novm/nodb"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
+
+type Tag struct {
+	Name  string `json:"name"`
+	Layer string `json:"layer"`
+}
 
 var (
-	host, registry, username, password, auth string
-	db                                       nodb.Nodb
+	Repository, Host, Registry, Username, Password string
+	urlBase, auth                                  string
+	Db                                             nodb.Nodb
 )
 
-func init(db nodb.Nodb, host string, registry string, username string, password string) {
+func Init(db nodb.Nodb, options map[string]string) {
+
+	Db = db
+	Host, Registry, Username, Password = options["host"], options["registry"], options["username"], options["password"]
+
+	if Host == "" {
+		Host = "index.docker.io"
+	}
+	urlBase = "https://" + Host + "/v1/"
+
+	if Username != "" && Password != "" {
+		auth = base64.StdEncoding.EncodeToString([]byte(Username + ":" + Password))
+	}
+
 }
 
 func request(
-	url string, method string, body string, output string,
-	hostName string, token string, auth bool) map[string]interface{} {
+	url string, method string, body string, output io.Writer,
+	response *interface{}, hostName string, token string) interface{} {
 
-	var bodyReader *strings.Reader
+	var (
+		bodyReader *strings.Reader
+		endpoint   string
+	)
 
 	if hostName == "" {
-		hostName = host
+		hostName = Host
 	}
 
-	url = "https://" + hostName + "/" + url
+	url = urlBase + url
 
 	if method == "" {
 		if body == "" {
@@ -35,9 +64,7 @@ func request(
 		}
 	}
 
-	client := &http.Client{
-		CheckRedirect: redirectPolicyFunc,
-	}
+	client := &http.Client{}
 
 	if body != "" {
 		bodyReader = strings.NewReader(body)
@@ -46,34 +73,112 @@ func request(
 	req, err := http.NewRequest(method, url, bodyReader)
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Token "+token)
-	req.Header.Add("Authorization", "Basic "+auth)
-	req.Header.Add("X-Docker-Token", "true")
+	if token != "" {
+		req.Header.Add("Authorization", "Token "+token)
+	}
+	if auth != "" {
+		req.Header.Add("Authorization", "Basic "+auth)
+		req.Header.Add("X-Docker-Token", "true")
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.StatusCode/100 != 2 {
+		log.Panic("Failed to request %q, %q (Status: %q)", method, url, res.Status)
+	}
+
+	if auth != "" {
+		// This is a special case where we are authenticating
+		// with an index prior to querying the underlying registry.
+		token = res.Header.Get("X-Docker-Token")
+		dockerEndpoints := res.Header.Get("X-Docker-Endpoints")
+		if dockerEndpoints != "" {
+			endpoints := strings.Split(dockerEndpoints, ",")
+			endpoint = endpoints[rand.Intn(len(endpoints))]
+		} else {
+			endpoint = Host
+		}
+		return []string{token, endpoint}
+	}
+
+	if output != nil {
+		io.Copy(output, res.Body)
+
+	} else {
+		json.NewDecoder(res.Body).Decode(response)
+	}
+	res.Body.Close()
+
+	return nil
 
 }
 
-func getTags(repository) {
+func ImageInfo(repository string, imageId string) map[string]string {
+	return nil
+}
+
+func Tags(repository string) (tags []Tag) {
+	resp, err := http.Get(urlBase + "repositories/" + repository + "/tags")
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	json.NewDecoder(resp.Body).Decode(&tags)
+	return
+}
+
+func PullImage(repository string, imageId string) {
+
+	var parent string
+
+	// Is this already in our database?
+	obj, _ := Db.Get("parent")
+
+	if obj != nil {
+		parent = string(obj["parent"])
+	} else {
+		imageInfo := ImageInfo(repository, imageId)
+
+		// Do we have a parent?
+		parent = imageInfo["parent"]
+
+		imageDir := Db.File(imageId)
+		if utils.PathExists(imageDir) {
+			os.MkdirAll(imageDir, os.ModeDir|0755)
+		}
+
+		// TODO:...
+
+	}
+	_ = parent
 
 }
 
-func PullRepository(repository string, options map[string]string) []string {
+func PullRepository(repository string) []string {
 
 	var (
-		tag string
+		tag     string
+		imageId string
 	)
 
-	host, registry, username, password = options["host"], options["registry"], options["username"], options["password"]
-	if host == "" {
-		host = "index.docker.io"
-	}
-
-	if username != "" && password != "" {
-		auth = base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
-	}
-
-	if strings.Contains(registry, ":") {
+	if strings.Contains(repository, ":") {
 		parts := strings.SplitN(repository, ":", 1)
-		registry, tag = parts[0], parts[1]
+		repository, tag = parts[0], parts[1]
+		for _, t := range Tags(repository) {
+			if tag == t.Name {
+				imageId = t.Layer
+			}
+		}
+		if imageId == "" {
+			log.Panic("Failed to pull the image with tag %q", tag)
+		}
+	} else {
+		t := Tags(repository)[0]
+		tag, imageId = t.Name, t.Layer
 	}
+
+	return nil
 
 }
