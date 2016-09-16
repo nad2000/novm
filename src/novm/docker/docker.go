@@ -21,7 +21,7 @@ type Tag struct {
 
 var (
 	Repository, Host, Registry, Username, Password string
-	urlBase, auth                                  string
+	BaseUrl, auth                                  string
 	Db                                             nodb.Nodb
 )
 
@@ -33,7 +33,7 @@ func Init(db nodb.Nodb, options map[string]string) {
 	if Host == "" {
 		Host = "index.docker.io"
 	}
-	urlBase = "https://" + Host + "/v1/"
+	BaseUrl = "https://" + Host + "/v1/"
 
 	if Username != "" && Password != "" {
 		auth = base64.StdEncoding.EncodeToString([]byte(Username + ":" + Password))
@@ -54,7 +54,7 @@ func request(
 		hostName = Host
 	}
 
-	url = urlBase + url
+	url = BaseUrl + url
 
 	if method == "" {
 		if body == "" {
@@ -120,7 +120,7 @@ func ImageInfo(repository string, imageId string) map[string]string {
 }
 
 func Tags(repository string) (tags []Tag) {
-	resp, err := http.Get(urlBase + "repositories/" + repository + "/tags")
+	resp, err := http.Get(BaseUrl + "repositories/" + repository + "/tags")
 	if err != nil {
 		panic(err)
 	}
