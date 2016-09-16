@@ -10,11 +10,6 @@ import (
 	"github.com/rocksolidlabs/novm/src/novm/nodb"
 )
 
-func TestDocker(t *testing.T) {
-	// docker.Init(nodb.Nodb{}, map[string]string{})
-	// t.Log(docker.Tags("nginx"))
-}
-
 func TestTags(t *testing.T) {
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -35,4 +30,11 @@ func TestTags(t *testing.T) {
 		t.Errorf(`Got %#v as the first tag, want: {"layer": "bf727fd7", "name": "1.9.6"}`, tag)
 	}
 
+}
+
+func TestDocker(t *testing.T) {
+	// docker.Init(nodb.Nodb{}, map[string]string{})
+	// t.Log(docker.Tags("nginx"))
+	docker.Init(nodb.Nodb{}, map[string]string{})
+	t.Log(docker.Authenticate("repositories/nginx/images"))
 }

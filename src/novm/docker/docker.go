@@ -4,10 +4,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/rocksolidlabs/novm/src/novm/nodb"
@@ -41,9 +43,61 @@ func Init(db nodb.Nodb, options map[string]string) {
 
 }
 
+func newRequest(url string, method string, bodyReader io.Reader, token string) (*http.Request, error) {
+
+	url = BaseUrl + url
+
+	if method == "" {
+		if bodyReader == nil {
+			method = "GET"
+		} else {
+			method = "PUT"
+		}
+	}
+
+	req, err := http.NewRequest(method, url, bodyReader)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	if token != "" {
+		req.Header.Add("Authorization", "Token "+token)
+	}
+
+	return req, err
+}
+
+func Authenticate(url string) (token string, endpoint string) {
+
+	client := &http.Client{}
+	req, err := newRequest(url, "GET", nil, "")
+
+	if auth != "" {
+		req.Header.Add("Authorization", "Basic "+auth)
+		req.Header.Add("X-Docker-Token", "true")
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if res.StatusCode/100 != 2 {
+		log.Panicf("Failed to request %q (Status: %q)", url, res.Status)
+	}
+
+	token = res.Header.Get("X-Docker-Token")
+	dockerEndpoints := res.Header.Get("X-Docker-Endpoints")
+	if dockerEndpoints != "" {
+		endpoints := strings.Split(dockerEndpoints, ",")
+		endpoint = endpoints[rand.Intn(len(endpoints))]
+	} else {
+		endpoint = Host
+	}
+	return token, endpoint
+}
+
 func request(
 	url string, method string, body string, output io.Writer,
-	response *interface{}, hostName string, token string) interface{} {
+	response *interface{}, hostName string, token string, authenticate bool) interface{} {
 
 	var (
 		bodyReader *strings.Reader
@@ -76,7 +130,7 @@ func request(
 	if token != "" {
 		req.Header.Add("Authorization", "Token "+token)
 	}
-	if auth != "" {
+	if authenticate && auth != "" {
 		req.Header.Add("Authorization", "Basic "+auth)
 		req.Header.Add("X-Docker-Token", "true")
 	}
@@ -129,9 +183,15 @@ func Tags(repository string) (tags []Tag) {
 	return
 }
 
-func PullImage(repository string, imageId string) {
+func ImageDownload(repository string, imageId string, tf io.Writer) {
+}
 
-	var parent string
+func PullImage(repository string, imageId string) []string {
+
+	var (
+		parent  string
+		allDirs []string
+	)
 
 	// Is this already in our database?
 	obj, _ := Db.Get("parent")
@@ -149,11 +209,34 @@ func PullImage(repository string, imageId string) {
 			os.MkdirAll(imageDir, os.ModeDir|0755)
 		}
 
-		// TODO:...
+		tf, _ := ioutil.TempFile("", "image")
+		defer os.Remove(tf.Name())
 
+		// Pull down the data:
+		ImageDownload(repository, imageId, tf)
+		tf.Close()
+
+		// Copy all the files into a single directory.
+		command := exec.Command(
+			"fakeroot", "tar", "-C", imageDir, "-xf", tf.Name())
+
+		err := command.Run()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Save the image data:
+		Db.Add(imageId, imageInfo)
 	}
-	_ = parent
 
+	if parent != "" {
+		allDirs = PullImage(repository, parent)
+		allDirs = append(allDirs, Db.File(imageId))
+	} else {
+		allDirs = []string{Db.File(imageId)}
+	}
+
+	return allDirs
 }
 
 func PullRepository(repository string) []string {
