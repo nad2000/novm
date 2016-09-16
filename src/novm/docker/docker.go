@@ -170,6 +170,9 @@ func request(
 }
 
 func ImageInfo(repository string, imageId string) map[string]string {
+	token, endpoint := Authenticate("repositories/" + repository + "/images")
+	req, err := NewRequest(
+
 	return nil
 }
 
@@ -184,6 +187,7 @@ func Tags(repository string) (tags []Tag) {
 }
 
 func ImageDownload(repository string, imageId string, tf io.Writer) {
+	token, endpoint := Authenticate("repositories/" + repository + "/images")
 }
 
 func PullImage(repository string, imageId string) []string {
