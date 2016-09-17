@@ -39,6 +39,29 @@ func TestTags(t *testing.T) {
 
 }
 
+func TestImages(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintln(w, `[
+			{"checksum": "", "id": "680812a4847486e7c32cd43dfd06db339cf26fe6437fb06744523ced17682cac"}, 
+			{"checksum": "", "id": "7585ae1f3b9ae87ba607747a3c2691157fcf14d1bb75e89076e658f05ddf43c0"}
+			]`)
+	}))
+	defer ts.Close()
+
+	docker.Init(nodb.Nodb{}, map[string]string{})
+	docker.BaseUrl = ts.URL + "/"
+
+	images := docker.Images("nginx")
+	if len(images) != 2 {
+		t.Error("Expected 2 tags. Got:", images)
+	}
+
+	if image := images[0]; image != "680812a4847486e7c32cd43dfd06db339cf26fe6437fb06744523ced17682cac" {
+		t.Errorf(`Got %#v as the image, want: 680812a4847486e7c32cd43dfd06db339cf26fe6437fb06744523ced17682cac`, image)
+	}
+}
+
 func TestDocker(t *testing.T) {
 	// docker.Init(nodb.Nodb{}, map[string]string{})
 	// t.Log(docker.Tags("nginx"))
@@ -72,3 +95,25 @@ func TestImageInfo(t *testing.T) {
 		t.Error("Missing parent")
 	}
 }
+
+// func TestPullImage(t *testing.T) {
+// 	db := nodb.Nodb{}
+// 	db.Open(path.Join(os.TempDir(), "db"))
+// 	t.Log("*** ", db.File(""))
+// 	docker.Init(db, map[string]string{"username": "nad2000@gmail.com", "password": "XXX"})
+// 	// t.Log(docker.Tags("nginx"))
+// 	//t.Log(docker.Authenticate("repositories/nginx/images"))
+// 	t.Log(docker.PullImage("nginx", "56c99fa886e832960de32d147868d3a419a42ef0f9134fb021e8befc497a647e"))
+// }
+
+// func TestDownloadImage(t *testing.T) {
+// 	db := nodb.Nodb{}
+// 	db.Open(path.Join(os.TempDir(), "db"))
+// 	t.Log("*** ", db.File(""))
+// 	docker.Init(db, map[string]string{"username": "nad2000@gmail.com", "password": "XXX"})
+// 	// t.Log(docker.Tags("nginx"))
+// 	//t.Log(docker.Authenticate("repositories/nginx/images"))
+// 	tf, _ := ioutil.TempFile("", "image")
+// 	docker.DownloadImage(
+// 		"nginx", "56c99fa886e832960de32d147868d3a419a42ef0f9134fb021e8befc497a647e", tf)
+// }

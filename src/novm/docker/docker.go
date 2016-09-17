@@ -43,6 +43,7 @@ func Init(db nodb.Nodb, options map[string]string) {
 
 }
 
+// newRequest creats a generic Docker API request
 func newRequest(
 	url string, method string, bodyReader io.Reader, endpoint string, token string) (*http.Request, error) {
 
@@ -180,7 +181,6 @@ func request(
 func ImageInfo(repository string, imageId string) (imageInfo map[string]interface{}) {
 
 	token, endpoint := Authenticate("repositories/" + repository + "/images")
-	//req, err := NewRequest(
 	client := &http.Client{}
 	req, err := newRequest("images/"+imageId+"/json", "GET", nil, endpoint, token)
 
@@ -211,8 +211,55 @@ func Tags(repository string) (tags []Tag) {
 	return
 }
 
-func ImageDownload(repository string, imageId string, tf io.Writer) {
-	// token, endpoint := Authenticate("repositories/" + repository + "/images")
+// Images returns the list of all images in the repository
+func Images(repository string) (images []string) {
+
+	resp, err := http.Get(BaseUrl + "repositories/" + repository + "/images")
+	if err != nil {
+		panic(err)
+	}
+
+	defer resp.Body.Close()
+	dec := json.NewDecoder(resp.Body)
+
+	// read open bracket
+	_, err = dec.Token()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for dec.More() {
+		var img struct {
+			Id string
+		}
+		dec.Decode(&img)
+		if img.Id != "" {
+			images = append(images, img.Id)
+		}
+	}
+
+	return
+}
+
+func DownloadImage(repository string, imageId string, tf io.Writer) {
+	token, endpoint := Authenticate("repositories/" + repository + "/images")
+
+	client := &http.Client{}
+	req, err := newRequest("images/"+imageId+"/layer", "GET", nil, endpoint, token)
+
+	res, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if res.StatusCode/100 != 2 {
+		log.Panicf("Failed to request %q (Status: %q)", req.URL, res.Status)
+	}
+
+	_, err = io.Copy(tf, res.Body)
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func PullImage(repository string, imageId string) []string {
@@ -239,10 +286,10 @@ func PullImage(repository string, imageId string) []string {
 		}
 
 		tf, _ := ioutil.TempFile("", "image")
-		defer os.Remove(tf.Name())
+		//defer os.Remove(tf.Name())
 
 		// Pull down the data:
-		ImageDownload(repository, imageId, tf)
+		DownloadImage(repository, imageId, tf)
 		tf.Close()
 
 		// Copy all the files into a single directory.
