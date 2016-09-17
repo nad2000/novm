@@ -43,9 +43,17 @@ func Init(db nodb.Nodb, options map[string]string) {
 
 }
 
-func newRequest(url string, method string, bodyReader io.Reader, token string) (*http.Request, error) {
+func newRequest(
+	url string, method string, bodyReader io.Reader, endpoint string, token string) (*http.Request, error) {
 
-	url = BaseUrl + url
+	var baseUrl string
+	if endpoint == "" {
+		baseUrl = BaseUrl
+	} else {
+		baseUrl = "https://" + endpoint + "/v1/"
+	}
+
+	url = baseUrl + url
 
 	if method == "" {
 		if bodyReader == nil {
@@ -65,10 +73,12 @@ func newRequest(url string, method string, bodyReader io.Reader, token string) (
 	return req, err
 }
 
+// This is a special case where we are authenticating
+// with an index prior to querying the underlying registry.
 func Authenticate(url string) (token string, endpoint string) {
 
 	client := &http.Client{}
-	req, err := newRequest(url, "GET", nil, "")
+	req, err := newRequest(url, "GET", nil, "", "")
 
 	if auth != "" {
 		req.Header.Add("Authorization", "Basic "+auth)
@@ -89,8 +99,6 @@ func Authenticate(url string) (token string, endpoint string) {
 	if dockerEndpoints != "" {
 		endpoints := strings.Split(dockerEndpoints, ",")
 		endpoint = endpoints[rand.Intn(len(endpoints))]
-	} else {
-		endpoint = Host
 	}
 	return token, endpoint
 }
@@ -169,11 +177,28 @@ func request(
 
 }
 
-func ImageInfo(repository string, imageId string) map[string]string {
-	token, endpoint := Authenticate("repositories/" + repository + "/images")
-	req, err := NewRequest(
+func ImageInfo(repository string, imageId string) (imageInfo map[string]interface{}) {
 
-	return nil
+	token, endpoint := Authenticate("repositories/" + repository + "/images")
+	//req, err := NewRequest(
+	client := &http.Client{}
+	req, err := newRequest("images/"+imageId+"/json", "GET", nil, endpoint, token)
+
+	res, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if res.StatusCode/100 != 2 {
+		log.Panicf("Failed to request %q (Status: %q)", req.URL, res.Status)
+	}
+
+	err = json.NewDecoder(res.Body).Decode(&imageInfo)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return
 }
 
 func Tags(repository string) (tags []Tag) {
@@ -187,7 +212,7 @@ func Tags(repository string) (tags []Tag) {
 }
 
 func ImageDownload(repository string, imageId string, tf io.Writer) {
-	token, endpoint := Authenticate("repositories/" + repository + "/images")
+	// token, endpoint := Authenticate("repositories/" + repository + "/images")
 }
 
 func PullImage(repository string, imageId string) []string {
@@ -206,7 +231,7 @@ func PullImage(repository string, imageId string) []string {
 		imageInfo := ImageInfo(repository, imageId)
 
 		// Do we have a parent?
-		parent = imageInfo["parent"]
+		parent = imageInfo["parent"].(string)
 
 		imageDir := Db.File(imageId)
 		if utils.PathExists(imageDir) {

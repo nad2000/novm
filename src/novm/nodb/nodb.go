@@ -94,7 +94,7 @@ func (db *Nodb) Show() (result map[string]map[string]string) {
 	return
 }
 
-func (db *Nodb) Add(objId string, obj map[string]string) (err error) {
+func (db *Nodb) Add(objId string, obj map[string]interface{}) (err error) {
 	obj["timestamp"] = strconv.FormatInt(time.Now().Unix(), 10)
 	of, err := os.Create(db.File(objId + ".json"))
 	defer of.Close()
@@ -208,7 +208,7 @@ func (db *Nodb) Fetch(url string, params map[string]string) (objId string) {
 		inf io.ReadCloser
 		err error
 	)
-	obj := make(map[string]string)
+	obj := make(map[string]interface{})
 	for k, v := range params {
 		obj[k] = v
 	}
