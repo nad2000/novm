@@ -178,6 +178,7 @@ func request(
 
 }
 
+// ImageInfo retrieves the image info
 func ImageInfo(repository string, imageId string) (imageInfo map[string]interface{}) {
 
 	token, endpoint := Authenticate("repositories/" + repository + "/images")
@@ -201,6 +202,7 @@ func ImageInfo(repository string, imageId string) (imageInfo map[string]interfac
 	return
 }
 
+// Tags returns all repository tags
 func Tags(repository string) (tags []Tag) {
 	resp, err := http.Get(BaseUrl + "repositories/" + repository + "/tags")
 	if err != nil {
@@ -338,6 +340,6 @@ func PullRepository(repository string) []string {
 		tag, imageId = t.Name, t.Layer
 	}
 
-	return nil
+	return PullImage(repository, imageId)
 
 }
