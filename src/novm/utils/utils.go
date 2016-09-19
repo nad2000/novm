@@ -313,7 +313,7 @@ func StringIsIn(a string, list []string) bool {
 	return false
 }
 
-func ClearCloexec(fd int) {
+func ClearCloexec(fd uintptr) {
 	// TODO:
 	/*
 			flags = fcntl.fcntl(fd, fcntl.F_GETFD)

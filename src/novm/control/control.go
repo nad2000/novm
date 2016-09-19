@@ -25,9 +25,8 @@ type CommandMessage struct {
 }
 
 var (
-	bind     bool
 	sendRpc  bool = false
-	listener net.Listener
+	listener *net.UnixListener
 	conn     net.Conn
 )
 
@@ -66,6 +65,24 @@ func readLine() (line []byte, err error) {
 	return line, nil
 }
 
+func Bind(ctrlPath string) (fd uintptr, err error) {
+
+	dirName := path.Dir(ctrlPath)
+	if !utils.PathExists(dirName) {
+		err = os.MkdirAll(dirName, os.ModeDir|0755)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+	}
+
+	listener, err = net.ListenUnix("unix", &net.UnixAddr{ctrlPath, "unix"})
+	fd = listener.File().Fd()
+	if err != nil {
+		panic(err)
+	}
+}
+
 func Open(ctrlPath string) (err error) {
 	dirName := path.Dir(ctrlPath)
 	if !utils.PathExists(dirName) {
@@ -76,16 +93,9 @@ func Open(ctrlPath string) (err error) {
 		}
 	}
 
-	if bind {
-		listener, err = net.Listen("unix", ctrlPath)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		conn, err = net.Dial("unix", ctrlPath)
-		if err != nil {
-			panic(err)
-		}
+	conn, err = net.Dial("unix", ctrlPath)
+	if err != nil {
+		panic(err)
 	}
 	return
 }

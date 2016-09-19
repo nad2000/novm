@@ -4,7 +4,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"novm/control"
+	"os"
+	"path"
+	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 
@@ -111,6 +116,24 @@ Docker repositories are provided as follows.
 
 		fmt.Printf("*****************************************\n%#v", CreateState(
 			kernel, release, cpus, com1, com2, nopci, memsize, nics, disks, read, write, packs, repos))
+
+		// Provide our state by dumping to a temporary file:
+		tf, _ := ioutil.TempFile("", "image")
+		os.Remove(tf.Name())
+		// metaData = CreateState(...) // TODO...
+		tf.Seek(0, 0)
+
+		// Keep the descriptor:
+		stateFd, _ := syscall.Dup(int(tf.Fd()))
+		utils.ClearCloexec(stateFd)
+		tf.Close()
+
+		// Control socket
+		ctrlFileName = path.Join(controlPath, strconv.Itoa(os.Getpid())+".ctrl")
+		ctrlFd, _ = control.Bind(ctrlFileName)
+
+		// Add our metadata to the regitry:
+		instances.Add(strconv.Itoa(os.Getpid())) // TODO: meta data
 
 	},
 }
