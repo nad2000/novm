@@ -13,7 +13,7 @@ var mkpackCmd = &cobra.Command{
 	Long:  `Create a pack from a tree.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		debugCmd(cmd)
-		objId := flagString(cmd, "id")
+		objID := flagString(cmd, "id")
 		name := flagString(cmd, "name")
 		dirPath := flagString(cmd, "path")
 		include := flagStringSlice(cmd, "include")
@@ -21,9 +21,9 @@ var mkpackCmd = &cobra.Command{
 		output := utils.TempFileName("tmp", ".zip")
 
 		if dirPath == "" {
-			if objId != "" || name != "" {
-				objId = instances.Find(objId, dict{"name": name})
-				dirPath = instances.File(objId)
+			if objID != "" || name != "" {
+				objID = instances.Find(objID, dict{"name": name})
+				dirPath = instances.File(objID)
 			} else {
 				dirPath = "."
 			}

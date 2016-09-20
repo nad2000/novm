@@ -49,8 +49,8 @@ For example:
 			params[splitArg[0]] = splitArg[1]
 		}
 
-		objId := instances.Find(id, dict{"name": name})
-		ctrlPath := path.Join(control_file, objId+".ctrl")
+		objID := instances.Find(id, dict{"name": name})
+		ctrlPath := path.Join(control_file, objID+".ctrl")
 		control.Open(ctrlPath)
 		result, _ := control.Rpc(command, params)
 		printResult(cmd, result)

@@ -60,6 +60,8 @@ func debugCmd(cmd *cobra.Command) {
 	}
 }
 
+// SetRootDir sets the root directory of the configuration.
+// It could be specified using NOVM_ROOT environment variable
 func SetRootDir(dirName string) {
 	if dirName == "" {
 		root = utils.GetEnv(

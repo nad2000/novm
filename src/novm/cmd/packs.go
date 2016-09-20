@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// packsCmd represents the packs command
 var packsCmd = &cobra.Command{
 	Use:   "packs",
 	Short: "-- List available packs.",
@@ -17,6 +16,7 @@ var packsCmd = &cobra.Command{
 	},
 }
 
+// Packs lists available packs
 func Packs() {
 	rval := packs.Show()
 	utils.PrettyPrintFields(rval,

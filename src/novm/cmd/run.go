@@ -27,8 +27,8 @@ var runCmd = &cobra.Command{
 			return
 		}
 
-		objId := instances.Find(id, dict{"name": name})
-		ctrlPath := path.Join(control_file, objId+".ctrl")
+		objID := instances.Find(id, dict{"name": name})
+		ctrlPath := path.Join(control_file, objID+".ctrl")
 		control.Open(ctrlPath)
 
 		result, _ := control.Run(command, env, cwd, terminal)

@@ -4,16 +4,16 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"github.com/rocksolidlabs/novm/src/novm/utils"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 
+	"github.com/rocksolidlabs/novm/src/novm/utils"
+
 	"github.com/spf13/cobra"
 )
 
-// mkkernelCmd represents the mkkernel command
 var mkkernelCmd = &cobra.Command{
 	Use:   "mkkernel",
 	Short: "-- Make a new kernel from an local kernel.",
@@ -34,6 +34,7 @@ var mkkernelCmd = &cobra.Command{
 	},
 }
 
+// Mkkernel makea a new kernel from an local kernel
 func Mkkernel(
 
 	output string, release string, modules string, bzimage string,

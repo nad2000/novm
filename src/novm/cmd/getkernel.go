@@ -24,13 +24,14 @@ var getkernelCmd = &cobra.Command{
 	},
 }
 
+// GetKernel attempts to import a kernel with given URL naming as 'name'
 func GetKernel(url string, nocache bool, name string) interface{} {
 	_ = nocache
 	if result := kernels.Find("", dict{"url": url, "name": name}); result != "" {
 		return result
-	} else {
-		return kernels.Fetch(url, dict{"name": name})
 	}
+
+	return kernels.Fetch(url, dict{"name": name})
 }
 
 func init() {

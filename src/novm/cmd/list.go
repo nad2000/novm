@@ -1,12 +1,7 @@
 package cmd
 
-import (
-	. "github.com/rocksolidlabs/novm/src/novm/utils"
+import "github.com/spf13/cobra"
 
-	"github.com/spf13/cobra"
-)
-
-// listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "-- List running instances.",
@@ -17,6 +12,7 @@ var listCmd = &cobra.Command{
 	},
 }
 
+// List lists all instances:
 func List(full bool, alive bool) {
 	rval := instances.Show()
 	for pid, v := range rval {

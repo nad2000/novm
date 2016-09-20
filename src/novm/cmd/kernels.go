@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"bufio"
-	"github.com/rocksolidlabs/novm/src/novm/utils"
 	"os"
 	"path"
+
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -20,10 +21,11 @@ var kernelsCmd = &cobra.Command{
 	},
 }
 
+// Kernels prints the list of all available kernels
 func Kernels() {
 	items := kernels.Show()
-	for objId, item := range items {
-		rf, err := os.Open(path.Join(kernels.File(objId), "release"))
+	for objID, item := range items {
+		rf, err := os.Open(path.Join(kernels.File(objID), "release"))
 		if err != nil {
 			continue
 		}
