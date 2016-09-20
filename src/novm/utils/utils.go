@@ -327,7 +327,7 @@ func StringIsIn(a string, list []string) bool {
 
 // ClearCloexec removes FD_CLOEXEC ("Close on Exit") flag from the file
 // specified with a file descriptor.
-func ClearCloexec(fd uintptr) {
+func ClearCloexec(fd int) {
 	// TODO:
 	/*
 			flags = fcntl.fcntl(fd, fcntl.FGETFD)

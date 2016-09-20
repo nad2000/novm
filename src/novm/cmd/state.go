@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/rocksolidlabs/novm/src/novm/devices"
+	"github.com/rocksolidlabs/novm/src/novm/docker"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
@@ -142,7 +143,8 @@ func CreateVM(
 			parts := strings.SplitN(arg, "=", 1)
 			options[parts[0]] = parts[1]
 		}
-		read = append(read, utils.PullRepository(repository, options)...)
+		docker.Init(dockerDB, options)
+		read = append(read, docker.PullRepository(repository)...)
 	}
 
 	// The root filesystem:

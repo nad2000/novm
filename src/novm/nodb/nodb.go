@@ -103,11 +103,11 @@ func (db *Nodb) Add(objId string, obj interface{}) (err error) {
 		var mapObj map[string]interface{}
 		objJson := utils.JSONDumps(obj)
 		json.Unmarshal([]byte(objJson), &mapObj)
-		return Add(objId, mapObj)
+		return db.Add(objId, mapObj)
 	case map[string]string:
-		obj["timestamp"] = strconv.FormatInt(time.Now().Unix(), 10)
+		obj.(map[string]string)["timestamp"] = strconv.FormatInt(time.Now().Unix(), 10)
 	case map[string]interface{}:
-		obj["timestamp"] = time.Now().Unix()
+		obj.(map[string]interface{})["timestamp"] = time.Now().Unix()
 	}
 	of, err := os.Create(db.File(objId + ".json"))
 	defer of.Close()

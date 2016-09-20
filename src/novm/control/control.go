@@ -72,10 +72,15 @@ func Bind(ctrlPath string) (fd uintptr, err error) {
 	}
 
 	listener, err = net.ListenUnix("unix", &net.UnixAddr{ctrlPath, "unix"})
-	fd = listener.File().Fd()
+	socketFile, err := listener.File()
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
+	fd = socketFile.Fd()
+	if err != nil {
+		log.Panic(err)
+	}
+	return
 }
 
 // Open creates and opens a Unix socket
@@ -156,14 +161,14 @@ func RPC(name string, params map[string]string) (interface{}, error) {
 	}
 
 	msg = rawMsg.(map[string]interface{})
-	respId, ok := msg["id"]
+	respID, ok := msg["id"]
 	if !ok {
 		err = fmt.Errorf("%+v", msg)
 		panic(err)
 		return msg, err
 	}
-	if respId != rpcUUID {
-		err = fmt.Errorf("Request ID and response ID mismatch.", rpcUUID, respId)
+	if respID != rpcUUID {
+		err = fmt.Errorf("Request ID and response ID mismatch.", rpcUUID, respID)
 		panic(err)
 		return msg, err
 	}
@@ -177,6 +182,7 @@ func RPC(name string, params map[string]string) (interface{}, error) {
 	return msg, nil
 }
 
+// Run runs a remote command on VM
 func Run(command []string, env []string, cwd string, terminal bool) (interface{}, error) {
 
 	var (

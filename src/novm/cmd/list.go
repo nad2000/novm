@@ -1,6 +1,10 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/rocksolidlabs/novm/src/novm/utils"
+
+	"github.com/spf13/cobra"
+)
 
 var listCmd = &cobra.Command{
 	Use:   "list",
@@ -22,7 +26,7 @@ func List(full bool, alive bool) {
 			v["alive"] = "False"
 		}
 	}
-	PrettyPrintFields(rval,
+	utils.PrettyPrintFields(rval,
 		[]string{"id", "name", "timestamp", "cpus", "alive", "ips", "memory"})
 }
 

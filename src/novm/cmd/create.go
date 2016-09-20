@@ -3,7 +3,6 @@ package cmd
 import (
 	"io/ioutil"
 	"log"
-	"novm/control"
 	"os"
 	"os/exec"
 	"path"
@@ -11,6 +10,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/rocksolidlabs/novm/src/novm/control"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 
 	"github.com/spf13/cobra"
@@ -98,6 +98,11 @@ Docker repositories are provided as follows.
 		nofork := flagBool(cmd, "nofork")
 		terminal := flagBool(cmd, "terminal")
 
+		_ = name
+		_ = cwd
+		_ = nofork
+		_ = terminal
+
 		cmdArgs := make([]string, 0, 10)
 		if init {
 			cmdArgs = append(cmdArgs, "-init")
@@ -121,25 +126,25 @@ Docker repositories are provided as follows.
 		tf.Close()
 
 		// Control socket
-		ctrlFileName = path.Join(controlPath, strconv.Itoa(os.Getpid())+".ctrl")
-		ctrlFd, _ = control.Bind(ctrlFileName)
+		ctrlFileName := path.Join(controlPath, strconv.Itoa(os.Getpid())+".ctrl")
+		ctrlFd, _ := control.Bind(ctrlFileName)
 
 		// Add our metadata to the regitry:
 		meta := CreateVM(
 			kernel, release, cpus, com1, com2, nopci, memsize, nics, disks, read, write, packs, repos)
 		instances.Add(strconv.Itoa(os.Getpid()), meta)
 
-		args := []string{
+		cmdArgs = append([]string{
 			"-statefd=" + strconv.Itoa(stateFd),
-			"-controlfd=" + strconv.Itoa(ctrlFd),
-		}
+			"-controlfd=" + strconv.Itoa(int(ctrlFd)),
+		}, cmdArgs...)
 
 		for _, o := range vmmopt {
-			args = append(args, "-"+o)
+			cmdArgs = append(cmdArgs, "-"+o)
 		}
 
 		command := exec.Command(utils.LibExec("novmm"), args...)
-		err = command.Run()
+		err := command.Run()
 		if err != nil {
 			log.Panic(err)
 		}

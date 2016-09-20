@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"log"
-	"github.com/rocksolidlabs/novm/src/novm/control"
 	"path"
 	"strings"
+
+	"github.com/rocksolidlabs/novm/src/novm/control"
 
 	"github.com/spf13/cobra"
 )
@@ -50,9 +51,9 @@ For example:
 		}
 
 		objID := instances.Find(id, dict{"name": name})
-		ctrlPath := path.Join(control_file, objID+".ctrl")
+		ctrlPath := path.Join(controlPath, objID+".ctrl")
 		control.Open(ctrlPath)
-		result, _ := control.Rpc(command, params)
+		result, _ := control.RPC(command, params)
 		printResult(cmd, result)
 	},
 }

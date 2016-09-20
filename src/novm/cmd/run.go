@@ -2,8 +2,9 @@ package cmd
 
 import (
 	"log"
-	"github.com/rocksolidlabs/novm/src/novm/control"
 	"path"
+
+	"github.com/rocksolidlabs/novm/src/novm/control"
 
 	"github.com/spf13/cobra"
 )
@@ -28,7 +29,7 @@ var runCmd = &cobra.Command{
 		}
 
 		objID := instances.Find(id, dict{"name": name})
-		ctrlPath := path.Join(control_file, objID+".ctrl")
+		ctrlPath := path.Join(controlPath, objID+".ctrl")
 		control.Open(ctrlPath)
 
 		result, _ := control.Run(command, env, cwd, terminal)
