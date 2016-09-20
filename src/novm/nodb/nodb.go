@@ -94,8 +94,21 @@ func (db *Nodb) Show() (result map[string]map[string]string) {
 	return
 }
 
-func (db *Nodb) Add(objId string, obj map[string]interface{}) (err error) {
-	obj["timestamp"] = strconv.FormatInt(time.Now().Unix(), 10)
+func (db *Nodb) Add(objId string, obj interface{}) (err error) {
+	switch obj.(type) {
+	default:
+		// Change "obj" into string map to interface{}
+		// in order to add the timestamp field.
+		// Perhpas there is a better way to do this?
+		var mapObj map[string]interface{}
+		objJson := utils.JsonDumps(obj)
+		json.Unmarshal([]byte(objJson), &mapObj)
+		return Add(objId, mapObj)
+	case map[string]string:
+		obj["timestamp"] = strconv.FormatInt(time.Now().Unix(), 10)
+	case map[string]interface{}:
+		obj["timestamp"] = time.Now().Unix()
+	}
 	of, err := os.Create(db.File(objId + ".json"))
 	defer of.Close()
 	if err != nil {
