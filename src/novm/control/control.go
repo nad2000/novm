@@ -18,14 +18,8 @@ import (
 	termios "github.com/creack/termios/raw"
 )
 
-type CommandMessage struct {
-	method string
-	params []string
-	id     string
-}
-
 var (
-	sendRpc  bool = false
+	sendRPC  = false
 	listener *net.UnixListener
 	conn     net.Conn
 )
@@ -41,9 +35,9 @@ func readLine() (line []byte, err error) {
 			panic(err)
 			if n > 0 {
 				return buf[:n], err
-			} else {
-				return nil, err
 			}
+
+			return nil, err
 		}
 		if line == nil {
 			if n < bytes.MinRead {
@@ -65,6 +59,7 @@ func readLine() (line []byte, err error) {
 	return line, nil
 }
 
+// Bind creates and binds to listen on a Unix socket
 func Bind(ctrlPath string) (fd uintptr, err error) {
 
 	dirName := path.Dir(ctrlPath)
@@ -83,6 +78,7 @@ func Bind(ctrlPath string) (fd uintptr, err error) {
 	}
 }
 
+// Open creates and opens a Unix socket
 func Open(ctrlPath string) (err error) {
 	dirName := path.Dir(ctrlPath)
 	if !utils.PathExists(dirName) {
@@ -100,7 +96,8 @@ func Open(ctrlPath string) (err error) {
 	return
 }
 
-func Rpc(name string, params map[string]string) (interface{}, error) {
+// RPC calls RPC command over the Unix socket
+func RPC(name string, params map[string]string) (interface{}, error) {
 
 	var (
 		msg     map[string]interface{}
@@ -109,37 +106,37 @@ func Rpc(name string, params map[string]string) (interface{}, error) {
 		rawResp []byte
 	)
 
-	param_list := make(map[string]interface{})
+	paramList := make(map[string]interface{})
 	for n, v := range params {
 		if utils.IsNumber(v) {
 			if strings.Contains(v, ".") {
-				param_list[n], err = strconv.ParseFloat(v, 64)
+				paramList[n], err = strconv.ParseFloat(v, 64)
 			} else {
-				param_list[n], err = strconv.ParseInt(v, 10, 64)
+				paramList[n], err = strconv.ParseInt(v, 10, 64)
 			}
 		} else if lv := strings.ToLower(v); lv == "true" || lv == "false" {
-			param_list[n] = (lv == "true")
+			paramList[n] = (lv == "true")
 		} else {
-			param_list[n] = v
+			paramList[n] = v
 		}
 	}
 
-	if !sendRpc {
+	if !sendRPC {
 		_, err = conn.Write([]byte("NOVM RPC\n"))
 		if err != nil {
 			panic(err)
 			return nil, err
 		}
-		sendRpc = true
+		sendRPC = true
 	}
 
-	rpcUuid := utils.Uuid()
+	rpcUUID := utils.UUID()
 
 	rpcCmd := fmt.Sprintf(`{
 		"method": "Rpc.%s",
 		"params": [%s],
 		"id": "%s"
-	}`, strings.Title(name), utils.JsonDumps(param_list), rpcUuid)
+	}`, strings.Title(name), utils.JSONDumps(paramList), rpcUUID)
 
 	_, err = conn.Write([]byte(rpcCmd))
 	if err != nil {
@@ -165,8 +162,8 @@ func Rpc(name string, params map[string]string) (interface{}, error) {
 		panic(err)
 		return msg, err
 	}
-	if respId != rpcUuid {
-		err = fmt.Errorf("Request ID and response ID mismatch.", rpcUuid, respId)
+	if respId != rpcUUID {
+		err = fmt.Errorf("Request ID and response ID mismatch.", rpcUUID, respId)
 		panic(err)
 		return msg, err
 	}
@@ -208,7 +205,7 @@ func Run(command []string, env []string, cwd string, terminal bool) (interface{}
 		"terminal":    terminal,
 		"cwd":         cwd,
 	}
-	utils.JsonDump(startCmd, conn)
+	utils.JSONDump(startCmd, conn)
 	conn.Write([]byte("\n"))
 
 	if terminal {

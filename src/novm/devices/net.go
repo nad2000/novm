@@ -160,7 +160,7 @@ func CreateNic(index int, options map[string]string) (state State) {
 
 	name, ok = options["name"]
 	if !ok || name == "" {
-		name = utils.Uuid()
+		name = utils.UUID()
 	}
 
 	mac = options["mac"]

@@ -33,25 +33,25 @@ func CreateVM(
 
 	devs := []devices.State{
 		{
-			"name":   utils.Uuid(),
+			"name":   utils.UUID(),
 			"driver": "bios",
 			"data":   map[string]interface{}{},
 			"debug":  false,
 		},
 		{
-			"name":   utils.Uuid(),
+			"name":   utils.UUID(),
 			"driver": "acpi",
 			"data":   map[string]interface{}{},
 			"debug":  false,
 		},
 		{
-			"name":   utils.Uuid(),
+			"name":   utils.UUID(),
 			"driver": "apic",
 			"data":   map[string]interface{}{},
 			"debug":  false,
 		},
 		{
-			"name":   utils.Uuid(),
+			"name":   utils.UUID(),
 			"driver": "pit",
 			"data":   map[string]interface{}{},
 			"debug":  false,
@@ -67,7 +67,7 @@ func CreateVM(
 	}
 
 	devs = append(devs, devices.State{
-		"name":   utils.Uuid(),
+		"name":   utils.UUID(),
 		"driver": "rtc",
 		"data":   map[string]interface{}{},
 		"debug":  false,
@@ -75,7 +75,7 @@ func CreateVM(
 
 	if devices.Pci {
 		devs = append(devs, devices.State{
-			"name":   utils.Uuid(),
+			"name":   utils.UUID(),
 			"driver": "pci-bus",
 			"data":   map[string]interface{}{},
 			"debug":  false,

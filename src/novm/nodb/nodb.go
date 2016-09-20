@@ -101,7 +101,7 @@ func (db *Nodb) Add(objId string, obj interface{}) (err error) {
 		// in order to add the timestamp field.
 		// Perhpas there is a better way to do this?
 		var mapObj map[string]interface{}
-		objJson := utils.JsonDumps(obj)
+		objJson := utils.JSONDumps(obj)
 		json.Unmarshal([]byte(objJson), &mapObj)
 		return Add(objId, mapObj)
 	case map[string]string:
@@ -115,7 +115,7 @@ func (db *Nodb) Add(objId string, obj interface{}) (err error) {
 		log.Fatal(err)
 		return
 	}
-	err = utils.JsonDump(obj, of)
+	err = utils.JSONDump(obj, of)
 	db.list = nil
 	return
 }

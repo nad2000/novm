@@ -24,7 +24,7 @@ func createDevice(driver string, name string, data State, cmdline string) State 
 	}
 
 	if name == "" {
-		name = utils.Uuid()
+		name = utils.UUID()
 	}
 
 	if driver == "" {
@@ -91,7 +91,7 @@ func createCom(comNo int) State {
 
 	return State{
 		"driver": "uart",
-		"name":   utils.Uuid(),
+		"name":   utils.UUID(),
 		"data": State{
 			"base":      base,
 			"interrupt": irq,
@@ -126,7 +126,7 @@ func CreateUserMemory(size int, fd int) State {
 	}
 
 	return State{
-		"name":   utils.Uuid(),
+		"name":   utils.UUID(),
 		"driver": "user-memory",
 		"data": map[string]interface{}{
 			"fd":   fd,

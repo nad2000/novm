@@ -151,7 +151,7 @@ func flagInt(cmd *cobra.Command, name string) (val int) {
 // Print the result
 func printResult(cmd *cobra.Command, result interface{}) {
 	if json, _ := cmd.Flags().GetBool("json"); json || cmd.Name() == "control" {
-		fmt.Println(utils.JsonDumps(result))
+		fmt.Println(utils.JSONDumps(result))
 	} else if plain, _ := cmd.Flags().GetBool("plain"); plain {
 		fmt.Printf("%v\n", result)
 	} else {

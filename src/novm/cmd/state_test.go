@@ -10,7 +10,7 @@ import (
 func TestStateCreation(t *testing.T) {
 
 	state := cmd.CreateState("KERNEL", "RELEASE", 4, true, true, false, 0, nil, nil, nil, nil, nil, nil)
-	t.Log(utils.JsonDumps(state))
+	t.Log(utils.JSONDumps(state))
 }
 
 var SAMPLE_STATE string = `{

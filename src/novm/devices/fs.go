@@ -15,7 +15,7 @@ func CreateFs(index int, tag string, tempDir string, read []string, write []stri
 	var err error
 
 	if tag == "" {
-		tag = utils.Uuid()
+		tag = utils.UUID()
 	}
 
 	if tempDir == "" {

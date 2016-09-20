@@ -17,10 +17,11 @@ import (
 	"syscall"
 )
 
+// Debug is the debugging attribute for the whole package
 var Debug bool
 
-// Creates a unique UUID
-func Uuid() string {
+// UUID creates a unique UUID
+func UUID() string {
 	b := make([]byte, 16)
 	rand.Read(b)
 	b[6] = (b[6] & 0x0f) | 0x40
@@ -28,17 +29,18 @@ func Uuid() string {
 	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 }
 
+// PathExists tests the existence of a path
 func PathExists(path string) bool {
-	// test if a file exists:
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
 }
 
+// Packdir packs a directory into a zip file including and/or excluding files accodingly
 func Packdir(input string, output string, include []string, exclude []string) error {
 
 	var fh *zip.FileHeader
-	output_file, _ := os.Create(output)
-	zipf := zip.NewWriter(output_file)
+	outputFile, _ := os.Create(output)
+	zipf := zip.NewWriter(outputFile)
 	defer zipf.Close()
 
 	if !strings.HasSuffix(input, "/") {
@@ -51,14 +53,14 @@ func Packdir(input string, output string, include []string, exclude []string) er
 			return nil
 		}
 
-		for _, exclude_fileName := range exclude {
-			if strings.HasPrefix(fileName, exclude_fileName) {
+		for _, excludeFileName := range exclude {
+			if strings.HasPrefix(fileName, excludeFileName) {
 				return nil
 			}
 		}
 		if include != nil && len(include) > 0 {
-			for _, include_fileName := range include {
-				if strings.HasPrefix(fileName, include_fileName) {
+			for _, includeFileName := range include {
+				if strings.HasPrefix(fileName, includeFileName) {
 					goto Add
 				}
 			}
@@ -87,6 +89,7 @@ func Packdir(input string, output string, include []string, exclude []string) er
 	return err
 }
 
+// Unpackdir unpacks a directory from a zip file
 func Unpackdir(input string, output string) error {
 
 	r, err := zip.OpenReader(input)
@@ -100,25 +103,26 @@ func Unpackdir(input string, output string) error {
 		if err != nil {
 			log.Fatal(err)
 		}
-		file_name := path.Join(output, f.Name)
-		output_path, _ := path.Split(file_name)
+		fileName := path.Join(output, f.Name)
+		outputPath, _ := path.Split(fileName)
 
-		if !PathExists(output_path) {
-			os.MkdirAll(output_path, os.ModeDir|0755)
+		if !PathExists(outputPath) {
+			os.MkdirAll(outputPath, os.ModeDir|0755)
 		}
 
-		output_file, _ := os.Create(file_name)
-		_, err = io.Copy(output_file, rc)
+		outputFile, _ := os.Create(fileName)
+		_, err = io.Copy(outputFile, rc)
 		if err != nil {
 			log.Fatal(err)
 		}
 		rc.Close()
-		output_file.Close()
+		outputFile.Close()
 	}
 
 	return err
 }
 
+// Asbool converts an arbitrary value inot a boollean value
 func Asbool(value interface{}) bool {
 
 	if value == nil {
@@ -137,6 +141,7 @@ func Asbool(value interface{}) bool {
 	}
 }
 
+// TempFileName creates a temporal file name
 func TempFileName(prefix, suffix string) string {
 	// TempFileName generates a temporary filename for use in testing or whatever
 	randBytes := make([]byte, 4)
@@ -144,6 +149,7 @@ func TempFileName(prefix, suffix string) string {
 	return filepath.Join(os.TempDir(), prefix+hex.EncodeToString(randBytes)+suffix)
 }
 
+// SystemRelease retrieves the system release value
 func SystemRelease() string {
 	var u syscall.Utsname
 	_ = syscall.Uname(&u)
@@ -157,6 +163,8 @@ func SystemRelease() string {
 	return str
 }
 
+// LibExec finds and extends to the absolute file name
+// included scripts
 func LibExec(name string) string {
 	binDir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	binName := filepath.Base(os.Args[0])
@@ -179,7 +187,7 @@ func LibExec(name string) string {
 	return ""
 }
 
-// Copies file source to destination dest.
+// CopyFile copies file source to destination dest.
 func CopyFile(source string, dest string) (err error) {
 	sf, err := os.Open(source)
 	if err != nil {
@@ -203,14 +211,15 @@ func CopyFile(source string, dest string) (err error) {
 	return
 }
 
+// CopyDir copies recursively whole directory to a new destination
 func CopyDir(source string, dest string) (err error) {
 	return CopyTree(source, dest, nil)
 }
 
+// CopyTree recursively copies a directory tree, attempting to preserve permissions.
+// Source directory must exist, destination directory must *not* exist.
+// The matching directories with any in the list are ignored.
 func CopyTree(source string, dest string, ignore func(string) bool) (err error) {
-	// Recursively copies a directory tree, attempting to preserve permissions.
-	// Source directory must exist, destination directory must *not* exist.
-	// The matching directories with any in the list are ignored.
 
 	// get properties of source dir
 	fi, err := os.Stat(source)
@@ -266,8 +275,8 @@ func CopyTree(source string, dest string, ignore func(string) bool) (err error) 
 	return
 }
 
+// GetEnv ruturns environent variable value or if it's missing, default fall back value
 func GetEnv(name string, defaultValue string) (value string) {
-	// ruturns environent variable value or it's missing, default fall back value
 
 	value = os.Getenv(name)
 	if value == "" {
@@ -276,7 +285,8 @@ func GetEnv(name string, defaultValue string) (value string) {
 	return
 }
 
-func JsonDumps(in interface{}) string {
+// JSONDumps serialize an object into indented JSON string
+func JSONDumps(in interface{}) string {
 	var out bytes.Buffer
 	b, err := json.Marshal(in)
 	if err != nil {
@@ -291,7 +301,8 @@ func JsonDumps(in interface{}) string {
 	return out.String()
 }
 
-func JsonDump(in interface{}, out io.Writer) error {
+// JSONDump serialize an object into indented JSON streaming it into the writer
+func JSONDump(in interface{}, out io.Writer) error {
 	b, err := json.MarshalIndent(in, "", "\t")
 	if err != nil {
 		log.Fatal(err)
@@ -304,6 +315,7 @@ func JsonDump(in interface{}, out io.Writer) error {
 	return err
 }
 
+// StringIsIn tests if a string is in the list of strings
 func StringIsIn(a string, list []string) bool {
 	for _, b := range list {
 		if b == a {
@@ -313,10 +325,12 @@ func StringIsIn(a string, list []string) bool {
 	return false
 }
 
+// ClearCloexec removes FD_CLOEXEC ("Close on Exit") flag from the file
+// specified with a file descriptor.
 func ClearCloexec(fd uintptr) {
 	// TODO:
 	/*
-			flags = fcntl.fcntl(fd, fcntl.F_GETFD)
-		    fcntl.fcntl(fd, fcntl.F_SETFD, flags & (~fcntl.FD_CLOEXEC))
+			flags = fcntl.fcntl(fd, fcntl.FGETFD)
+		    fcntl.fcntl(fd, fcntl.FSETFD, flags & (~fcntl.FDCLOEXEC))
 	*/
 }

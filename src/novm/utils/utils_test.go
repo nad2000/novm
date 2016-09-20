@@ -207,7 +207,7 @@ func TestCopyTree(t *testing.T) {
 	removeTestTree()
 }
 
-func TestJsonDumps(t *testing.T) {
+func TestJSONDumps(t *testing.T) {
 	type test struct {
 		Name      string   `json:"name" field`
 		Age       int      `json:"age" field`
@@ -223,7 +223,7 @@ func TestJsonDumps(t *testing.T) {
 		[]string{"one", "two", "three"},
 		[]string{"ONE", "TWO", "THREE"},
 	}}
-	outputData := utils.JsonDumps(obj)
+	outputData := utils.JSONDumps(obj)
 	expectedOutput := `[
 	{
 		"name": "test",
@@ -255,7 +255,7 @@ func TestJsonDumps(t *testing.T) {
 		"timestamp": 1470581110
 	}
 ]`
-	outputData2 := utils.JsonDumps(obj2)
+	outputData2 := utils.JSONDumps(obj2)
 
 	if outputData2 != expectedOutput2 {
 		t.Errorf("Object:\n%+v\nserialized into:\n%v\nExpected:\n%v",

@@ -41,7 +41,7 @@ func CreateDisk(index int, options map[string]string) State {
 	driver += "-block"
 
 	if name == "" {
-		name = utils.Uuid()
+		name = utils.UUID()
 	}
 
 	return State{
