@@ -7,9 +7,9 @@ import (
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
-func TestStateCreation(t *testing.T) {
+func TestVMCreation(t *testing.T) {
 
-	state := cmd.CreateState("KERNEL", "RELEASE", 4, true, true, false, 0, nil, nil, nil, nil, nil, nil)
+	state := cmd.CreateVM("KERNEL", "RELEASE", 4, true, true, false, 0, nil, nil, nil, nil, nil, nil)
 	t.Log(utils.JSONDumps(state))
 }
 

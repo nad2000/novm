@@ -19,8 +19,10 @@ func TestCreatCom(t *testing.T) {
 }
 
 func TestCreatConsole(t *testing.T) {
-	console := devices.CreateConsole(0, true)
+	devices.Pci = true
+	console := devices.CreateConsole(0)
 	t.Logf("PCI Console:\n%#v", console)
-	console = devices.CreateConsole(0, false)
+	devices.Pci = false
+	console = devices.CreateConsole(0)
 	t.Logf("NON-PCI Console:\n%#v", console)
 }
