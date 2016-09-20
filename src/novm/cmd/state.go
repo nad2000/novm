@@ -11,7 +11,9 @@ import (
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
-func CreateState(
+// CreateVm creates VM accoding the settings and stores the configuration
+// in the state
+func CreateVm(
 	kernel string, release string, cpus int, com1 bool, com2 bool, nopci bool, memsize int,
 	nics []string, disks []string, read []string, write []string, packList []string,
 	repos []string) devices.State {

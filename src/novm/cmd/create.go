@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"novm/control"
 	"os"
+	"os/exec"
 	"path"
 	"strconv"
 	"strings"
@@ -63,14 +63,14 @@ Docker repositories are provided as follows.
 		cmd.DebugFlags()
 		name := flagString(cmd, "name")
 		kernel := flagString(cmd, "kernel")
-		available_kernels := kernels.List()
+		availableKernels := kernels.List()
 		if kernel == "" {
-			if available_kernels == nil {
+			if availableKernels == nil {
 				panic("No kernel found.")
 			}
-			kernel = available_kernels[0]
+			kernel = availableKernels[0]
 		} else {
-			if !utils.StringIsIn(kernel, available_kernels) {
+			if !utils.StringIsIn(kernel, availableKernels) {
 				log.Panicf("Kernel '%s' not found!", kernel)
 			}
 		}
@@ -109,14 +109,6 @@ Docker repositories are provided as follows.
 			"-initrd", kernels.File(kernel, "initrd"),
 			"-setup", kernels.File(kernel, "setup"))
 
-		fmt.Printf("%v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %v, %#v\n",
-			name, kernel, cmdline, cpus, memsize, init, nics, disks, packs,
-			repos, read, write, vmmopt, cwd, nopci, com1, com2, nofork, terminal,
-			cmdArgs)
-
-		fmt.Printf("*****************************************\n%#v", CreateState(
-			kernel, release, cpus, com1, com2, nopci, memsize, nics, disks, read, write, packs, repos))
-
 		// Provide our state by dumping to a temporary file:
 		tf, _ := ioutil.TempFile("", "image")
 		os.Remove(tf.Name())
@@ -133,8 +125,24 @@ Docker repositories are provided as follows.
 		ctrlFd, _ = control.Bind(ctrlFileName)
 
 		// Add our metadata to the regitry:
-		instances.Add(strconv.Itoa(os.Getpid())) // TODO: meta data
+		meta := CreateVm(
+			kernel, release, cpus, com1, com2, nopci, memsize, nics, disks, read, write, packs, repos)
+		instances.Add(strconv.Itoa(os.Getpid()), meta)
 
+		args := []string{
+			"-statefd=" + strconv.Itoa(stateFd),
+			"-controlfd=" + strconv.Itoa(ctrlFd),
+		}
+
+		for _, o := range vmmopt {
+			args = append(args, "-"+o)
+		}
+
+		command := exec.Command(utils.LibExec("novmm"), args...)
+		err = command.Run()
+		if err != nil {
+			log.Panic(err)
+		}
 	},
 }
 
