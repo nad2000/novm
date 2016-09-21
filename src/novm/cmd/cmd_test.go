@@ -3,14 +3,16 @@ package cmd_test
 import (
 	"fmt"
 	"log"
-	"github.com/rocksolidlabs/novm/src/novm/cmd"
 	"os"
 	"path"
+
+	"github.com/rocksolidlabs/novm/src/novm/cmd"
 )
 
 var rootPath string = path.Join(os.TempDir(), "test_data")
 
 func init() {
+	os.Setenv("TZ", "UTC")
 }
 
 func createTestTree() string {

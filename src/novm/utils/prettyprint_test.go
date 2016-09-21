@@ -2,9 +2,15 @@ package utils_test
 
 import (
 	"bytes"
-	"github.com/rocksolidlabs/novm/src/novm/utils"
+	"os"
 	"testing"
+
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
+
+func init() {
+	os.Setenv("TZ", "UTC")
+}
 
 func TestIsNumber(t *testing.T) {
 	if utils.IsNumber("AAA") {
@@ -123,8 +129,7 @@ func TestPrettyPrintStringSliceWithTs(t *testing.T) {
 -------------------------------------------------
 `
 	if output != expected {
-		t.Errorf("%#v rendered as \n%s\nexpected:\n%s\n\nNB! make sure you run the test with TZ=UTC!", data, output, expected)
-		t.FailNow()
+		t.Errorf("%#v rendered as \n%s\nexpected:\n%s\n\n", data, output, expected)
 	}
 
 }

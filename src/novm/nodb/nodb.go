@@ -18,12 +18,14 @@ import (
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
+// Nodb - simple file based data base for storing
+// configuration in JSON format and ather files.
 type Nodb struct {
 	root string
 	list []string
 }
 
-func toObjId(id interface{}) string {
+func toobjID(id interface{}) string {
 	switch id.(type) {
 	default:
 		log.Panicf("Incorrect ID (%#v) type: %T", id, id)
@@ -35,6 +37,7 @@ func toObjId(id interface{}) string {
 	}
 }
 
+// Open opens or creates NODB
 func (db *Nodb) Open(dbPath string) {
 	db.root = dbPath
 	db.list = nil
@@ -44,12 +47,14 @@ func (db *Nodb) Open(dbPath string) {
 	}
 }
 
-func (db *Nodb) File(objId string, args ...string) string {
-	parts := []string{db.root, objId}
+// File returns absolute path of an object in DB
+func (db *Nodb) File(objID string, args ...string) string {
+	parts := []string{db.root, objID}
 	parts = append(parts, args...)
 	return path.Join(parts...)
 }
 
+// List returns sorted list of all object IDs in DB
 // We store all data in the given directory.
 // All entries are simply stored as json files.
 func (db *Nodb) List() (list []string) {
@@ -72,17 +77,19 @@ func (db *Nodb) List() (list []string) {
 	return
 }
 
-func (db *Nodb) Has(objId string) bool {
+// Has test if and object with the given ID exists in DB
+func (db *Nodb) Has(objID string) bool {
 	list := db.List()
 
-	i := sort.SearchStrings(list, objId)
-	if i < len(list) && list[i] == objId {
+	i := sort.SearchStrings(list, objID)
+	if i < len(list) && list[i] == objID {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
+// Show returns a full list of objesct with their attributes in
+// a form of map of maps
 func (db *Nodb) Show() (result map[string]map[string]string) {
 
 	result = make(map[string]map[string]string)
@@ -94,22 +101,23 @@ func (db *Nodb) Show() (result map[string]map[string]string) {
 	return
 }
 
-func (db *Nodb) Add(objId string, obj interface{}) (err error) {
+// Add adds and object to the DB
+func (db *Nodb) Add(objID string, obj interface{}) (err error) {
 	switch obj.(type) {
 	default:
 		// Change "obj" into string map to interface{}
 		// in order to add the timestamp field.
 		// Perhpas there is a better way to do this?
 		var mapObj map[string]interface{}
-		objJson := utils.JSONDumps(obj)
-		json.Unmarshal([]byte(objJson), &mapObj)
-		return db.Add(objId, mapObj)
+		objJSON := utils.JSONDumps(obj)
+		json.Unmarshal([]byte(objJSON), &mapObj)
+		return db.Add(objID, mapObj)
 	case map[string]string:
 		obj.(map[string]string)["timestamp"] = strconv.FormatInt(time.Now().Unix(), 10)
 	case map[string]interface{}:
 		obj.(map[string]interface{})["timestamp"] = time.Now().Unix()
 	}
-	of, err := os.Create(db.File(objId + ".json"))
+	of, err := os.Create(db.File(objID + ".json"))
 	defer of.Close()
 	if err != nil {
 		log.Fatal(err)
@@ -120,18 +128,19 @@ func (db *Nodb) Add(objId string, obj interface{}) (err error) {
 	return
 }
 
-func (db *Nodb) Get(objId string) (map[string]string, bool) {
-	return db.GetObj(objId, nil)
+// Get retrievs an object from DB in a form of map of strings
+func (db *Nodb) Get(objID string) (map[string]string, bool) {
+	return db.GetObj(objID, nil)
 }
 
-func (db *Nodb) GetObj(objId string, params map[string]string) (obj map[string]string, ok bool) {
+// GetObj retrievs an object either using object ID or atributs as query criteria
+func (db *Nodb) GetObj(objID string, params map[string]string) (obj map[string]string, ok bool) {
 	var _obj map[string]interface{}
-	objId = db.Find(objId, params)
-	inf, err := os.Open(db.File(objId + ".json"))
+	objID = db.Find(objID, params)
+	inf, err := os.Open(db.File(objID + ".json"))
 	if err != nil {
 		return nil, false
 	}
-	//err := json.Unmarshal(...)
 	dec := json.NewDecoder(inf)
 
 	err = dec.Decode(&_obj)
@@ -156,8 +165,9 @@ func (db *Nodb) GetObj(objId string, params map[string]string) (obj map[string]s
 	return obj, true
 }
 
-func (db *Nodb) Remove(objId interface{}, params map[string]string) (ok bool) {
-	id := db.Find(toObjId(objId), params)
+// Remove removes an object from DB
+func (db *Nodb) Remove(objID interface{}, params map[string]string) (ok bool) {
+	id := db.Find(toobjID(objID), params)
 	if id == "" {
 		return false
 	}
@@ -179,21 +189,21 @@ func (db *Nodb) Remove(objId interface{}, params map[string]string) (ok bool) {
 	return true
 }
 
+// Find finds an object and returns its ID
 func (db *Nodb) Find(id interface{}, params map[string]string) (found string) {
-	objId := toObjId(id)
-	if objId != "" {
-		if !utils.PathExists(db.File(objId + ".json")) {
+	objID := toobjID(id)
+	if objID != "" {
+		if !utils.PathExists(db.File(objID + ".json")) {
 			return ""
-		} else {
-			return objId
 		}
+		return objID
 	}
 
-	var timestamp float64 = 0.0
+	var timestamp float64
 
 LoopObjects:
-	for _, objId := range db.List() {
-		obj, _ := db.GetObj(objId, params)
+	for _, objID := range db.List() {
+		obj, _ := db.GetObj(objID, params)
 		for k, v := range params {
 			if v == "" {
 				continue
@@ -209,13 +219,14 @@ LoopObjects:
 		}
 
 		if ts, _ := strconv.ParseFloat(tsStr, 64); ts > timestamp {
-			found, timestamp = objId, ts
+			found, timestamp = objID, ts
 		}
 	}
 	return
 }
 
-func (db *Nodb) Fetch(url string, params map[string]string) (objId string) {
+// Fetch downloads an object and stores it into DB
+func (db *Nodb) Fetch(url string, params map[string]string) (objID string) {
 
 	var (
 		inf io.ReadCloser
@@ -244,8 +255,8 @@ func (db *Nodb) Fetch(url string, params map[string]string) (objId string) {
 
 		// TODO: support for "large" files
 		content, err := ioutil.ReadAll(inf)
-		objId = fmt.Sprintf("%x", sha1.Sum(content))
-		if db.Has(objId) {
+		objID = fmt.Sprintf("%x", sha1.Sum(content))
+		if db.Has(objID) {
 			return
 		}
 
@@ -262,11 +273,11 @@ func (db *Nodb) Fetch(url string, params map[string]string) (objId string) {
 			log.Fatal(err)
 		}
 
-		objPath := db.File(objId)
+		objPath := db.File(objID)
 		os.MkdirAll(objPath, os.ModeDir|0755)
 		utils.Unpackdir(tf.Name(), objPath)
 
-		db.Add(objId, obj)
+		db.Add(objID, obj)
 
 	}
 	return
