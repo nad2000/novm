@@ -1,3 +1,4 @@
+//golint:ignore
 package devices
 
 import (
@@ -77,6 +78,7 @@ func randomMac(oui string) string {
 	return fmt.Sprintf("%s:%02x:%02x:%02x", oui, b[0], b[1], b[2])
 }
 
+// ItoIpv4 converts 32 bit integer into string representation of IPv4 address
 func ItoIpv4(addr int) string {
 	return strings.Join([]string{
 		strconv.Itoa((addr >> 24) & 0xff),
@@ -86,7 +88,7 @@ func ItoIpv4(addr int) string {
 	}, ".")
 }
 
-// Parse an IP address given CIDR form.
+// ParseIpv4mask parses an IP address given CIDR form.
 //
 // We also return the associated gateway
 // and broadcast address for the subnet.

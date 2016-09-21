@@ -10,8 +10,10 @@ import (
 )
 
 var (
+	// Debug global debugging option
 	Debug bool
-	Pci   bool
+	// Pci PCI flag. If 'true' PIC drivers would be set, if 'false' - MMIO
+	Pci bool
 )
 
 // State is a shorthand equivalent for Python dictionary used as "state"
