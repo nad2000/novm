@@ -26,7 +26,7 @@ func TestTags(t *testing.T) {
 	defer ts.Close()
 
 	docker.Init(nodb.Nodb{}, map[string]string{})
-	docker.BaseUrl = ts.URL + "/"
+	docker.BaseURL = ts.URL + "/"
 
 	tags := docker.Tags("nginx")
 	if len(tags) != 4 {
@@ -50,7 +50,7 @@ func TestImages(t *testing.T) {
 	defer ts.Close()
 
 	docker.Init(nodb.Nodb{}, map[string]string{})
-	docker.BaseUrl = ts.URL + "/"
+	docker.BaseURL = ts.URL + "/"
 
 	images := docker.Images("nginx")
 	if len(images) != 2 {
@@ -85,7 +85,7 @@ func TestImageInfo(t *testing.T) {
 	}))
 	defer ts.Close()
 	docker.Init(nodb.Nodb{}, map[string]string{"username": "USERNAME", "password": "PASSWORD"})
-	docker.BaseUrl = ts.URL + "/"
+	docker.BaseURL = ts.URL + "/"
 	ii := docker.ImageInfo("ABC", "123")
 	if p, ok := ii["parent"]; ok {
 		if p.(string) != "PARENT123" {
