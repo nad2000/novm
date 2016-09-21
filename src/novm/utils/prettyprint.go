@@ -27,6 +27,7 @@ func center(s string, n int, fill string) string {
 	return strings.Repeat(fill, leftPadding) + s + strings.Repeat(fill, rightPadding)
 }
 
+// IsNumber tests if the value is numeric
 func IsNumber(val interface{}) bool {
 	var hasDot bool
 	for _, c := range fmt.Sprintf("%v", val) {
@@ -45,7 +46,7 @@ func IsNumber(val interface{}) bool {
 	return true
 }
 
-// Format Unix timestamp into readable timestamp,
+// Str2TsStr formats Unix timestamp into readable timestamp,
 // eg, Fri Aug 12 19:22:00 2016
 func Str2TsStr(value interface{}) string {
 	var sec, nsec int64
@@ -90,9 +91,8 @@ func formatEntry(field string, value interface{}, fieldWidth int) string {
 				return leftJust(v, fieldWidth, " ")
 			}
 			return rightJust(v, fieldWidth, " ")
-		} else {
-			return leftJust(v, fieldWidth, " ")
 		}
+		return leftJust(v, fieldWidth, " ")
 	case float32, float64:
 		return rightJust(fmt.Sprintf("%.5f", value), fieldWidth, " ")
 	case []string:
@@ -169,19 +169,24 @@ func mapKeys(values interface{}) []string {
 
 }
 
+// PrettyPrint formats an arbitray object for printing to os.Stdout
 func PrettyPrint(values interface{}) {
 	FprettyPrintFields(os.Stdout, values, nil)
 }
 
+// PrettyPrintFields formats an arbitray object for printing
+// with fields to a given writer
 func PrettyPrintFields(values interface{}, fields []string) {
 	FprettyPrintFields(os.Stdout, values, fields)
 }
 
+// FprettyPrint formats an arbitray object for printing to a given writer
 func FprettyPrint(output io.Writer, values interface{}) {
 	FprettyPrintFields(output, values, nil)
 }
 
-// Prettry print with a set field list
+// FprettyPrintFields formats an arbitray object for printing
+// with fields to a given writer
 func FprettyPrintFields(output io.Writer, values interface{}, fields []string) {
 	var (
 		maxWidths      map[string]int
