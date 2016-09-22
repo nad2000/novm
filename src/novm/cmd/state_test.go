@@ -9,7 +9,7 @@ import (
 
 func TestVMCreation(t *testing.T) {
 
-	state := cmd.CreateVM("KERNEL", "RELEASE", 4, true, true, false, 0, nil, nil, nil, nil, nil, nil)
+	state := cmd.CreateInstance("KERNEL", "RELEASE", 4, true, true, false, 0, nil, nil, nil, nil, nil, nil)
 	t.Log(utils.JSONDumps(state))
 }
 

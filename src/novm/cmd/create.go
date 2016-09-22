@@ -130,7 +130,7 @@ Docker repositories are provided as follows.
 		ctrlFd, _ := control.Bind(ctrlFileName)
 
 		// Add our metadata to the regitry:
-		meta := CreateVM(
+		meta := CreateInstance(
 			kernel, release, cpus, com1, com2, nopci, memsize, nics, disks, read, write, packs, repos)
 		instances.Add(strconv.Itoa(os.Getpid()), meta)
 
