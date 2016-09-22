@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"syscall"
 	"unsafe"
 
 	"github.com/rocksolidlabs/novm/src/novm/utils"
@@ -48,24 +47,6 @@ var (
 	TUNSETOFFLOAD   = iow('T', 208, 4)
 	TUNGETVNETHDRSZ = ior('T', 215, 4)
 )
-
-func fcntl(fd uintptr, cmd int, arg uintptr) (val int, err error) {
-	r, _, e := syscall.Syscall(syscall.SYS_FCNTL, uintptr(fd), uintptr(cmd), arg)
-	val = int(r)
-	if e != 0 {
-		switch e {
-		case 0xb:
-			err = syscall.EAGAIN
-		case 0x16:
-			err = syscall.EINVAL
-		case 0x2:
-			err = syscall.ENOENT
-		default:
-			err = error(e)
-		}
-	}
-	return
-}
 
 // Return a random MAC address
 func randomMac(oui string) string {
@@ -124,7 +105,7 @@ func TapDevice(name string) (tap *os.File, vnet int, offload bool) {
 	// Figure out if the kernel supports processing vnet headers on tap
 	// devices. This is necessary for forwarding hardware offloading
 	// from the guest virtual nics to the physical nics on the host.
-	features, err := fcntl(tap.Fd(), TUNGETFEATURES, uintptr(0))
+	features, err := utils.Fcntl(tap.Fd(), TUNGETFEATURES, uintptr(0))
 
 	flags := IFF_TAP | IFF_NO_PI | (features & IFF_VNET_HDR)
 
@@ -132,13 +113,13 @@ func TapDevice(name string) (tap *os.File, vnet int, offload bool) {
 	var ifr [18]byte
 	copy(ifr[:], []byte(name))
 	binary.LittleEndian.PutUint16(ifr[:], uint16(flags))
-	fcntl(tap.Fd(), TUNSETIFF, uintptr(unsafe.Pointer(&ifr)))
-	vnetHdrSz, _ := fcntl(tap.Fd(), TUNGETVNETHDRSZ, uintptr(0))
+	utils.Fcntl(tap.Fd(), TUNSETIFF, uintptr(unsafe.Pointer(&ifr)))
+	vnetHdrSz, _ := utils.Fcntl(tap.Fd(), TUNGETVNETHDRSZ, uintptr(0))
 
 	// Size of the vnet header expected by the TAP device:
 	if features&IFF_VNET_HDR != 0 {
 		vnet = vnetHdrSz
-		_, err := fcntl(tap.Fd(), TUNSETOFFLOAD,
+		_, err := utils.Fcntl(tap.Fd(), TUNSETOFFLOAD,
 			uintptr(TUN_F_CSUM|TUN_F_TSO4|
 				TUN_F_TSO6|TUN_F_TSO_ECN|TUN_F_UFO))
 		if offload = err == nil; !offload {

@@ -325,12 +325,34 @@ func StringIsIn(a string, list []string) bool {
 	return false
 }
 
+// Fcntl manipulates file descriptors
+func Fcntl(fd uintptr, cmd int, arg uintptr) (val int, err error) {
+	r, _, e := syscall.Syscall(syscall.SYS_FCNTL, uintptr(fd), uintptr(cmd), arg)
+	val = int(r)
+	if e != 0 {
+		switch e {
+		case 0xb:
+			err = syscall.EAGAIN
+		case 0x16:
+			err = syscall.EINVAL
+		case 0x2:
+			err = syscall.ENOENT
+		default:
+			err = error(e)
+		}
+	}
+	return
+}
+
 // ClearCloexec removes FD_CLOEXEC ("Close on Exit") flag from the file
 // specified with a file descriptor.
 func ClearCloexec(fd int) {
-	// TODO:
-	/*
-			flags = fcntl.fcntl(fd, fcntl.FGETFD)
-		    fcntl.fcntl(fd, fcntl.FSETFD, flags & (~fcntl.FDCLOEXEC))
-	*/
+	flags, err := Fcntl(uintptr(fd), syscall.F_GETFD, uintptr(0))
+	if err != nil {
+		log.Println("Failed to get flags for file descriptor %d: %v)", fd, err)
+	}
+	_, err = Fcntl(uintptr(fd), syscall.F_SETFD, uintptr(flags & ^syscall.FD_CLOEXEC))
+	if err != nil {
+		log.Println("Failed to remove CLOEXEC flag from file descriptor %d: %v)", fd, err)
+	}
 }
