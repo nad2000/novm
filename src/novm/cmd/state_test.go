@@ -1,6 +1,7 @@
 package cmd_test
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/rocksolidlabs/novm/src/novm/cmd"
@@ -9,8 +10,14 @@ import (
 
 func TestVMCreation(t *testing.T) {
 
-	state := cmd.CreateInstance("KERNEL", "RELEASE", 4, true, true, false, 0, nil, nil, nil, nil, nil, nil)
-	t.Log(utils.JSONDumps(state))
+	var output bytes.Buffer
+
+	meta, cmdline := cmd.CreateInstance(&output,
+		"KERNEL", "RELEASE", 4, true, true, false, 0, nil, nil, nil, nil, nil, nil, "NAME", "CMDLINE")
+
+	t.Log("META:", utils.JSONDumps(meta))
+	t.Log("CMDLINE:", cmdline)
+	t.Log("STATE:", output.String())
 }
 
 var SAMPLE_STATE string = `{

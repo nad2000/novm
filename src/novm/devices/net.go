@@ -131,10 +131,10 @@ func TapDevice(name string) (tap *os.File, vnet int, offload bool) {
 }
 
 // CreateNic creates a vitio network device.
-func CreateNic(index int, options map[string]string) (state State) {
+func CreateNic(index int, options map[string]string) (state State, ip string) {
 	var (
-		mac, tapName, bridge, ip, gateway, mtu, name string
-		ok, debug                                    bool
+		mac, tapName, bridge, gateway, mtu, name string
+		ok, debug                                bool
 	)
 
 	_ = gateway
@@ -211,6 +211,6 @@ func CreateNic(index int, options map[string]string) (state State) {
 		"debug": debug,
 		"drive": driver,
 		"name":  name,
-	}
+	}, ip
 
 }

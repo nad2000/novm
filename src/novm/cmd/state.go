@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -14,9 +15,10 @@ import (
 
 // CreateInstance creates VM and stores the configuration in the state object
 func CreateInstance(
+	output io.Writer,
 	kernel string, release string, cpus int, com1 bool, com2 bool, nopci bool, memsize int,
 	nics []string, disks []string, read []string, write []string, packList []string,
-	repos []string) devices.State {
+	repos []string, name string, cmdline string) (devCmdline string, meta devices.State) {
 
 	if cpus <= 0 {
 		cpus = 1
@@ -28,6 +30,10 @@ func CreateInstance(
 
 	if write == nil {
 		write = make([]string, 0, 10)
+	}
+
+	if cmdline != "" && !strings.HasPrefix(cmdline, " ") {
+		cmdline = " " + cmdline
 	}
 
 	devices.Pci = !nopci
@@ -97,6 +103,7 @@ func CreateInstance(
 	}...)
 
 	// Build our NICs
+	ips := []string{}
 	for index, nic := range nics {
 		options := make(map[string]string)
 		for _, opt := range strings.Split(nic, ",") {
@@ -106,7 +113,11 @@ func CreateInstance(
 			}
 			options[parts[0]] = parts[1]
 		}
-		devs = append(devs, devices.CreateNic(index, options))
+		nic, ip := devices.CreateNic(index, options)
+		devs = append(devs, nic)
+		if ip != "" {
+			ips = append(ips, ip)
+		}
 	}
 
 	// Build our disks:
@@ -164,5 +175,27 @@ func CreateInstance(
 		"devices": devs,
 		"vcpus":   vcpus,
 	}
-	return state
+	utils.JSONDump(state, output)
+
+	meta = map[string]interface{}{
+		"name":   name,
+		"cpus":   cpus,
+		"memory": memsize,
+		"kernel": kernel,
+		"ips":    ips,
+	}
+
+	devCmdline = "-cmdline="
+	for _, d := range devs {
+		cl := d.Cmdline()
+		if cl != "" {
+			if !strings.HasSuffix(devCmdline, "=") {
+				devCmdline += " "
+			}
+			devCmdline += cl
+		}
+	}
+	devCmdline += cmdline
+	return
+
 }

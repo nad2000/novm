@@ -19,6 +19,15 @@ var (
 // State is a shorthand equivalent for Python dictionary used as "state"
 type State map[string]interface{}
 
+// Cmdline returns device state 'cmdline' attribute
+func (s State) Cmdline() string {
+	val := s["cmdline"]
+	if val != nil {
+		return val.(string)
+	}
+	return ""
+}
+
 func createDevice(driver string, name string, data State, cmdline string) State {
 
 	if data == nil {

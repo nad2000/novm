@@ -98,7 +98,6 @@ Docker repositories are provided as follows.
 		nofork := flagBool(cmd, "nofork")
 		terminal := flagBool(cmd, "terminal")
 
-		_ = name
 		_ = cwd
 		_ = nofork
 		_ = terminal
@@ -115,9 +114,11 @@ Docker repositories are provided as follows.
 			"-setup", kernels.File(kernel, "setup"))
 
 		// Provide our state by dumping to a temporary file:
-		tf, _ := ioutil.TempFile("", "image")
+		tf, _ := ioutil.TempFile("", "state")
 		os.Remove(tf.Name())
-		// metaData = CreateState(...) // TODO...
+		devCmdline, meta := CreateInstance(
+			tf, kernel, release, cpus, com1, com2, nopci, memsize,
+			nics, disks, read, write, packs, repos, name, cmdline)
 		tf.Seek(0, 0)
 
 		// Keep the descriptor:
@@ -130,8 +131,6 @@ Docker repositories are provided as follows.
 		ctrlFd, _ := control.Bind(ctrlFileName)
 
 		// Add our metadata to the regitry:
-		meta := CreateInstance(
-			kernel, release, cpus, com1, com2, nopci, memsize, nics, disks, read, write, packs, repos)
 		instances.Add(strconv.Itoa(os.Getpid()), meta)
 
 		cmdArgs = append([]string{
@@ -139,11 +138,15 @@ Docker repositories are provided as follows.
 			"-controlfd=" + strconv.Itoa(int(ctrlFd)),
 		}, cmdArgs...)
 
+		if devCmdline != "-cmdline " {
+			cmdArgs = append(cmdArgs, devCmdline)
+		}
+
 		for _, o := range vmmopt {
 			cmdArgs = append(cmdArgs, "-"+o)
 		}
 
-		command := exec.Command(utils.LibExec("novmm"), args...)
+		command := exec.Command(utils.LibExec("novmm"), cmdArgs...)
 		err := command.Run()
 		if err != nil {
 			log.Panic(err)
