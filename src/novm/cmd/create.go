@@ -60,7 +60,7 @@ Docker repositories are provided as follows.
 
     You should specify at least username, password.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.DebugFlags()
+		debugCmd(cmd)
 		name := flagString(cmd, "name")
 		kernel := flagString(cmd, "kernel")
 		availableKernels := kernels.List()
@@ -128,6 +128,9 @@ Docker repositories are provided as follows.
 
 		// Control socket
 		ctrlFileName := path.Join(controlPath, strconv.Itoa(os.Getpid())+".ctrl")
+		if debug {
+			log.Print("Control file name: ", ctrlFileName)
+		}
 		ctrlFd, _ := control.Bind(ctrlFileName)
 
 		// Add our metadata to the regitry:
@@ -138,7 +141,7 @@ Docker repositories are provided as follows.
 			"-controlfd=" + strconv.Itoa(int(ctrlFd)),
 		}, cmdArgs...)
 
-		if devCmdline != "-cmdline " {
+		if devCmdline != "-cmdline=" {
 			cmdArgs = append(cmdArgs, devCmdline)
 		}
 
@@ -146,7 +149,13 @@ Docker repositories are provided as follows.
 			cmdArgs = append(cmdArgs, "-"+o)
 		}
 
-		command := exec.Command(utils.LibExec("novmm"), cmdArgs...)
+		novmm := utils.LibExec("novmm")
+		if debug {
+			cmdArgs = append(cmdArgs, "-debug")
+			log.Print("Executing: ", novmm, " ", strings.Join(cmdArgs, " "))
+		}
+
+		command := exec.Command(novmm, cmdArgs...)
 		err := command.Run()
 		if err != nil {
 			log.Panic(err)

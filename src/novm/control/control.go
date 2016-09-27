@@ -72,6 +72,9 @@ func Bind(ctrlPath string) (fd uintptr, err error) {
 	}
 
 	listener, err = net.ListenUnix("unix", &net.UnixAddr{ctrlPath, "unix"})
+	if err != nil {
+		log.Panic(err)
+	}
 	socketFile, err := listener.File()
 	if err != nil {
 		log.Panic(err)

@@ -46,10 +46,11 @@ func CreateInstance(
 			"debug":  false,
 		},
 		{
-			"name":   utils.UUID(),
-			"driver": "acpi",
-			"data":   map[string]interface{}{},
-			"debug":  false,
+			"name":    utils.UUID(),
+			"driver":  "acpi",
+			"data":    map[string]interface{}{},
+			"cmdline": "intel_pstate=disable",
+			"debug":   false,
 		},
 		{
 			"name":   utils.UUID(),
@@ -82,10 +83,11 @@ func CreateInstance(
 
 	if devices.Pci {
 		devs = append(devs, devices.State{
-			"name":   utils.UUID(),
-			"driver": "pci-bus",
-			"data":   map[string]interface{}{},
-			"debug":  false,
+			"name":    utils.UUID(),
+			"driver":  "pci-bus",
+			"cmdline": "pci=conf1",
+			"data":    map[string]interface{}{},
+			"debug":   false,
 		})
 	}
 
