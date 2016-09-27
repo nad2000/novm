@@ -10,6 +10,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/sevlyar/go-daemon"
+
 	"github.com/rocksolidlabs/novm/src/novm/control"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 
@@ -60,111 +62,127 @@ Docker repositories are provided as follows.
 
     You should specify at least username, password.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		debugCmd(cmd)
-		name := flagString(cmd, "name")
-		kernel := flagString(cmd, "kernel")
-		availableKernels := kernels.List()
-		if kernel == "" {
-			if availableKernels == nil {
-				panic("No kernel found.")
-			}
-			kernel = availableKernels[0]
-		} else {
-			if !utils.StringIsIn(kernel, availableKernels) {
-				log.Panicf("Kernel '%s' not found!", kernel)
-			}
-		}
-		raw, _ := ioutil.ReadFile(kernels.File(kernel, "release"))
-		release := strings.TrimSpace(string(raw))
-
-		cmdline := flagString(cmd, "cmdline")
-		if cmdline != "" {
-			cmdline += " "
-		}
-		cpus := flagInt(cmd, "cpus")
-		memsize := flagInt(cmd, "memsize")
-		init := flagBool(cmd, "init")
-		nics := flagStringArray(cmd, "nic")
-		disks := flagStringArray(cmd, "disk")
-		packs := flagStringSlice(cmd, "pack")
-		repos := flagStringArray(cmd, "repo")
-		read := flagStringSlice(cmd, "read")
-		write := flagStringSlice(cmd, "write")
-		vmmopt := flagStringSlice(cmd, "vmmopt")
-		cwd := flagString(cmd, "cwd")
-		nopci := flagBool(cmd, "nopci")
-		com1 := flagBool(cmd, "com1")
-		com2 := flagBool(cmd, "com2")
-		nofork := flagBool(cmd, "nofork")
-		terminal := flagBool(cmd, "terminal")
-
-		_ = cwd
-		_ = nofork
-		_ = terminal
-
-		cmdArgs := make([]string, 0, 10)
-		if init {
-			cmdArgs = append(cmdArgs, "-init")
-		}
-
-		cmdArgs = append(cmdArgs,
-			"-vmlinux", kernels.File(kernel, "vmlinux"),
-			"-sysmap", kernels.File(kernel, "sysmap"),
-			"-initrd", kernels.File(kernel, "initrd"),
-			"-setup", kernels.File(kernel, "setup"))
-
-		// Provide our state by dumping to a temporary file:
-		tf, _ := ioutil.TempFile("", "state")
-		if debug {
-			log.Print("Sate stored in: ", tf.Name())
-		} else {
-			os.Remove(tf.Name())
-		}
-		devCmdline, meta := CreateInstance(
-			tf, kernel, release, cpus, com1, com2, nopci, memsize,
-			nics, disks, read, write, packs, repos, name, cmdline)
-		tf.Seek(0, 0)
-
-		// Keep the descriptor:
-		stateFd, _ := syscall.Dup(int(tf.Fd()))
-		utils.ClearCloexec(stateFd)
-		tf.Close()
-
-		// Control socket
-		ctrlFileName := path.Join(controlPath, strconv.Itoa(os.Getpid())+".ctrl")
-		if debug {
-			log.Print("Control file name: ", ctrlFileName)
-		}
-		ctrlFd, _ := control.Bind(ctrlFileName)
-
-		// Add our metadata to the regitry:
-		instances.Add(strconv.Itoa(os.Getpid()), meta)
-
-		cmdArgs = append([]string{
-			"-statefd=" + strconv.Itoa(stateFd),
-			"-controlfd=" + strconv.Itoa(int(ctrlFd)),
-		}, cmdArgs...)
-
-		if devCmdline != "-cmdline=" {
-			cmdArgs = append(cmdArgs, devCmdline)
-		}
-
-		for _, o := range vmmopt {
-			cmdArgs = append(cmdArgs, "-"+o)
-		}
-
-		novmm := utils.LibExec("novmm")
-		if debug {
-			cmdArgs = append(cmdArgs, "-debug")
-			log.Print("Executing: ", novmm, " ", strings.Join(cmdArgs, " "))
-		}
-
-		command := exec.Command(novmm, cmdArgs...)
-		err := command.Run()
-		if err != nil {
-			log.Panic(err)
-		}
+		create(cmd)
 	},
+}
+
+func create(cmd *cobra.Command) {
+
+	context := &daemon.Context{
+		PidFileName: "pid",
+		PidFilePerm: 0644,
+		LogFileName: "log",
+		LogFilePerm: 0640,
+		WorkDir:     "./",
+		Umask:       027,
+		Args:        []string{"[novm create ...]"},
+	}
+	_ = context
+
+	debugCmd(cmd)
+	name := flagString(cmd, "name")
+	kernel := flagString(cmd, "kernel")
+	availableKernels := kernels.List()
+	if kernel == "" {
+		if availableKernels == nil {
+			panic("No kernel found.")
+		}
+		kernel = availableKernels[0]
+	} else {
+		if !utils.StringIsIn(kernel, availableKernels) {
+			log.Panicf("Kernel '%s' not found!", kernel)
+		}
+	}
+	raw, _ := ioutil.ReadFile(kernels.File(kernel, "release"))
+	release := strings.TrimSpace(string(raw))
+
+	cmdline := flagString(cmd, "cmdline")
+	if cmdline != "" {
+		cmdline += " "
+	}
+	cpus := flagInt(cmd, "cpus")
+	memsize := flagInt(cmd, "memsize")
+	init := flagBool(cmd, "init")
+	nics := flagStringArray(cmd, "nic")
+	disks := flagStringArray(cmd, "disk")
+	packs := flagStringSlice(cmd, "pack")
+	repos := flagStringArray(cmd, "repo")
+	read := flagStringSlice(cmd, "read")
+	write := flagStringSlice(cmd, "write")
+	vmmopt := flagStringSlice(cmd, "vmmopt")
+	cwd := flagString(cmd, "cwd")
+	nopci := flagBool(cmd, "nopci")
+	com1 := flagBool(cmd, "com1")
+	com2 := flagBool(cmd, "com2")
+	nofork := flagBool(cmd, "nofork")
+	terminal := flagBool(cmd, "terminal")
+
+	_ = cwd
+	_ = nofork
+	_ = terminal
+
+	cmdArgs := make([]string, 0, 10)
+	if init {
+		cmdArgs = append(cmdArgs, "-init")
+	}
+
+	cmdArgs = append(cmdArgs,
+		"-vmlinux", kernels.File(kernel, "vmlinux"),
+		"-sysmap", kernels.File(kernel, "sysmap"),
+		"-initrd", kernels.File(kernel, "initrd"),
+		"-setup", kernels.File(kernel, "setup"))
+
+	// Provide our state by dumping to a temporary file:
+	tf, _ := ioutil.TempFile("", "state")
+	if debug {
+		log.Print("Sate stored in: ", tf.Name())
+	} else {
+		os.Remove(tf.Name())
+	}
+	devCmdline, meta := CreateInstance(
+		tf, kernel, release, cpus, com1, com2, nopci, memsize,
+		nics, disks, read, write, packs, repos, name, cmdline)
+	tf.Seek(0, 0)
+
+	// Keep the descriptor:
+	stateFd, _ := syscall.Dup(int(tf.Fd()))
+	utils.ClearCloexec(stateFd)
+	tf.Close()
+
+	// Control socket
+	ctrlFileName := path.Join(controlPath, strconv.Itoa(os.Getpid())+".ctrl")
+	if debug {
+		log.Print("Control file name: ", ctrlFileName)
+	}
+	ctrlFd, _ := control.Bind(ctrlFileName)
+
+	// Add our metadata to the regitry:
+	instances.Add(strconv.Itoa(os.Getpid()), meta)
+
+	cmdArgs = append([]string{
+		"-statefd=" + strconv.Itoa(stateFd),
+		"-controlfd=" + strconv.Itoa(int(ctrlFd)),
+	}, cmdArgs...)
+
+	if devCmdline != "-cmdline=" {
+		cmdArgs = append(cmdArgs, devCmdline)
+	}
+
+	for _, o := range vmmopt {
+		cmdArgs = append(cmdArgs, "-"+o)
+	}
+
+	novmm := utils.LibExec("novmm")
+	if debug {
+		cmdArgs = append(cmdArgs, "-debug")
+		log.Print("Executing: ", novmm, " ", strings.Join(cmdArgs, " "))
+	}
+
+	command := exec.Command(novmm, cmdArgs...)
+	err := command.Run()
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func init() {
