@@ -57,7 +57,6 @@ func CreateFs(index int, tag string, tempDir string, read []string, write []stri
 	}
 
 	data := State{
-		"cmdline": nil,
 		"read":    readMap,
 		"write":   writeMap,
 		"tag":     tag,
