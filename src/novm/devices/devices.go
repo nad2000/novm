@@ -50,6 +50,8 @@ func createDevice(driver string, name string, data State, cmdline string) State 
 	}
 	if cmdline != "" {
 		device["cmdline"] = cmdline
+	} else {
+		device["cmdline"] = nil
 	}
 
 	return device
@@ -136,9 +138,23 @@ func CreateUserMemory(size int, fd int) State {
 		utils.ClearCloexec(fd)
 	}
 
+	// No size given? Default to file size:
+	if size <= 0 {
+		var sys syscall.Stat_t
+		err := syscall.Fstat(fd, &sys)
+		if err != nil {
+			log.Panic("Failed to get 'fstat' for file descriptor: ", fd)
+		}
+		size = int(sys.Size)
+	}
+
+	// Truncate the file:
+	syscall.Ftruncate(fd, int64(size))
+
 	return State{
-		"name":   utils.UUID(),
-		"driver": "user-memory",
+		"name":    utils.UUID(),
+		"cmdline": nil,
+		"driver":  "user-memory",
 		"data": map[string]interface{}{
 			"fd":   fd,
 			"size": size,

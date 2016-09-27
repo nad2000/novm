@@ -40,10 +40,11 @@ func CreateInstance(
 
 	devs := []devices.State{
 		{
-			"name":   utils.UUID(),
-			"driver": "bios",
-			"data":   map[string]interface{}{},
-			"debug":  false,
+			"name":    utils.UUID(),
+			"driver":  "bios",
+			"data":    map[string]interface{}{},
+			"cmdline": nil,
+			"debug":   false,
 		},
 		{
 			"name":    utils.UUID(),
@@ -53,16 +54,18 @@ func CreateInstance(
 			"debug":   false,
 		},
 		{
-			"name":   utils.UUID(),
-			"driver": "apic",
-			"data":   map[string]interface{}{},
-			"debug":  false,
+			"name":    utils.UUID(),
+			"driver":  "apic",
+			"data":    map[string]interface{}{},
+			"cmdline": nil,
+			"debug":   false,
 		},
 		{
-			"name":   utils.UUID(),
-			"driver": "pit",
-			"data":   map[string]interface{}{},
-			"debug":  false,
+			"name":    utils.UUID(),
+			"driver":  "pit",
+			"data":    map[string]interface{}{},
+			"cmdline": nil,
+			"debug":   false,
 		},
 	}
 
@@ -75,10 +78,11 @@ func CreateInstance(
 	}
 
 	devs = append(devs, devices.State{
-		"name":   utils.UUID(),
-		"driver": "rtc",
-		"data":   map[string]interface{}{},
-		"debug":  false,
+		"name":    utils.UUID(),
+		"driver":  "rtc",
+		"data":    map[string]interface{}{},
+		"cmdline": nil,
+		"debug":   false,
 	})
 
 	if devices.Pci {

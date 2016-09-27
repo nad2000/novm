@@ -115,7 +115,11 @@ Docker repositories are provided as follows.
 
 		// Provide our state by dumping to a temporary file:
 		tf, _ := ioutil.TempFile("", "state")
-		os.Remove(tf.Name())
+		if debug {
+			log.Print("Sate stored in: ", tf.Name())
+		} else {
+			os.Remove(tf.Name())
+		}
 		devCmdline, meta := CreateInstance(
 			tf, kernel, release, cpus, com1, com2, nopci, memsize,
 			nics, disks, read, write, packs, repos, name, cmdline)
