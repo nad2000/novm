@@ -68,7 +68,7 @@ func (db *Nodb) List() (list []string) {
 	list = make([]string, 0, len(files))
 	for _, fi := range files {
 		fileName := fi.Name()
-		if strings.HasSuffix(fileName, ".json") {
+		if strings.HasSuffix(fileName, ".json") || strings.Contains(db.root, "instances") {
 			list = append(list, strings.TrimSuffix(fileName, ".json"))
 		}
 	}
@@ -173,10 +173,6 @@ func (db *Nodb) Remove(objID interface{}, params map[string]string) (ok bool) {
 	}
 
 	err := os.RemoveAll(db.File(id + ".json"))
-	if err != nil {
-		log.Fatal(err)
-		return false
-	}
 
 	db.list = nil
 	if fileName := db.File(id); utils.PathExists(fileName) {
@@ -193,7 +189,8 @@ func (db *Nodb) Remove(objID interface{}, params map[string]string) (ok bool) {
 func (db *Nodb) Find(id interface{}, params map[string]string) (found string) {
 	objID := toobjID(id)
 	if objID != "" {
-		if !utils.PathExists(db.File(objID + ".json")) {
+		if !utils.PathExists(db.File(objID+".json")) &&
+			!(strings.Contains(db.root, "instances") && utils.PathExists(db.File(objID))) {
 			return ""
 		}
 		return objID
