@@ -103,6 +103,9 @@ func (db *Nodb) Show() (result map[string]map[string]string) {
 
 // Add adds and object to the DB
 func (db *Nodb) Add(objID string, obj interface{}) (err error) {
+
+	ts := float64(time.Now().UnixNano()) / float64(time.Second)
+
 	switch obj.(type) {
 	default:
 		// Change "obj" into string map to interface{}
@@ -113,9 +116,9 @@ func (db *Nodb) Add(objID string, obj interface{}) (err error) {
 		json.Unmarshal([]byte(objJSON), &mapObj)
 		return db.Add(objID, mapObj)
 	case map[string]string:
-		obj.(map[string]string)["timestamp"] = strconv.FormatInt(time.Now().Unix(), 10)
+		obj.(map[string]string)["timestamp"] = fmt.Sprintf("%f", ts)
 	case map[string]interface{}:
-		obj.(map[string]interface{})["timestamp"] = time.Now().Unix()
+		obj.(map[string]interface{})["timestamp"] = ts
 	}
 	of, err := os.Create(db.File(objID + ".json"))
 	defer of.Close()
