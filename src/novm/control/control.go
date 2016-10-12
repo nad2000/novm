@@ -83,6 +83,7 @@ func Bind(ctrlPath string) (fd uintptr, err error) {
 	if err != nil {
 		log.Panic(err)
 	}
+	utils.ClearCloexec(int(fd))
 	return
 }
 

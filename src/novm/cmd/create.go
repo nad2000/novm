@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"bufio"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -120,7 +122,8 @@ func create(cmd *cobra.Command) {
 	_ = nofork
 	_ = terminal
 
-	cmdArgs := make([]string, 0, 10)
+	cmdArgs := make([]string, 1, 10)
+	cmdArgs[0] = "novmm"
 	if init {
 		cmdArgs = append(cmdArgs, "-init")
 	}
@@ -158,11 +161,11 @@ func create(cmd *cobra.Command) {
 	// Add our metadata to the regitry:
 	instances.Add(strconv.Itoa(os.Getpid()), meta)
 
-	cmdArgs = append([]string{
-		"-statefd=" + strconv.Itoa(stateFd),
-		"-controlfd=" + strconv.Itoa(int(ctrlFd)),
-	}, cmdArgs...)
+	cmdArgs = append(cmdArgs,
+		"-statefd="+strconv.Itoa(stateFd),
+		"-controlfd="+strconv.Itoa(int(ctrlFd)))
 
+	// ignore empty "-cmdline"
 	if devCmdline != "-cmdline=" {
 		cmdArgs = append(cmdArgs, devCmdline)
 	}
@@ -174,7 +177,12 @@ func create(cmd *cobra.Command) {
 	novmm := utils.LibExec("novmm")
 	if debug {
 		cmdArgs = append(cmdArgs, "-debug")
-		log.Print("Executing: ", novmm, " ", strings.Join(cmdArgs, " "))
+		log.Print("Executing: ", novmm, " ", strings.Join(cmdArgs[0:], " "))
+	}
+
+	if debug {
+		fmt.Print("Press 'Enter' to continue...")
+		bufio.NewReader(os.Stdin).ReadBytes('\n')
 	}
 
 	err := syscall.Exec(novmm, cmdArgs, os.Environ())
