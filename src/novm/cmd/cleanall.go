@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -22,6 +24,13 @@ var cleanallCmd = &cobra.Command{
 				}
 				instances.Remove(pid, nil)
 				os.RemoveAll(path.Join(controlPath, pid+".ctrl"))
+			}
+		}
+		files, _ := ioutil.ReadDir(controlPath)
+		for _, fi := range files {
+			pid := strings.TrimSuffix(fi.Name(), ".ctrl")
+			if !isAlive(pid) {
+				os.RemoveAll(path.Join(controlPath, fi.Name()))
 			}
 		}
 	},
