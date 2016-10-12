@@ -179,6 +179,8 @@ func create(cmd *cobra.Command) {
 	}
 
 	command := exec.Command(novmm, cmdArgs...)
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
 	err := command.Run()
 	if err != nil {
 		log.Panic(err)
