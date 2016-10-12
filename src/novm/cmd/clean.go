@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"log"
+	"os"
+	"path"
 
 	"github.com/spf13/cobra"
 )
@@ -14,7 +16,9 @@ var cleanCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		debugCmd(cmd)
 		id, name := flagString(cmd, "id"), flagString(cmd, "name")
-		if instances.Remove(id, dict{"name": name}) {
+		id = instances.Find(id, dict{"name": name})
+		if instances.Remove(id, nil) {
+			os.RemoveAll(path.Join(controlPath, id+".ctrl"))
 			log.Printf("The instance %q removed.", name+id)
 		}
 	},

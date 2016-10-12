@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"log"
+	"os"
+	"path"
 
 	"github.com/spf13/cobra"
 )
@@ -19,6 +21,7 @@ var cleanallCmd = &cobra.Command{
 					log.Print("Removing PID: ", pid)
 				}
 				instances.Remove(pid, nil)
+				os.RemoveAll(path.Join(controlPath, pid+".ctrl"))
 			}
 		}
 	},
