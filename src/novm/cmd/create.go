@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"path"
 	"strconv"
 	"strings"
@@ -178,10 +177,7 @@ func create(cmd *cobra.Command) {
 		log.Print("Executing: ", novmm, " ", strings.Join(cmdArgs, " "))
 	}
 
-	command := exec.Command(novmm, cmdArgs...)
-	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
-	err := command.Run()
+	err := syscall.Exec(novmm, cmdArgs, os.Environ())
 	if err != nil {
 		log.Panic(err)
 	}
