@@ -1,6 +1,11 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"log"
+	"os"
+
+	"github.com/spf13/cobra"
+)
 
 // getkernelCmd represents the getkernel command
 var getkernelCmd = &cobra.Command{
@@ -16,8 +21,8 @@ var getkernelCmd = &cobra.Command{
 			if len(args) > 0 {
 				url = args[0]
 			} else {
-				panic("Missing kernel URL.")
-				return
+				log.Fatal("Missing kernel URL.")
+				os.Exit(1)
 			}
 		}
 		printResult(cmd, GetKernel(url, nocache, name))
