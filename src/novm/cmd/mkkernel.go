@@ -22,6 +22,9 @@ var mkkernelCmd = &cobra.Command{
 
 		debugCmd(cmd)
 		output := flagString(cmd, "output")
+		if output == "" && len(args) > 0 {
+			output = args[0]
+		}
 		release := flagString(cmd, "release")
 		modules := flagString(cmd, "modules")
 		bzimage := flagString(cmd, "bzimage")
@@ -59,6 +62,7 @@ func Mkkernel(
 
 		command := exec.Command(utils.LibExec("extract-vmlinux"), bzimage)
 		command.Stdout = vmlinuxFile
+		command.Stderr = os.Stderr
 
 		if debug {
 			log.Printf("Runing 'extract-vmlinux' with bzimage=%q to %q\n",
@@ -92,6 +96,7 @@ func Mkkernel(
 	command := exec.Command(utils.LibExec("mkinitramfs"), release, modules)
 	initrd, _ := os.Create(path.Join(tempDir, "initrd"))
 	command.Stdout = initrd
+	command.Stderr = os.Stderr
 
 	if err := command.Run(); err != nil {
 		log.Fatal(err)
