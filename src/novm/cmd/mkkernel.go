@@ -47,6 +47,9 @@ func Mkkernel(
 	}
 	if release == "" {
 		release = utils.SystemRelease()
+		if debug {
+			log.Printf("Creating kernel image using %s release", release)
+		}
 	}
 	if modules == "" {
 		modules = "/lib/modules/" + release
@@ -81,7 +84,7 @@ func Mkkernel(
 	if setup == "" {
 		setupFile, _ := ioutil.TempFile("", "")
 		bzimageFile, _ := os.Open(bzimage)
-		io.Copy(setupFile, bzimageFile)
+		io.CopyN(setupFile, bzimageFile, 4096)
 		bzimageFile.Close()
 		setup = setupFile.Name()
 		setupFile.Close()
