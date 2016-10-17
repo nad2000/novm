@@ -100,7 +100,7 @@ func Open(ctrlPath string) (err error) {
 
 	conn, err = net.Dial("unix", ctrlPath)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	return
 }
