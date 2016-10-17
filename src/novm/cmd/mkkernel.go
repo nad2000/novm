@@ -15,9 +15,10 @@ import (
 )
 
 var mkkernelCmd = &cobra.Command{
-	Use:   "mkkernel",
-	Short: "-- Make a new kernel from an local kernel.",
-	Long:  `Make a new kernel from an local kernel.`,
+	Use:     "mkkernel [OUTPUT]",
+	Aliases: []string{"mk", "mkk"},
+	Short:   "-- Make a new kernel from an local kernel.",
+	Long:    `Make a new kernel from an local kernel.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		debugCmd(cmd)
@@ -36,7 +37,6 @@ var mkkernelCmd = &cobra.Command{
 
 // Mkkernel makea a new kernel from an local kernel
 func Mkkernel(
-
 	output string, release string, modules string, bzimage string,
 	vmlinux string, setup string, sysmap string, nomodules bool) string {
 	if output == "" {
