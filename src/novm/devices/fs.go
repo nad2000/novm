@@ -23,7 +23,7 @@ func CreateFs(index int, tag string, tempDir string, read []string, write []stri
 		if err != nil {
 			log.Fatal("Can't create temporary directory")
 		}
-		// TODO: add to "cleanup" after shut-down this dir (utils.cleanup)
+		utils.AddForCleaning(tempDir)
 	}
 	if !utils.PathExists(tempDir) {
 		os.MkdirAll(tempDir, os.ModeDir|0755)

@@ -67,9 +67,9 @@ func Bind(ctrlPath string) (fd uintptr, err error) {
 		err = os.MkdirAll(dirName, os.ModeDir|0755)
 		if err != nil {
 			log.Fatal(err)
-			return
 		}
 	}
+	utils.AddForCleaning(ctrlPath)
 
 	listener, err = net.ListenUnix("unix", &net.UnixAddr{ctrlPath, "unix"})
 	if err != nil {

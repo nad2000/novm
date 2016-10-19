@@ -86,12 +86,12 @@ func create(cmd *cobra.Command) {
 	availableKernels := kernels.List()
 	if kernel == "" {
 		if availableKernels == nil {
-			panic("No kernel found.")
+			log.Fatal("No kernel found.")
 		}
 		kernel = availableKernels[0]
 	} else {
 		if !utils.StringIsIn(kernel, availableKernels) {
-			log.Panicf("Kernel '%s' not found!", kernel)
+			log.Fatalf("Kernel '%s' not found!", kernel)
 		}
 	}
 	raw, _ := ioutil.ReadFile(kernels.File(kernel, "release"))
@@ -159,7 +159,12 @@ func create(cmd *cobra.Command) {
 	ctrlFd, _ := control.Bind(ctrlFileName)
 
 	// Add our metadata to the regitry:
-	instances.Add(strconv.Itoa(os.Getpid()), meta)
+	instanceId := strconv.Itoa(os.Getpid())
+	instances.Add(instanceId, meta)
+	if !debug {
+		utils.AddForCleaning(instances.File(instanceId) + ".json")
+		utils.AddForCleaning(instances.File(instanceId))
+	}
 
 	cmdArgs = append(cmdArgs,
 		"-statefd="+strconv.Itoa(stateFd),
