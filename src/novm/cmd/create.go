@@ -181,7 +181,9 @@ func create(cmd *cobra.Command) {
 
 	novmm := utils.LibExec("novmm")
 	if debug {
-		cmdArgs = append(cmdArgs, "-debug")
+		if verbose {
+			cmdArgs = append(cmdArgs, "-debug")
+		}
 		log.Print("Executing: ", novmm, " ", strings.Join(cmdArgs[0:], " "))
 	}
 

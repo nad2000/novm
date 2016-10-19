@@ -21,11 +21,12 @@ var (
 	instances, packs     nodb.Nodb
 	kernels, dockerDB    nodb.Nodb
 	debug                bool
+	verbose              bool
 )
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "novm [-h] [--debug] [--plain] [--json]",
+	Use:   "novm [-h] [--debug] [--plain] [--json] [--verbose]",
 	Short: "TODO: A brief description of your application",
 	Long: `TODO: A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
@@ -51,6 +52,7 @@ func Execute() {
 
 func debugCmd(cmd *cobra.Command) {
 	debug = flagBool(cmd, "debug")
+	verbose = flagBool(cmd, "verbose")
 	utils.Debug = debug
 	if debug {
 		title := fmt.Sprintf("Command %q called with flags:", cmd.Name())
@@ -88,6 +90,7 @@ func init() {
 	// when this action is called directly.
 	RootCmd.PersistentFlags().BoolP("toggle", "t", false, "Help message for toggle")
 	RootCmd.PersistentFlags().BoolP("debug", "d", false, "Show full stack trace on error.")
+	RootCmd.PersistentFlags().BoolP("verbose", "V", false, "Show more verbose details.")
 	RootCmd.PersistentFlags().BoolP("plain", "p", false, "Print result as plain text (where applicable).")
 	RootCmd.PersistentFlags().BoolP("json", "j", false, "Print result as JSON (where applicable).")
 }

@@ -136,6 +136,7 @@ func CreateUserMemory(size int, fd int) State {
 		tf, _ := ioutil.TempFile("", "tmp")
 		fd, _ = syscall.Dup(int(tf.Fd()))
 		utils.ClearCloexec(fd)
+		tf.Chdir()
 	}
 
 	// No size given? Default to file size:
