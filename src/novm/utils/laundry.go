@@ -18,6 +18,7 @@ func AddForCleaning(path string) {
 // Cleanup - removes all files and directories added
 // to the "laundry list"
 func Cleanup() {
+	log.Println(laundry)
 	for _, p := range laundry {
 		err := os.RemoveAll(p)
 		if Debug && err != nil {

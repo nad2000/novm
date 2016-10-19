@@ -44,7 +44,7 @@ class FS(virtio.Driver):
             write = []
         if tempdir is None:
             tempdir = tempfile.mkdtemp()
-            utils.cleanup(shutil.rmtree, tempdir)
+            ####utils.cleanup(shutil.rmtree, tempdir)
         if not os.path.exists(tempdir):
             os.makedirs(tempdir)
 
