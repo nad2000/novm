@@ -74,9 +74,7 @@ func create(cmd *cobra.Command) {
 	signals := make(chan os.Signal, 2)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		fmt.Println("......\n")
 		<-signals
-		fmt.Println("cliening ....\n")
 		utils.Cleanup()
 		os.Exit(0)
 	}()
@@ -134,7 +132,7 @@ func create(cmd *cobra.Command) {
 	_ = nofork
 	_ = terminal
 
-	cmdArgs := make([]string, 1, 10)
+	cmdArgs := make([]string, 0, 10)
 	if init {
 		cmdArgs = append(cmdArgs, "-init")
 	}
@@ -206,12 +204,12 @@ func create(cmd *cobra.Command) {
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 	err := command.Run()
+
 	utils.Cleanup()
 	if err != nil {
 		log.Print(err)
 		os.Exit(1)
 	}
-
 }
 
 func init() {
