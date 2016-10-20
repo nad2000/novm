@@ -188,29 +188,39 @@ func CreateNic(index int, options map[string]string) (state State, ip string) {
 	// whenever the underlying instance dies.
 	ip = options["ip"]
 	if ip != "" {
-		// TODO:
+		address, start, end := ParseIpv4mask(ip)
+		dnsmasqArgs := []string{
+			"--keep-in-foreground",
+			"--no-daemon",
+			"--conf-file=",
+			"--bind-interfaces",
+			"--except-interface=lo",
+			"--interface=" + tapName,
+			"--dhcp-range=" + start + "," + end,
+			"--dhcp-host=" + mac + "," + address + "," + name,
+		}
+		if gateway != "" {
+			dnsmasqArgs = append(dnsmasqArgs, "--dhcp-option=option:router,"+gateway)
+		}
+
+		command := exec.Command("/usr/sbin/dnsmasq", dnsmasqArgs...)
+		command.Stdout = os.Stdout
+		command.Stderr = os.Stderr
+		command.Start()
 	}
 
-	var driver string
-	if Pci {
-		driver = "virtio-pci-net"
-	} else {
-		driver = "virtio-mmio-net"
-	}
 	fd := tap.Fd()
+	utils.ClearCloexec(int(fd))
 
-	return State{
-		"cmdline": nil, // TODO!
-		"data": map[string]interface{}{
+	state = createVirtio(index,
+		map[string]interface{}{
 			"fd":      fd,
 			"mac":     mac,
 			"vnet":    vnet,
 			"offload": offload,
 			"ip":      ip,
-		},
-		"debug": debug,
-		"drive": driver,
-		"name":  name,
-	}, ip
+		}, "net", name)
+	state["debug"] = debug
 
+	return
 }
