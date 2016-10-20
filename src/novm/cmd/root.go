@@ -27,18 +27,12 @@ var (
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "novm [-h] [--debug] [--plain] [--json] [--verbose]",
-	Short: "TODO: A brief description of your application",
-	Long: `TODO: A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Short: "'novm' management",
+	Long: `novm is a legacy-free, type 2 hypervisor written in Go. Its goal is to provide an alternate, high-performance Linux hypervisor for cloud workloads.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	Run: func(cmd *cobra.Command, args []string) {
-		debugCmd(cmd)
-	},
+novm is unique because it exposes a filesystem-device as a primary mechanism for running guests. This allows you to easily manage independent software and data bundles independently and combine them into a single virtual machine instance.
+
+novm leverages the excellent Linux Kernel Virtual Machine (KVM) interface to run guest instances.`,
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
