@@ -79,8 +79,7 @@ Docker repositories are provided as follows.
 			//  r1 - child pid = 0 in child
 			if r1 != 0 {
 				log.Printf("%q PID: %d", os.Args[0], r1)
-				// os.Exit(0)
-				syscall.RawSyscall(syscall.SYS_EXIT, 0, 0, 0)
+				os.Exit(0)
 				log.Fatal("Exit failed")
 			}
 		}
