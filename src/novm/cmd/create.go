@@ -13,8 +13,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/sevlyar/go-daemon"
-
 	"github.com/rocksolidlabs/novm/src/novm/control"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 
@@ -65,6 +63,27 @@ Docker repositories are provided as follows.
 
     You should specify at least username, password.`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		nofork := flagBool(cmd, "nofork")
+
+		if !nofork {
+			// detaches the current program by forking and exiting the parent:
+			r1, _, err1 := syscall.RawSyscall(syscall.SYS_FORK, 0, 0, 0)
+			if err1 != 0 {
+				if debug {
+					log.Fatal(os.NewSyscallError("fork", error(err1)))
+				} else {
+					log.Fatalf("Failed to fork %q", os.Args[0])
+				}
+			}
+			//  r1 - child pid = 0 in child
+			if r1 != 0 {
+				log.Printf("%q PID: %d", os.Args[0], r1)
+				// os.Exit(0)
+				syscall.RawSyscall(syscall.SYS_EXIT, 0, 0, 0)
+				log.Fatal("Exit failed")
+			}
+		}
 		create(cmd)
 	},
 }
@@ -78,17 +97,6 @@ func create(cmd *cobra.Command) {
 		utils.Cleanup()
 		os.Exit(0)
 	}()
-
-	context := &daemon.Context{
-		PidFileName: "pid",
-		PidFilePerm: 0644,
-		LogFileName: "log",
-		LogFilePerm: 0640,
-		WorkDir:     "./",
-		Umask:       027,
-		Args:        []string{"[novm create ...]"},
-	}
-	_ = context
 
 	debugCmd(cmd)
 	name := flagString(cmd, "name")
@@ -125,11 +133,9 @@ func create(cmd *cobra.Command) {
 	nopci := flagBool(cmd, "nopci")
 	com1 := flagBool(cmd, "com1")
 	com2 := flagBool(cmd, "com2")
-	nofork := flagBool(cmd, "nofork")
 	terminal := flagBool(cmd, "terminal")
 
 	_ = cwd
-	_ = nofork
 	_ = terminal
 
 	cmdArgs := make([]string, 0, 10)
