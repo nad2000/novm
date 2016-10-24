@@ -82,6 +82,8 @@ Docker repositories are provided as follows.
 				os.Exit(0)
 				log.Fatal("Exit failed")
 			}
+			// Reset to NODB root for the child process:
+			SetRootDir("")
 		}
 		create(cmd)
 	},

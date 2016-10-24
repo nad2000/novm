@@ -171,7 +171,9 @@ func LibExec(name string) string {
 	libExecDir := path.Join(binDir, "..", "lib", binName, "libexec")
 	pwd, _ := os.Getwd()
 	pathList := []string{
-		libExecDir, path.Join(binDir, "..", "bin"),
+		"/usr/bin", "/usr/lib/novm/libexec",
+		binDir, libExecDir,
+		path.Join(binDir, "..", "bin"),
 		path.Join(pwd, "..", "..", "lib", "novm", "libexec"),
 		path.Join(pwd, "..", "..", "bin"),
 		path.Join(pwd, "..", "..", "..", "bin"),
