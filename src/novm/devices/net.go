@@ -94,7 +94,7 @@ func ParseIpv4mask(ip string) (string, string, string) {
 	return addrPart, ItoIpv4(firstAddr), ItoIpv4(endAddr)
 }
 
-// TapDevice creats a TAP device
+// TapDevice creates a TAP device
 func TapDevice(name string) (tap *os.File, vnet int, offload bool) {
 
 	tap, err := os.OpenFile("/dev/net/tun", os.O_RDWR, 0666)
@@ -156,7 +156,7 @@ func CreateNic(index int, options map[string]string) (state State, ip string) {
 	}
 	tap, vnet, offload := TapDevice(tapName)
 	mtu, ok = options["mtu"]
-	if !ok || mtu != "" {
+	if ok && mtu != "" {
 		command := exec.Command("/sbin/ip", "link", "set", "dev", tapName, "mtu", mtu)
 		out, err := command.Output()
 		if err != nil {
@@ -166,11 +166,12 @@ func CreateNic(index int, options map[string]string) (state State, ip string) {
 
 	// Enslave to the given bridge. (It will be authomatically removed.)
 	bridge, ok = options["bridge"]
-	if !ok || bridge != "" {
+	if ok && bridge != "" {
 		command := exec.Command("/sbin/brctl", "addif", bridge, tapName)
-		out, err := command.Output()
+		out, err := command.CombinedOutput()
 		if err != nil {
-			log.Fatalf("Failed to add interface %#v to bridge %#v: %v (%v)", tapName, bridge, err, out)
+			log.Println(string(out))
+			log.Fatalf("Failed to add interface %#v to bridge %#v: %v", tapName, bridge, err)
 		}
 	}
 

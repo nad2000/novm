@@ -113,7 +113,7 @@ func CreateInstance(
 	for index, nic := range nics {
 		options := make(map[string]string)
 		for _, opt := range strings.Split(nic, ",") {
-			parts := strings.SplitN(opt, "=", 1)
+			parts := strings.SplitN(opt, "=", 2)
 			if len(parts) < 2 {
 				log.Panicf("Malformated NIC option: %q", opt)
 			}
