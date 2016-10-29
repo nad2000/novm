@@ -10,21 +10,11 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"syscall"
 	"unsafe"
 
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
-
-// Ioctl numbers are encoded in 32 bits:
-//   1  - 16: command
-//   17 - 30: param struct size
-//   31 - 32: direction
-func iow(cmdType int, nr int, size int) int {
-	return ((1 << 30) | (size << 16) | nr | (cmdType << 8))
-}
-func ior(cmdType int, nr int, size int) int {
-	return ((2 << 30) | (size << 16) | nr | (cmdType << 8))
-}
 
 const (
 	//  Tap device flags:
@@ -38,14 +28,6 @@ const (
 	TUN_F_TSO6    = 0x04
 	TUN_F_TSO_ECN = 0x08
 	TUN_F_UFO     = 0x10
-)
-
-var (
-	// Tap device ioctls:
-	TUNSETIFF       = iow('T', 202, 4)
-	TUNGETFEATURES  = ior('T', 207, 4)
-	TUNSETOFFLOAD   = iow('T', 208, 4)
-	TUNGETVNETHDRSZ = ior('T', 215, 4)
 )
 
 // Return a random MAC address
@@ -97,7 +79,7 @@ func ParseIpv4mask(ip string) (string, string, string) {
 // TapDevice creates a TAP device
 func TapDevice(name string) (tap *os.File, vnet int, offload bool) {
 
-	tap, err := os.OpenFile("/dev/net/tun", os.O_RDWR, 0666)
+	tap, err := os.OpenFile("/dev/net/tun", os.O_RDWR|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatal("Failed to open '/dev/net/tun':", err)
 	}
@@ -105,25 +87,54 @@ func TapDevice(name string) (tap *os.File, vnet int, offload bool) {
 	// Figure out if the kernel supports processing vnet headers on tap
 	// devices. This is necessary for forwarding hardware offloading
 	// from the guest virtual nics to the physical nics on the host.
-	features, err := utils.Fcntl(tap.Fd(), TUNGETFEATURES, uintptr(0))
+	var features int
+	r, _, e1 := syscall.Syscall(
+		syscall.SYS_IOCTL,
+		uintptr(tap.Fd()),
+		syscall.TUNGETFEATURES,
+		uintptr(unsafe.Pointer(&features)))
 
-	flags := IFF_TAP | IFF_NO_PI | (features & IFF_VNET_HDR)
+	if r != 0 {
+		log.Fatal(e1)
+	}
+
+	flags := IFF_TAP | IFF_NO_PI
+	if features&IFF_VNET_HDR != 0 {
+		flags |= IFF_VNET_HDR
+	}
 
 	// Ctreate the TAP device
 	var ifr [18]byte
 	copy(ifr[:], []byte(name))
-	binary.LittleEndian.PutUint16(ifr[:], uint16(flags))
-	utils.Fcntl(tap.Fd(), TUNSETIFF, uintptr(unsafe.Pointer(&ifr)))
-	vnetHdrSz, _ := utils.Fcntl(tap.Fd(), TUNGETVNETHDRSZ, uintptr(0))
+	binary.LittleEndian.PutUint16(ifr[16:], uint16(flags))
+	r, _, e1 = syscall.Syscall(
+		syscall.SYS_IOCTL,
+		uintptr(tap.Fd()),
+		syscall.TUNSETIFF,
+		uintptr(unsafe.Pointer(&ifr)))
+	if r != 0 {
+		log.Fatal(e1)
+	}
+	var vnetHdrSz int
+	r, _, e1 = syscall.Syscall(
+		syscall.SYS_IOCTL,
+		uintptr(tap.Fd()),
+		syscall.TUNGETVNETHDRSZ,
+		uintptr(unsafe.Pointer(&vnetHdrSz)))
+	if r != 0 {
+		log.Fatal(e1)
+	}
 
 	// Size of the vnet header expected by the TAP device:
 	if features&IFF_VNET_HDR != 0 {
 		vnet = vnetHdrSz
-		_, err := utils.Fcntl(tap.Fd(), TUNSETOFFLOAD,
-			uintptr(TUN_F_CSUM|TUN_F_TSO4|
-				TUN_F_TSO6|TUN_F_TSO_ECN|TUN_F_UFO))
-		if offload = err == nil; !offload {
-			log.Println("Failed to enable offloads:", err)
+		r, _, e1 = syscall.Syscall(
+			syscall.SYS_IOCTL,
+			uintptr(tap.Fd()),
+			syscall.TUNSETOFFLOAD,
+			uintptr(TUN_F_CSUM|TUN_F_TSO4|TUN_F_TSO6|TUN_F_TSO_ECN|TUN_F_UFO))
+		if offload = r == 0; !offload {
+			log.Print("Failed to enable offloads:", e1)
 		}
 	} // else vnet=0, offload=false
 
