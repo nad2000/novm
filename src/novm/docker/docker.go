@@ -346,7 +346,7 @@ func PullRepository(repository string) []string {
 	)
 
 	if strings.Contains(repository, ":") {
-		parts := strings.SplitN(repository, ":", 1)
+		parts := strings.SplitN(repository, ":", 2)
 		repository, tag = parts[0], parts[1]
 		for _, t := range Tags(repository) {
 			if tag == t.Name {
