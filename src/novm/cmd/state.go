@@ -130,7 +130,7 @@ func CreateInstance(
 	for index, disk := range disks {
 		options := make(map[string]string)
 		for _, opt := range strings.Split(disk, ",") {
-			parts := strings.SplitN(opt, "=", 1)
+			parts := strings.SplitN(opt, "=", 2)
 			if len(parts) < 2 {
 				log.Panicf("Malformated disk option: %q", opt)
 			}
@@ -157,7 +157,7 @@ func CreateInstance(
 		repository := opts[0]
 		options := make(map[string]string)
 		for _, arg := range opts[1:] {
-			parts := strings.SplitN(arg, "=", 1)
+			parts := strings.SplitN(arg, "=", 2)
 			options[parts[0]] = parts[1]
 		}
 		docker.Init(dockerDB, options)
