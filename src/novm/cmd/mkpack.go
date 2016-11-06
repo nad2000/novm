@@ -18,7 +18,7 @@ var mkpackCmd = &cobra.Command{
 		dirPath := flagString(cmd, "path")
 		include := flagStringSlice(cmd, "include")
 		exclude := flagStringSlice(cmd, "exclude")
-		output := utils.TempFileName("tmp", ".zip")
+		output := utils.TempFileName("tmp", ".tar.gz")
 
 		if dirPath == "" {
 			if objID != "" || name != "" {
@@ -29,7 +29,7 @@ var mkpackCmd = &cobra.Command{
 			}
 		}
 
-		err := utils.Packdir(dirPath, output, include, exclude)
+		err := utils.Tazdir(dirPath, output, include, exclude)
 		if err != nil {
 			panic(err)
 		} else {

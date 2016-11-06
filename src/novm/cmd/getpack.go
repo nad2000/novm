@@ -1,6 +1,11 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"log"
+	"os"
+
+	"github.com/spf13/cobra"
+)
 
 // getpackCmd represents the getpack command
 var getpackCmd = &cobra.Command{
@@ -18,8 +23,8 @@ var getpackCmd = &cobra.Command{
 				if len(args) > 0 {
 					url = args[0]
 				} else {
-					panic("Missing URL.")
-					return
+					log.Fatal("Missing URL.")
+					os.Exit(1)
 				}
 			}
 			result = packs.Fetch(url, dict{"name": name})
