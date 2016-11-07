@@ -105,6 +105,11 @@ func Open(ctrlPath string) (err error) {
 	return
 }
 
+// Close attempts to close the Unix socket
+func Close() error {
+	return conn.Close()
+}
+
 // RPC calls RPC command over the Unix socket
 func RPC(name string, params map[string]string) (interface{}, error) {
 
@@ -220,11 +225,16 @@ func Run(command []string, env []string, cwd string, terminal bool) (interface{}
 
 	if terminal {
 		origTcAttrs, err = termios.MakeRaw(0)
+		defer func() {
+			log.Print("Reverting termios settings...")
+			termios.TcSetAttr(0, origTcAttrs)
+		}()
+
 		if err != nil {
+			log.Print("Failed to enable RAW termios: ", err)
 			isTerminal = false
 		} else {
 			isTerminal = true
-			defer termios.TcSetAttr(0, origTcAttrs)
 		}
 	} else {
 		isTerminal = false
@@ -238,54 +248,46 @@ func Run(command []string, env []string, cwd string, terminal bool) (interface{}
 	// no errors. If it's a string -- error.
 	started := false
 
-	// We use a standard SSH-like escape.
-	// Remember if we've seen an ~ already.
-	seenTitle := false
-
-	// Poll and transform the event stream.
-	// This will basically turn this process
-	// into a proxy for the remote process.
-	readSet := []interface{}{conn, os.Stdin}
-	_ = isTerminal
-	_ = exitCode
-	_ = started
-	_ = seenTitle
-	_ = readSet
-
 	// Read input form terminal
 	go func() {
 
 		var (
-			buf       [4096]byte
+			buf [4096]byte
+			// We use a standard SSH-like escape.
+			// Remember if we've seen an ~ already.
 			seenTilde bool
 		)
 
 		for {
 			n, err := os.Stdin.Read(buf[:])
 			if err == io.EOF {
+				exitCode = 0
 				break
-			} else if err != nil {
-				log.Panic(err)
+			}
+			if err != nil {
+				log.Print(err)
+				exitCode = 1
+				break
 			}
 			if isTerminal {
 				if n == 1 && buf[0] == byte('~') {
-					seenTilde = !seenTitle
+					seenTilde = !seenTilde
 				} else if seenTilde && n == 1 && buf[0] == byte('.') {
-					break // TODO: should break from the loop
+					break
 				} else {
-					seenTitle = false
+					seenTilde = false
 				}
 			}
 
 			// Server expects JSON encoded value, eg, "ABC...", null, 1, etc.
-			conn.Write([]byte("\""))
 			if n != 0 {
+				conn.Write([]byte("\""))
 				conn.Write([]byte(base64.StdEncoding.EncodeToString(buf[:n])))
+				conn.Write([]byte("\""))
 			} else {
-
 				conn.Write([]byte("null"))
 			}
-			conn.Write([]byte("\"\n"))
+			conn.Write([]byte("\n"))
 
 			if n == 0 {
 				exitCode = 0 // in order to gracefully exit
@@ -300,15 +302,16 @@ func Run(command []string, env []string, cwd string, terminal bool) (interface{}
 		err = json.Unmarshal(rawResp, &rawMsg)
 
 		if err != nil {
-			panic(err)
-			return nil, err
+			log.Printf("%#v", string(rawResp))
+			log.Print(err)
+			os.Exit(1)
 		}
 
 		if !started {
 			// See the note above about 'started'
 			if rawMsg != nil {
-				err = fmt.Errorf("%#v: %#v", command)
-				panic(err)
+				err = fmt.Errorf("Received unexpected response %#v executing %q", rawMsg, command)
+				log.Print(err)
 				return nil, err
 			}
 			started = true
@@ -324,8 +327,8 @@ func Run(command []string, env []string, cwd string, terminal bool) (interface{}
 		case string:
 			data, err := base64.StdEncoding.DecodeString(rawMsg.(string))
 			if err != nil {
-				log.Panicf("Failed to decode Base64 message: %v", rawMsg)
-				panic(err)
+				log.Print("Failed to decode Base64 message: %v", rawMsg)
+				os.Exit(1)
 			}
 			fmt.Print(string(data))
 		case float64:
