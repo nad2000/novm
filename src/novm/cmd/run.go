@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"os"
 	"path"
 
 	"github.com/rocksolidlabs/novm/src/novm/control"
@@ -33,8 +34,14 @@ var runCmd = &cobra.Command{
 		control.Open(ctrlPath)
 		defer control.Close()
 
-		result, _ := control.Run(command, env, cwd, terminal)
+		result, err, exitCode := control.Run(command, env, cwd, terminal)
+		if err != nil {
+			log.Print(err)
+		}
 		printResult(cmd, result)
+		if exitCode != 0 {
+			os.Exit(exitCode)
+		}
 	},
 }
 

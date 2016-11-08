@@ -7,6 +7,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/rocksolidlabs/novm/src/novm/control"
 	"github.com/rocksolidlabs/novm/src/novm/nodb"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 
@@ -48,6 +49,7 @@ func debugCmd(cmd *cobra.Command) {
 	debug = flagBool(cmd, "debug")
 	verbose = flagBool(cmd, "verbose")
 	utils.Debug = debug
+	control.Debug = debug
 	if debug {
 		title := fmt.Sprintf("Command %q called with flags:", cmd.Name())
 		fmt.Println(title)

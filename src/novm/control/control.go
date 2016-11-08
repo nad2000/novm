@@ -1,7 +1,7 @@
 package control
 
 import (
-	"bytes"
+	"bufio"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -19,44 +19,20 @@ import (
 )
 
 var (
+	Debug bool
+
 	sendRPC  = false
 	listener *net.UnixListener
 	conn     net.Conn
 )
 
 // Read by chuncs the response until '\n' reached or EOF
-func readLine() (line []byte, err error) {
-
-	var buf [bytes.MinRead]byte
-
-	for {
-		n, err := conn.Read(buf[:])
-		if err != nil {
-			panic(err)
-			if n > 0 {
-				return buf[:n], err
-			}
-
-			return nil, err
-		}
-		if line == nil {
-			if n < bytes.MinRead {
-				line = make([]byte, n)
-				copy(line, buf[:n])
-
-				break
-			} else {
-				line = make([]byte, 0, 2*bytes.MinRead)
-			}
-		}
-		if n > 0 {
-			line = append(line, buf[:n]...)
-		}
-		if n == 0 || buf[n-1] == '\n' {
-			break
-		}
+func readLine() (line string, err error) {
+	line, err = bufio.NewReader(conn).ReadString('\n')
+	if err == nil && line != "" {
+		line = strings.TrimSpace(line)
 	}
-	return line, nil
+	return
 }
 
 // Bind creates and binds to listen on a Unix socket
@@ -87,7 +63,7 @@ func Bind(ctrlPath string) (fd uintptr, err error) {
 	return
 }
 
-// Open creates and opens a Unix socket
+// Open opens a Unix socket if the socket doesn't exit it creates it
 func Open(ctrlPath string) (err error) {
 	dirName := path.Dir(ctrlPath)
 	if !utils.PathExists(dirName) {
@@ -114,10 +90,10 @@ func Close() error {
 func RPC(name string, params map[string]string) (interface{}, error) {
 
 	var (
-		msg     map[string]interface{}
-		rawMsg  interface{}
-		err     error
-		rawResp []byte
+		msg    map[string]interface{}
+		rawMsg interface{}
+		err    error
+		line   string
 	)
 
 	paramList := make(map[string]interface{})
@@ -157,13 +133,13 @@ func RPC(name string, params map[string]string) (interface{}, error) {
 		panic(err)
 	}
 
-	rawResp, err = readLine()
+	line, err = readLine()
 	if err != nil {
 		panic(err)
 		return nil, err
 	}
 
-	err = json.Unmarshal(rawResp, &rawMsg)
+	err = json.Unmarshal([]byte(line), &rawMsg)
 	if err != nil {
 		panic(err)
 		return nil, err
@@ -192,11 +168,11 @@ func RPC(name string, params map[string]string) (interface{}, error) {
 }
 
 // Run runs a remote command on VM
-func Run(command []string, env []string, cwd string, terminal bool) (interface{}, error) {
+func Run(command []string, env []string, cwd string, terminal bool) (
+	rawMsg interface{}, err error, exitCode int) {
 
 	var (
-		rawMsg      interface{}
-		rawResp     []byte
+		line        string
 		origTcAttrs *termios.Termios
 		isTerminal  bool
 	)
@@ -208,10 +184,9 @@ func Run(command []string, env []string, cwd string, terminal bool) (interface{}
 		cwd = "/"
 	}
 
-	_, err := conn.Write([]byte("NOVM RUN\n"))
+	_, err = conn.Write([]byte("NOVM RUN\n"))
 	if err != nil {
-		panic(err)
-		return nil, err
+		log.Fatal(err)
 	}
 
 	startCmd := map[string]interface{}{
@@ -225,30 +200,24 @@ func Run(command []string, env []string, cwd string, terminal bool) (interface{}
 
 	if terminal {
 		origTcAttrs, err = termios.MakeRaw(0)
-		defer func() {
-			log.Print("Reverting termios settings...")
-			termios.TcSetAttr(0, origTcAttrs)
-		}()
 
 		if err != nil {
 			log.Print("Failed to enable RAW termios: ", err)
 			isTerminal = false
 		} else {
 			isTerminal = true
+			defer func() {
+				if Debug {
+					log.Print("Reverting termios settings...")
+				}
+				termios.TcSetAttr(0, origTcAttrs)
+			}()
 		}
 	} else {
 		isTerminal = false
 	}
 
-	// Remember our exitcode.
-	exitCode := 1
-
-	// Expect our first object to be a None.
-	// This indicates that we've started with
-	// no errors. If it's a string -- error.
-	started := false
-
-	// Read input form terminal
+	// Read input form terminal and sends over to VM
 	go func() {
 
 		var (
@@ -296,46 +265,58 @@ func Run(command []string, env []string, cwd string, terminal bool) (interface{}
 		}
 	}()
 
-	for {
-		rawResp, err = readLine()
+	// Remember our exitcode.
+	exitCode = 1
 
-		err = json.Unmarshal(rawResp, &rawMsg)
+	// Expect our first object to be a None.
+	// This indicates that we've started with
+	// no errors. If it's a string -- error.
+	started := false
+
+	for {
+		line, err = readLine()
+		if Debug {
+			log.Println("*** RAW LINE: ", line)
+		}
 
 		if err != nil {
-			log.Printf("%#v", string(rawResp))
 			log.Print(err)
-			os.Exit(1)
+			return
 		}
 
 		if !started {
 			// See the note above about 'started'
-			if rawMsg != nil {
-				err = fmt.Errorf("Received unexpected response %#v executing %q", rawMsg, command)
-				log.Print(err)
-				return nil, err
+			if line != "null" {
+				err = fmt.Errorf("Received unexpected response %#v executing %q", line, command)
+				break
 			}
 			started = true
 			continue
 		}
 
-		if rawMsg == nil {
+		// Expected either: null, integer, or Base64 encoded string:
+		if line == "null" {
 			// Server is done.
-			os.Exit(exitCode)
-		}
-
-		switch rawMsg.(type) {
-		case string:
-			data, err := base64.StdEncoding.DecodeString(rawMsg.(string))
+			break
+		} else if line[0] == '"' && line[len(line)-1] == '"' {
+			data, err := base64.StdEncoding.DecodeString(line[1 : len(line)-1])
 			if err != nil {
-				log.Print("Failed to decode Base64 message: %v", rawMsg)
-				os.Exit(1)
+				if Debug {
+					log.Print(err)
+				}
+				err = fmt.Errorf("Failed to decode Base64 message: %s", line)
+				break
+			} else {
+				fmt.Print(string(data))
 			}
-			fmt.Print(string(data))
-		case float64:
+		} else if rc, err := strconv.Atoi(line); err == nil {
 			// remember the exit code
-			exitCode = int(rawMsg.(float64))
+			exitCode = rc
+		} else {
+			err = fmt.Errorf("Received unexpected response %#v executing %q", line, command)
+			break
 		}
 
 	}
-	return rawMsg, nil
+	return
 }
