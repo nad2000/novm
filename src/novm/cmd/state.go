@@ -181,7 +181,7 @@ func CreateInstance(
 		"devices": devs,
 		"vcpus":   vcpus,
 	}
-	utils.JSONDump(state, output)
+	utils.JSONDump(state, output, true)
 
 	meta = map[string]interface{}{
 		"name":   name,

@@ -440,8 +440,15 @@ func JSONDumps(in interface{}) string {
 }
 
 // JSONDump serialize an object into indented JSON streaming it into the writer
-func JSONDump(in interface{}, out io.Writer) error {
-	b, err := json.MarshalIndent(in, "", "\t")
+func JSONDump(in interface{}, out io.Writer, indent bool) (err error) {
+
+	var b []byte
+
+	if indent {
+		b, err = json.MarshalIndent(in, "", "\t")
+	} else {
+		b, err = json.Marshal(in)
+	}
 	if err != nil {
 		log.Fatal(err)
 		return err

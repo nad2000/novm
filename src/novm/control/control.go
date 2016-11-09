@@ -195,8 +195,7 @@ func Run(command []string, env []string, cwd string, terminal bool) (
 		"terminal":    terminal,
 		"cwd":         cwd,
 	}
-	utils.JSONDump(startCmd, conn)
-	conn.Write([]byte("\n"))
+	utils.JSONDump(startCmd, conn, false)
 
 	if terminal {
 		origTcAttrs, err = termios.MakeRaw(0)
@@ -276,7 +275,7 @@ func Run(command []string, env []string, cwd string, terminal bool) (
 	for {
 		line, err = readLine()
 		if Debug {
-			log.Println("*** RAW LINE: ", line)
+			log.Println("*** RAW LINE:", line)
 		}
 
 		if err != nil {
