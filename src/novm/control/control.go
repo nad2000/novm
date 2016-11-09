@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"os"
@@ -65,6 +64,7 @@ func Bind(ctrlPath string) (fd uintptr, err error) {
 
 // Open opens a Unix socket if the socket doesn't exit it creates it
 func Open(ctrlPath string) (err error) {
+
 	dirName := path.Dir(ctrlPath)
 	if !utils.PathExists(dirName) {
 		err = os.MkdirAll(dirName, os.ModeDir|0755)
@@ -228,15 +228,11 @@ func Run(command []string, env []string, cwd string, terminal bool) (
 
 		for {
 			n, err := os.Stdin.Read(buf[:])
-			if err == io.EOF {
-				exitCode = 0
-				break
-			}
+
 			if err != nil {
-				log.Print(err)
-				exitCode = 1
 				break
 			}
+
 			if isTerminal {
 				if n == 1 && buf[0] == byte('~') {
 					seenTilde = !seenTilde
@@ -258,7 +254,6 @@ func Run(command []string, env []string, cwd string, terminal bool) (
 			conn.Write([]byte("\n"))
 
 			if n == 0 {
-				exitCode = 0 // in order to gracefully exit
 				break
 			}
 		}
