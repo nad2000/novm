@@ -3,7 +3,7 @@ package cmd
 import (
 	"io"
 	"io/ioutil"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/exec"
 	"path"
@@ -73,10 +73,10 @@ func Mkkernel(
 		}
 
 		if err := command.Run(); err != nil {
-			log.Panicln(err)
+			log.Fatalln(err)
 		}
 		if err := vmlinuxFile.Close(); err != nil {
-			log.Panicln(err)
+			log.Fatalln(err)
 		}
 		vmlinux = vmlinuxFile.Name()
 

@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"strconv"
 	"strings"
@@ -115,7 +115,7 @@ func CreateInstance(
 		for _, opt := range strings.Split(nic, ",") {
 			parts := strings.SplitN(opt, "=", 2)
 			if len(parts) < 2 {
-				log.Panicf("Malformated NIC option: %q", opt)
+				log.Fatalf("Malformated NIC option: %q", opt)
 			}
 			options[parts[0]] = parts[1]
 		}
@@ -132,7 +132,7 @@ func CreateInstance(
 		for _, opt := range strings.Split(disk, ",") {
 			parts := strings.SplitN(opt, "=", 2)
 			if len(parts) < 2 {
-				log.Panicf("Malformated disk option: %q", opt)
+				log.Fatalf("Malformated disk option: %q", opt)
 			}
 			options[parts[0]] = parts[1]
 		}

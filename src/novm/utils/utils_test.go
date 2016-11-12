@@ -3,13 +3,13 @@ package utils_test
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"strings"
 	"testing"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 

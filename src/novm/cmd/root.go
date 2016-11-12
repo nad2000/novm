@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"path"
 	"strings"
@@ -162,7 +162,7 @@ func printResult(cmd *cobra.Command, result interface{}) {
 func isAlive(pid interface{}) bool {
 	switch pid.(type) {
 	default:
-		log.Panicf("Incorrect PID type: %#v", pid)
+		log.Fatalf("Incorrect PID type: %#v", pid)
 		return false
 	case int:
 		return utils.PathExists(fmt.Sprintf("/proc/%d", pid.(int)))

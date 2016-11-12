@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/exec"
 	"os/signal"
