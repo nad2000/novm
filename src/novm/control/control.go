@@ -22,11 +22,12 @@ var (
 	sendRPC  = false
 	listener *net.UnixListener
 	conn     net.Conn
+	reader   *bufio.Reader
 )
 
 // Read by chuncs the response until '\n' reached or EOF
 func readLine() (line string, err error) {
-	line, err = bufio.NewReader(conn).ReadString('\n')
+	line, err = reader.ReadString('\n')
 	if err == nil && line != "" {
 		line = strings.TrimSpace(line)
 	}
@@ -77,6 +78,8 @@ func Open(ctrlPath string) (err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	reader = bufio.NewReader(conn)
+
 	return
 }
 
@@ -280,7 +283,7 @@ func Run(command []string, env []string, cwd string, terminal bool) (
 		if !started {
 			// See the note above about 'started'
 			if line != "null" {
-				err = fmt.Errorf("Received unexpected response %#v executing %q", line, command)
+				err = fmt.Errorf("Received unexpected response %q executing %q", line, command)
 				break
 			}
 			started = true
