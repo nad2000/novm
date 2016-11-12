@@ -3,7 +3,7 @@ package devices
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"syscall"
 
 	"github.com/rocksolidlabs/novm/src/novm/utils"

@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"path"
 	"strings"

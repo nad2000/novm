@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"io/ioutil"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"path"
 	"strings"

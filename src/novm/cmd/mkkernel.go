@@ -3,7 +3,7 @@ package cmd
 import (
 	"io"
 	"io/ioutil"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/exec"
 	"path"

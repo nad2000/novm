@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"math/rand"
 	"net/http"
 	"os"

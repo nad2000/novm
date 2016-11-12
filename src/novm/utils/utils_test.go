@@ -3,7 +3,7 @@ package utils_test
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 	"os"
 	"path"

@@ -2,7 +2,7 @@ package cmd_test
 
 import (
 	"fmt"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"path"
 

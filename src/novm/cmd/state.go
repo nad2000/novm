@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"strconv"
 	"strings"
