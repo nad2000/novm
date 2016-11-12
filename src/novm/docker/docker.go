@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"math/rand"
 	"net/http"
 	"os"
@@ -110,7 +110,7 @@ func Authenticate(url string) (token string, endpoint string) {
 	}
 
 	if res.StatusCode/100 != 2 {
-		log.Panicf("Failed to request %q (Status: %q)", url, res.Status)
+		log.Fatalf("Failed to request %q (Status: %q)", url, res.Status)
 	}
 
 	token = res.Header.Get("X-Docker-Token")
@@ -167,7 +167,7 @@ func request(
 		log.Fatal(err)
 	}
 	if res.StatusCode/100 != 2 {
-		log.Panic("Failed to request %q, %q (Status: %q)", method, url, res.Status)
+		log.Fatal("Failed to request %q, %q (Status: %q)", method, url, res.Status)
 	}
 
 	if auth != "" {
@@ -209,7 +209,7 @@ func ImageInfo(repository string, imageID string) (imageInfo map[string]interfac
 	}
 
 	if res.StatusCode/100 != 2 {
-		log.Panicf("Failed to request %q (Status: %q)", req.URL, res.Status)
+		log.Fatalf("Failed to request %q (Status: %q)", req.URL, res.Status)
 	}
 
 	err = json.NewDecoder(res.Body).Decode(&imageInfo)
@@ -224,7 +224,7 @@ func ImageInfo(repository string, imageID string) (imageInfo map[string]interfac
 func Tags(repository string) (tags []Tag) {
 	resp, err := http.Get(BaseURL + "repositories/" + repository + "/tags")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer resp.Body.Close()
 	json.NewDecoder(resp.Body).Decode(&tags)
@@ -236,7 +236,7 @@ func Images(repository string) (images []string) {
 
 	resp, err := http.Get(BaseURL + "repositories/" + repository + "/images")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	defer resp.Body.Close()
@@ -273,12 +273,12 @@ func DownloadImage(repository string, imageID string, tf io.Writer) {
 	}
 
 	if res.StatusCode/100 != 2 {
-		log.Panicf("Failed to request %q (Status: %q)", req.URL, res.Status)
+		log.Fatalf("Failed to request %q (Status: %q)", req.URL, res.Status)
 	}
 
 	_, err = io.Copy(tf, res.Body)
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 }
 
@@ -354,7 +354,7 @@ func PullRepository(repository string) []string {
 			}
 		}
 		if imageID == "" {
-			log.Panic("Failed to pull the image with tag %q", tag)
+			log.Fatal("Failed to pull the image with tag %q", tag)
 		}
 	} else {
 		t := Tags(repository)[0]

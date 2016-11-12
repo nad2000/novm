@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	"log"
 	"os"
 	"path"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/control"
 

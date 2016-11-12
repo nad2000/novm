@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"log"
-	"os"
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
@@ -24,7 +23,7 @@ var getpackCmd = &cobra.Command{
 					url = args[0]
 				} else {
 					log.Fatal("Missing URL.")
-					os.Exit(1)
+					return
 				}
 			}
 			result = packs.Fetch(url, dict{"name": name})

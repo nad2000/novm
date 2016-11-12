@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"path"
 	"path/filepath"
@@ -207,16 +207,16 @@ func Packdir(input, output string, include, exclude []string) error {
 		fh.Name = strings.TrimPrefix(fileName, input)
 		f, err := zipf.CreateHeader(fh)
 		if err != nil {
-			log.Panicln(err)
+			log.Fatalln(err)
 		}
 		sf, err := os.Open(fileName)
 		defer sf.Close()
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 		_, err = io.Copy(f, sf)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 		return err
 	}
@@ -321,7 +321,7 @@ func LibExec(name string) string {
 			return libExecPath
 		}
 	}
-	log.Panicf("Failed to find %q in %v", name, pathList)
+	log.Fatalf("Failed to find %q in %v", name, pathList)
 	return ""
 }
 

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"path"
 

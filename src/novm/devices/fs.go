@@ -2,7 +2,7 @@ package devices
 
 import (
 	"io/ioutil"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"strings"
 
