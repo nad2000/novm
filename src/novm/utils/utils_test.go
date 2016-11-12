@@ -3,16 +3,21 @@ package utils_test
 import (
 	"fmt"
 	"io/ioutil"
-	log "github.com/Sirupsen/logrus"
-	"github.com/rocksolidlabs/novm/src/novm/utils"
 	"os"
 	"path"
 	"strings"
 	"testing"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
 var rootPath string = path.Join(os.TempDir(), "test_data")
+
+func init() {
+	utils.Debug = testing.Verbose()
+}
 
 func createTestTree() string {
 	return createTestTreeWithName("packdir")
@@ -25,6 +30,7 @@ func createTestTreeWithName(name string) string {
 		name := path.Join(rootPath, name, dirName)
 		os.MkdirAll(name, os.ModeDir|0755)
 		tf, err := os.Create(path.Join(name, "test.txt"))
+		fmt.Fprintf(tf, "TEST FILE IN %q", name)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -37,12 +43,32 @@ func removeTestTree() {
 	os.RemoveAll(rootPath)
 }
 
+// TESTS:
 func TestStr2TsStr(t *testing.T) {
 	expected := fmt.Sprint(time.Unix(454634382, 100000000))
 	output := utils.Str2TsStr("454634382.10000000")
 	if expected != output {
 		t.Errorf("Mismatch %q != %q", output, expected)
 	}
+}
+
+func TestTazdir(t *testing.T) {
+	createTestTree()
+	utils.Tazdir(path.Join(rootPath, "packdir"), path.Join(rootPath, "tazdir.taz"), nil, nil)
+	os.RemoveAll(path.Join(rootPath, "packdir"))
+	output_dir := path.Join(rootPath, "packdir", "output")
+	err := utils.Untazdir(path.Join(rootPath, "tazdir.taz"), output_dir)
+	if err != nil {
+		t.Error(err)
+	}
+	for _, dirName := range []string{"aaa", "bbb", "ccc", "ddd"} {
+		name := path.Join(output_dir, dirName, "test.txt")
+		if !utils.PathExists(name) {
+			t.Errorf("Expected to find '%v'", name)
+			t.FailNow()
+		}
+	}
+	removeTestTree()
 }
 
 func TestPackdir(t *testing.T) {
@@ -52,7 +78,7 @@ func TestPackdir(t *testing.T) {
 	output_dir := path.Join(rootPath, "packdir", "output")
 	utils.Unpackdir(path.Join(rootPath, "packdir.zip"), output_dir)
 	for _, dirName := range []string{"aaa", "bbb", "ccc", "ddd"} {
-		name := path.Join(output_dir, rootPath, "packdir", dirName, "test.txt")
+		name := path.Join(output_dir, dirName, "test.txt")
 		if !utils.PathExists(name) {
 			t.Errorf("Expected to find '%v'", name)
 			t.FailNow()
@@ -69,7 +95,7 @@ func TestPackdirInclude(t *testing.T) {
 	output_dir := path.Join(rootPath, "packdir", "output_include")
 	utils.Unpackdir(path.Join(rootPath, "packdir_include.zip"), output_dir)
 	for _, dirName := range []string{"aaa", "bbb", "ccc", "ddd"} {
-		name := path.Join(output_dir, rootPath, "packdir", dirName, "test.txt")
+		name := path.Join(output_dir, dirName, "test.txt")
 		if !utils.PathExists(name) && dirName == "aaa" {
 			t.Errorf("Expected to find '%v'", name)
 			t.FailNow()
@@ -90,7 +116,7 @@ func TestPackdirExclude(t *testing.T) {
 	output_dir := path.Join(rootPath, "packdir", "output_exclude")
 	utils.Unpackdir(path.Join(rootPath, "packdir_exclude.zip"), output_dir)
 	for _, dirName := range []string{"aaa", "bbb", "ccc", "ddd"} {
-		name := path.Join(output_dir, rootPath, "packdir", dirName, "test.txt")
+		name := path.Join(output_dir, dirName, "test.txt")
 		if !utils.PathExists(name) && dirName != "aaa" {
 			t.Errorf("Expected to find '%v'", name)
 			t.FailNow()

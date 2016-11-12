@@ -1,11 +1,14 @@
 package utils
 
 import (
+	"archive/tar"
 	"archive/zip"
 	"bytes"
+	"compress/gzip"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -35,8 +38,141 @@ func PathExists(path string) bool {
 	return !os.IsNotExist(err)
 }
 
+// Tazdir packs a directory into a gzipped tarball file including and/or excluding files accodingly
+func Tazdir(input, output string, include, exclude []string) error {
+
+	outputFile, err := os.Create(output)
+	if err != nil {
+		return errors.New(fmt.Sprintf("Could not create tarball file %q, got error %q", outputFile, err.Error()))
+	}
+	defer outputFile.Close()
+
+	gzipWriter := gzip.NewWriter(outputFile)
+	defer gzipWriter.Close()
+
+	tarWriter := tar.NewWriter(gzipWriter)
+	defer tarWriter.Close()
+
+	if !strings.HasSuffix(input, "/") {
+		input = input + "/"
+	}
+
+	return filepath.Walk(input, func(fileName string, fileInfo os.FileInfo, err error) error {
+
+		if err != nil {
+			if Debug {
+				log.Print(err)
+			}
+			return err
+		}
+
+		for _, excludeFileName := range exclude {
+			if strings.HasPrefix(fileName, excludeFileName) {
+				return nil
+			}
+		}
+		if include != nil && len(include) > 0 {
+			for _, includeFileName := range include {
+				if strings.HasPrefix(fileName, includeFileName) {
+					goto Add
+				}
+			}
+			return nil
+		}
+	Add:
+		th, err := tar.FileInfoHeader(fileInfo, fileInfo.Name())
+		relativeName := strings.TrimPrefix(fileName, input)
+		if relativeName == "" {
+			relativeName = "."
+		}
+
+		if fileInfo.IsDir() {
+			relativeName = relativeName + "/"
+		}
+		th.Name = relativeName
+
+		if err = tarWriter.WriteHeader(th); err != nil {
+			log.Print(err)
+			return err
+		}
+
+		if fileInfo.IsDir() {
+			return nil
+		}
+
+		sf, err := os.Open(fileName)
+		if err != nil {
+			log.Print(err)
+			return err
+		}
+		defer sf.Close()
+
+		_, err = io.Copy(tarWriter, sf)
+		if err != nil {
+			log.Print(err)
+			return err
+		}
+
+		return nil
+	})
+
+}
+
+// Untazdir unpacks a directory from a gzipped tarball
+func Untazdir(input, output string) error {
+
+	inputFile, err := os.Open(input)
+	if err != nil {
+		return err
+	}
+	defer inputFile.Close()
+
+	gzipReader, err := gzip.NewReader(inputFile)
+	if err != nil {
+		return err
+	}
+	defer gzipReader.Close()
+
+	r := tar.NewReader(gzipReader)
+
+	for {
+		h, err := r.Next()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return err
+		}
+
+		fileName := path.Join(output, h.Name)
+		info := h.FileInfo()
+
+		if info.IsDir() {
+			if err = os.MkdirAll(fileName, info.Mode()); err != nil {
+				if Debug {
+					log.Print(err)
+				}
+				return err
+			}
+			continue
+		}
+
+		outputFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
+		if err != nil {
+			return errors.New(fmt.Sprintf("Could not create file %q, got error %q", fileName, err.Error()))
+		}
+		defer outputFile.Close()
+
+		_, err = io.Copy(outputFile, r)
+		if err != nil {
+			return errors.New(fmt.Sprintf("Failed to copy file content to %q, got error %q", fileName, err.Error()))
+		}
+	}
+
+	return nil
+}
+
 // Packdir packs a directory into a zip file including and/or excluding files accodingly
-func Packdir(input string, output string, include []string, exclude []string) error {
+func Packdir(input, output string, include, exclude []string) error {
 
 	var fh *zip.FileHeader
 	outputFile, _ := os.Create(output)
@@ -90,7 +226,7 @@ func Packdir(input string, output string, include []string, exclude []string) er
 }
 
 // Unpackdir unpacks a directory from a zip file
-func Unpackdir(input string, output string) error {
+func Unpackdir(input, output string) error {
 
 	r, err := zip.OpenReader(input)
 	if err != nil {
@@ -351,10 +487,10 @@ func Fcntl(fd uintptr, cmd int, arg uintptr) (val int, err error) {
 func ClearCloexec(fd int) {
 	flags, err := Fcntl(uintptr(fd), syscall.F_GETFD, uintptr(0))
 	if err != nil {
-		log.Println("Failed to get flags for file descriptor %d: %v)", fd, err)
+		log.Printf("Failed to get flags for file descriptor %d: %v)", fd, err)
 	}
 	_, err = Fcntl(uintptr(fd), syscall.F_SETFD, uintptr(flags & ^syscall.FD_CLOEXEC))
 	if err != nil {
-		log.Println("Failed to remove CLOEXEC flag from file descriptor %d: %v)", fd, err)
+		log.Printf("Failed to remove CLOEXEC flag from file descriptor %d: %v)", fd, err)
 	}
 }

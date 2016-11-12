@@ -275,7 +275,7 @@ func (db *Nodb) Fetch(url string, params map[string]string) (objID string) {
 
 		objPath := db.File(objID)
 		os.MkdirAll(objPath, os.ModeDir|0755)
-		utils.Unpackdir(tf.Name(), objPath)
+		utils.Untazdir(tf.Name(), objPath)
 
 		db.Add(objID, obj)
 
