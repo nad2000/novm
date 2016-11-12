@@ -126,7 +126,7 @@ func (db *Nodb) Add(objID string, obj interface{}) (err error) {
 		log.Fatal(err)
 		return
 	}
-	err = utils.JSONDump(obj, of)
+	err = utils.JSONDump(obj, of, true)
 	db.list = nil
 	return
 }

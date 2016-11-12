@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 	"os"
 	"path"
@@ -13,10 +12,8 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-
-	"github.com/rocksolidlabs/novm/src/novm/utils"
-
 	termios "github.com/creack/termios/raw"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
 var (
@@ -25,11 +22,12 @@ var (
 	sendRPC  = false
 	listener *net.UnixListener
 	conn     net.Conn
+	reader   *bufio.Reader
 )
 
 // Read by chuncs the response until '\n' reached or EOF
 func readLine() (line string, err error) {
-	line, err = bufio.NewReader(conn).ReadString('\n')
+	line, err = reader.ReadString('\n')
 	if err == nil && line != "" {
 		line = strings.TrimSpace(line)
 	}
@@ -66,6 +64,7 @@ func Bind(ctrlPath string) (fd uintptr, err error) {
 
 // Open opens a Unix socket if the socket doesn't exit it creates it
 func Open(ctrlPath string) (err error) {
+
 	dirName := path.Dir(ctrlPath)
 	if !utils.PathExists(dirName) {
 		err = os.MkdirAll(dirName, os.ModeDir|0755)
@@ -79,6 +78,8 @@ func Open(ctrlPath string) (err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	reader = bufio.NewReader(conn)
+
 	return
 }
 
@@ -196,8 +197,7 @@ func Run(command []string, env []string, cwd string, terminal bool) (
 		"terminal":    terminal,
 		"cwd":         cwd,
 	}
-	utils.JSONDump(startCmd, conn)
-	conn.Write([]byte("\n"))
+	utils.JSONDump(startCmd, conn, false)
 
 	if terminal {
 		origTcAttrs, err = termios.MakeRaw(0)
@@ -230,15 +230,11 @@ func Run(command []string, env []string, cwd string, terminal bool) (
 
 		for {
 			n, err := os.Stdin.Read(buf[:])
-			if err == io.EOF {
-				exitCode = 0
-				break
-			}
+
 			if err != nil {
-				log.Print(err)
-				exitCode = 1
 				break
 			}
+
 			if isTerminal {
 				if n == 1 && buf[0] == byte('~') {
 					seenTilde = !seenTilde
@@ -260,7 +256,6 @@ func Run(command []string, env []string, cwd string, terminal bool) (
 			conn.Write([]byte("\n"))
 
 			if n == 0 {
-				exitCode = 0 // in order to gracefully exit
 				break
 			}
 		}
@@ -277,7 +272,7 @@ func Run(command []string, env []string, cwd string, terminal bool) (
 	for {
 		line, err = readLine()
 		if Debug {
-			log.Println("*** RAW LINE: ", line)
+			log.Println("*** RAW LINE:", line)
 		}
 
 		if err != nil {
@@ -288,7 +283,7 @@ func Run(command []string, env []string, cwd string, terminal bool) (
 		if !started {
 			// See the note above about 'started'
 			if line != "null" {
-				err = fmt.Errorf("Received unexpected response %#v executing %q", line, command)
+				err = fmt.Errorf("Received unexpected response %q executing %q", line, command)
 				break
 			}
 			started = true
