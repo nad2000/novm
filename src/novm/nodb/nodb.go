@@ -28,7 +28,7 @@ type Nodb struct {
 func toobjID(id interface{}) string {
 	switch id.(type) {
 	default:
-		log.Panicf("Incorrect ID (%#v) type: %T", id, id)
+		log.Fatalf("Incorrect ID (%#v) type: %T", id, id)
 		return ""
 	case int:
 		return fmt.Sprintln("%d", id)

@@ -1,6 +1,9 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	log "github.com/Sirupsen/logrus"
+	"github.com/spf13/cobra"
+)
 
 // getpackCmd represents the getpack command
 var getpackCmd = &cobra.Command{
@@ -18,7 +21,7 @@ var getpackCmd = &cobra.Command{
 				if len(args) > 0 {
 					url = args[0]
 				} else {
-					panic("Missing URL.")
+					log.Fatal("Missing URL.")
 					return
 				}
 			}

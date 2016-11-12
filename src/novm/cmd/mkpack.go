@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 
 	"github.com/spf13/cobra"
@@ -31,7 +32,7 @@ var mkpackCmd = &cobra.Command{
 
 		err := utils.Packdir(dirPath, output, include, exclude)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		} else {
 			printResult(cmd, "file://"+output)
 		}

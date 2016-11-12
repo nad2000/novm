@@ -32,7 +32,7 @@ func readLine() (line []byte, err error) {
 	for {
 		n, err := conn.Read(buf[:])
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 			if n > 0 {
 				return buf[:n], err
 			}
@@ -73,15 +73,15 @@ func Bind(ctrlPath string) (fd uintptr, err error) {
 
 	listener, err = net.ListenUnix("unix", &net.UnixAddr{ctrlPath, "unix"})
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 	socketFile, err := listener.File()
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 	fd = socketFile.Fd()
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 	utils.ClearCloexec(int(fd))
 	return
@@ -138,7 +138,7 @@ func RPC(name string, params map[string]string) (interface{}, error) {
 	if !sendRPC {
 		_, err = conn.Write([]byte("NOVM RPC\n"))
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 			return nil, err
 		}
 		sendRPC = true
@@ -154,18 +154,18 @@ func RPC(name string, params map[string]string) (interface{}, error) {
 
 	_, err = conn.Write([]byte(rpcCmd))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	rawResp, err = readLine()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 		return nil, err
 	}
 
 	err = json.Unmarshal(rawResp, &rawMsg)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 		return nil, err
 	}
 
@@ -173,12 +173,12 @@ func RPC(name string, params map[string]string) (interface{}, error) {
 	respID, ok := msg["id"]
 	if !ok {
 		err = fmt.Errorf("%+v", msg)
-		panic(err)
+		log.Fatal(err)
 		return msg, err
 	}
 	if respID != rpcUUID {
 		err = fmt.Errorf("Request ID and response ID mismatch.", rpcUUID, respID)
-		panic(err)
+		log.Fatal(err)
 		return msg, err
 	}
 
@@ -210,7 +210,7 @@ func Run(command []string, env []string, cwd string, terminal bool) (interface{}
 
 	_, err := conn.Write([]byte("NOVM RUN\n"))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 		return nil, err
 	}
 

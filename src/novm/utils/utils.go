@@ -71,16 +71,16 @@ func Packdir(input string, output string, include []string, exclude []string) er
 		fh.Name = strings.TrimPrefix(fileName, input)
 		f, err := zipf.CreateHeader(fh)
 		if err != nil {
-			log.Panicln(err)
+			log.Fatalln(err)
 		}
 		sf, err := os.Open(fileName)
 		defer sf.Close()
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 		_, err = io.Copy(f, sf)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 		return err
 	}
@@ -185,7 +185,7 @@ func LibExec(name string) string {
 			return libExecPath
 		}
 	}
-	log.Panicf("Failed to find %q in %v", name, pathList)
+	log.Fatalf("Failed to find %q in %v", name, pathList)
 	return ""
 }
 

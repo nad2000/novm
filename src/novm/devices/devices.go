@@ -144,7 +144,7 @@ func CreateUserMemory(size int, fd int) State {
 		var sys syscall.Stat_t
 		err := syscall.Fstat(fd, &sys)
 		if err != nil {
-			log.Panic("Failed to get 'fstat' for file descriptor: ", fd)
+			log.Fatal("Failed to get 'fstat' for file descriptor: ", fd)
 		}
 		size = int(sys.Size)
 	}
