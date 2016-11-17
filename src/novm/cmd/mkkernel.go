@@ -3,11 +3,12 @@ package cmd
 import (
 	"io"
 	"io/ioutil"
-	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 
@@ -63,12 +64,12 @@ func Mkkernel(
 			log.Fatal(err)
 		}
 
-		command := exec.Command(utils.LibExec("extract-vmlinux"), bzimage)
+		command := exec.Command(utils.LibExec("novm-extract-vmlinux"), bzimage)
 		command.Stdout = vmlinuxFile
 		command.Stderr = os.Stderr
 
 		if debug {
-			log.Printf("Runing 'extract-vmlinux' with bzimage=%q to %q\n",
+			log.Printf("Runing 'novm-extract-vmlinux' with bzimage=%q to %q\n",
 				bzimage, vmlinuxFile.Name())
 		}
 
@@ -96,7 +97,7 @@ func Mkkernel(
 
 	// Copy all the files into a single directory.
 	tempDir, _ := ioutil.TempDir(os.TempDir(), "tmp")
-	command := exec.Command(utils.LibExec("mkinitramfs"), release, modules)
+	command := exec.Command(utils.LibExec("novm-mkinitramfs"), release, modules)
 	initrd, _ := os.Create(path.Join(tempDir, "initrd"))
 	command.Stdout = initrd
 	command.Stderr = os.Stderr

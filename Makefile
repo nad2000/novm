@@ -49,13 +49,12 @@ all: dist
 	
 ARCH ?= $(shell arch)
 go-build:
-	@mkdir build
-	@cd build; \
-CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/src/novmm/; \
-echo "Building noguest"; \
-CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/src/noguest/; \
-echo "Building 'novm'"; \
-CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/src/novm
+	@echo "Building novmm"
+	@GO15VENDOREXPERIMENT=1 CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/src/novmm/
+	@echo "Building noguest"
+	@GO15VENDOREXPERIMENT=1 CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/src/noguest/
+	@echo "Building novm"
+	@GO15VENDOREXPERIMENT=1 CGO_CFLAGS="$(CGO_CFLAGS)" go build --ldflags '--extldflags "-static"' -tags netgo github.com/rocksolidlabs/novm/src/novm
 
 test: go-test
 .PHONY: test
@@ -72,7 +71,7 @@ deps:
 
 clean:
 	@echo "clean start"
-	@rm -f novmm noguest 
+	@rm -f novmm noguest novm 
 	@rm -rf bin/ pkg/ dist/ doc/ _obj build/
 	@rm -rf debbuild/ rpmbuild/ *.deb *.rpm
 	@echo "clean done"
@@ -86,19 +85,14 @@ dist:
 	@$(MAKE) go-build
 	@echo "dist build done"
 	@mkdir bin
-	@mv build/* bin/
-	@rm -rf build
+	@mv novmm bin/
+	@mv noguest bin/
+	@mv novm bin/
 	@mkdir -p dist/usr/bin
 	@install -m 0755 scripts/* dist/usr/bin
-	@rm -rf dist/lib && cp -ar lib/ dist/usr/lib
 	@install -m 0755 bin/* dist/usr/bin/
-	@# Install our libexec directory.
-	@rm -rf dist/lib && cp -ar lib/ dist/usr/lib
-	@install -m 0755 bin/* dist/usr/lib/novm/libexec
-	@# Install our python code.
-	@mkdir -p dist/usr/lib/novm/python
-	@rsync -ru --delete --exclude=*.pyc novm \
-	    dist/usr/lib/novm/python/
+	@mkdir -p dist/usr/lib/novm/libexec
+	@install -m 0755 lib/novm/libexec/* dist/usr/lib/novm/libexec
 	@echo "dist done"
 
 .PHONY: dist
