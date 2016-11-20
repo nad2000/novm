@@ -182,6 +182,7 @@ func CreateNic(index int, options map[string]string) (state State, ip string) {
 	bridge, ok = options["bridge"]
 	if ok && bridge != "" {
 		driver, ok = options["driver"]
+		// default to linuc bridge networking
 		if !ok && driver == "" {
 			driver = "bridge"
 		}
@@ -191,14 +192,18 @@ func CreateNic(index int, options map[string]string) (state State, ip string) {
 		}
 	}
 
-	// Make sure the interface is up:
-	command := exec.Command("/sbin/ip", "link", "set", "up", "dev", tapName)
-	out, err := command.Output()
+	// Make sure the interface is up
+	link, err := netlink.LinkByName(tapName)
 	if err != nil {
-		log.Fatalf("Failed to set up the interface %#v: %v (%v) ", tapName, err, out)
-	} else {
-		log.Println(out)
+		log.Fatalf("Error getting tuntap interface: %s", err)
 	}
+	err = netlink.LinkSetUp(link)
+	if err != nil {
+		log.Fatalf("Error getting tuntap interface: %s", err)
+	} else {
+		log.Println("Completed setup of tuntap interface: %s", tapName)
+	}
+
 	// Start our dnsmasq.
 	// This is just a simple responded for
 	// DHCP queries and routes that will die
