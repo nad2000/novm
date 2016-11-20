@@ -15,6 +15,24 @@
 			"revisionTime": "2015-03-19T15:26:39Z"
 		},
 		{
+			"checksumSHA1": "72zRy5zCQvI87HDwbIfwhfOBXew=",
+			"path": "github.com/cenkalti/hub",
+			"revision": "11382a9960d39b0ecda16fd01c424c11ff765a34",
+			"revisionTime": "2016-05-27T10:32:12Z"
+		},
+		{
+			"checksumSHA1": "0ltqvTVAyA7ihRvfLQPIM6Xqa28=",
+			"path": "github.com/cenkalti/rpc2",
+			"revision": "fac97dd4d61d3c78eb07081aff6e5e0fbb74c8f0",
+			"revisionTime": "2016-11-11T14:46:59Z"
+		},
+		{
+			"checksumSHA1": "SV8XkMo9habP+09CWxEKm7ojrOA=",
+			"path": "github.com/cenkalti/rpc2/jsonrpc",
+			"revision": "fac97dd4d61d3c78eb07081aff6e5e0fbb74c8f0",
+			"revisionTime": "2016-11-11T14:46:59Z"
+		},
+		{
 			"checksumSHA1": "p1k7Godkd1CtdqxSLeG549XNHs4=",
 			"path": "github.com/creack/termios/raw",
 			"revision": "88d0029e36a108c959d6f8fc63c393f591b0302b",
@@ -87,6 +105,12 @@
 			"revisionTime": "2016-08-11T00:15:26Z"
 		},
 		{
+			"checksumSHA1": "HdUSy3VkpdPJPN8sYkAkreEvRag=",
+			"path": "github.com/kopwei/goovs",
+			"revision": "bbecf5f202922196c55fd36fef3a5c7e97954dc4",
+			"revisionTime": "2016-10-25T13:49:15Z"
+		},
+		{
 			"checksumSHA1": "S6PDDQMYaKwLDIP/NsRYb4FRAqQ=",
 			"path": "github.com/magiconair/properties",
 			"revision": "b3f6dd549956e8a61ea4a686a1c02a33d5bdda4b",
@@ -109,6 +133,12 @@
 			"path": "github.com/rocksolidlabs/RSIM/src/lib/psnotify",
 			"revision": "15db778e3008bb3f65d6fa0b49ba2dfaf2f8e30a",
 			"revisionTime": "2016-10-24T23:19:59Z"
+		},
+		{
+			"checksumSHA1": "ngoFAbwQKIcCi987D+nZRK0JTrM=",
+			"path": "github.com/socketplane/libovsdb",
+			"revision": "25888126ec4465200ff14c087b497ba64d761041",
+			"revisionTime": "2016-11-16T12:12:14Z"
 		},
 		{
 			"checksumSHA1": "F5PKdeFzODdoAChY/aEiEDaNWtQ=",
@@ -141,6 +171,24 @@
 			"revisionTime": "2016-07-18T21:48:14Z"
 		},
 		{
+			"checksumSHA1": "yVNyN25a4unF/jI0BkodSCuL2KA=",
+			"path": "github.com/vishvananda/netlink",
+			"revision": "482f7a52b758233521878cb6c5904b6bd63f3457",
+			"revisionTime": "2016-11-19T21:40:56Z"
+		},
+		{
+			"checksumSHA1": "qKneIoHTQHLsL2EF1Zl3S7S++gk=",
+			"path": "github.com/vishvananda/netlink/nl",
+			"revision": "482f7a52b758233521878cb6c5904b6bd63f3457",
+			"revisionTime": "2016-11-19T21:40:56Z"
+		},
+		{
+			"checksumSHA1": "zjfUA3qOv6grhBLpyJ+7EejXWQE=",
+			"path": "github.com/vishvananda/netns",
+			"revision": "8ba1072b58e0c2a240eb5f6120165c7776c3e7b8",
+			"revisionTime": "2016-04-30T05:37:23Z"
+		},
+		{
 			"checksumSHA1": "15doxxBfOxOhWExkxjPNo6Y7fEw=",
 			"path": "golang.org/x/sys/unix",
 			"revision": "20457ee8ea8546920d3f4e19e405da45250dc5a5",
@@ -153,5 +201,5 @@
 			"revisionTime": "2015-12-01T16:27:45Z"
 		}
 	],
-	"rootPath": "github.com/rocksolidlabs/bitvessel"
+	"rootPath": "github.com/rocksolidlabs/novm"
 }

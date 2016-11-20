@@ -5,13 +5,16 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"syscall"
 	"unsafe"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/kopwei/goovs"
+	"github.com/vishvananda/netlink"
 
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
@@ -144,8 +147,8 @@ func TapDevice(name string) (tap *os.File, vnet int, offload bool) {
 // CreateNic creates a vitio network device.
 func CreateNic(index int, options map[string]string) (state State, ip string) {
 	var (
-		mac, tapName, bridge, gateway, mtu, name string
-		ok, debug                                bool
+		mac, tapName, bridge, gateway, mtu, name, driver string
+		ok, debug                                        bool
 	)
 
 	_ = gateway
@@ -175,13 +178,15 @@ func CreateNic(index int, options map[string]string) (state State, ip string) {
 		}
 	}
 
-	// Enslave to the given bridge. (It will be authomatically removed.)
+	// Enslave to the given bridge.
 	bridge, ok = options["bridge"]
 	if ok && bridge != "" {
-		command := exec.Command("/sbin/brctl", "addif", bridge, tapName)
-		out, err := command.CombinedOutput()
+		driver, ok = options["driver"]
+		if !ok && driver == "" {
+			driver = "bridge"
+		}
+		err := EnslaveNic(driver, tapName, bridge)
 		if err != nil {
-			log.Println(string(out))
 			log.Fatalf("Failed to add interface %#v to bridge %#v: %v", tapName, bridge, err)
 		}
 	}
@@ -235,4 +240,61 @@ func CreateNic(index int, options map[string]string) (state State, ip string) {
 	state["debug"] = debug
 
 	return
+}
+
+// EnslaveNic enslaves a nic to a supplied bridge.
+func EnslaveNic(driver, tapName, bridge string) error {
+	if driver == "bridge" {
+		// check if the bridge exists
+		_, err := netlink.LinkByName(bridge)
+		// create the bridge
+		if err != nil {
+			la := netlink.NewLinkAttrs()
+			la.Name = bridge
+			br := &netlink.Bridge{la}
+			err := netlink.LinkAdd(br)
+			if err != nil {
+				return fmt.Errorf("Error creating Linux Bridge: %s", err)
+			}
+		}
+		// enslave the tuntap
+		_, err = netlink.LinkByName(bridge)
+		if err != nil {
+			return fmt.Errorf("Error getting linux bridge: %s, %s", bridge, err)
+		}
+		tap, err := netlink.LinkByName(tapName)
+		if err != nil {
+			return fmt.Errorf("Error getting linux tuntap: %s, %s", tapName, err)
+		}
+		err = netlink.LinkSetMaster(tap, &netlink.Bridge{netlink.LinkAttrs{Name: bridge}})
+		if err != nil {
+			return fmt.Errorf("Error enslaving tuntap to Linux bridge: %s -> %s, %s", tapName, bridge, err)
+		}
+	} else if driver == "ovs" {
+		client, err := goovs.GetOVSClient("unix", "")
+		if err != nil {
+			return fmt.Errorf("Error obtaining unix socket connection to Open vSwitch DB: %s", err)
+		}
+		// check if bridge exists
+		ok, err := client.BridgeExists(bridge)
+		if err != nil {
+			return fmt.Errorf("Error checking if Open vSwitch bridge exists: %s", err)
+		}
+		// create the bridge
+		if !ok {
+			err := client.CreateBridge(bridge)
+			if err != nil {
+				return fmt.Errorf("Error creating Open vSwitch bridge: %s", err)
+			}
+		}
+		// enslave the tuntap
+		err = client.CreateVethPort(bridge, tapName, 0)
+		if err != nil {
+			return fmt.Errorf("Error enslaving tuntap to Open vSwitch bridge: %s -> %s, %s", tapName, bridge, err)
+		}
+	} else {
+		return fmt.Errorf("Please supply a valid networking driver: bridge|ovs")
+	}
+
+	return nil
 }
