@@ -11,6 +11,15 @@ import (
 	"github.com/rocksolidlabs/novm/src/novm/nodb"
 )
 
+func TestGetAuthToken(t *testing.T) {
+	res := http.Response{}
+	res.Header = make(http.Header)
+	res.Header.Set(
+		"Www-Authenticate",
+		`Bearer realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:nginx:pull",error="insufficient_scope"`)
+	docker.GetAuthToken(&res)
+}
+
 func TestTags(t *testing.T) {
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

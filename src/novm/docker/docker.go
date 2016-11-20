@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	log "github.com/Sirupsen/logrus"
 	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/nodb"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
@@ -51,7 +52,7 @@ func Init(db nodb.Nodb, options map[string]string) {
 	if baseURL != "" {
 		BaseURL = baseURL
 	} else {
-		BaseURL = "https://" + Host + "/v1/"
+		BaseURL = "https://" + Host + "/v2/"
 	}
 
 	if Username != "" && Password != "" {
@@ -67,7 +68,7 @@ func newRequest(
 	if endpoint == "" {
 		baseURL = BaseURL
 	} else {
-		baseURL = "https://" + endpoint + "/v1/"
+		baseURL = "https://" + endpoint + "/v2/"
 	}
 
 	url = baseURL + url
@@ -84,10 +85,31 @@ func newRequest(
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
 	if token != "" {
-		req.Header.Add("Authorization", "Token "+token)
+		req.Header.Add("Authorization", "Bearer "+token)
 	}
 
 	return req, err
+}
+
+// GetAuthToken attempts to retrieve Www-Authenticate
+// header data for requesting authentication token
+func GetAuthToken(res *http.Response) (token string) {
+	log.SetLevel(log.InfoLevel)
+	header := res.Header.Get("Www-Authenticate")
+	parts := strings.Split(header, " ")
+	if len(parts) < 2 {
+		log.Errorf("Wrong Www-Authenticate header: %s", header)
+		return
+	}
+
+	parts = strings.Split(parts[1], ",")
+	attributes := make(map[string]string)
+	for _, p := range parts {
+		keyValue := strings.Split(p, "=")
+		attributes[keyValue[0]] = strings.Trim(keyValue[1], "\"")
+	}
+	log.Println(attributes)
+	return
 }
 
 // Authenticate authenticats client and returns authentiation token
