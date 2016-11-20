@@ -85,7 +85,7 @@ func CheckIfRoot() {
 		os.Exit(-1)
 	}
 	if curUser.Name != "root" {
-		fmt.Println("bv must be run as root")
+		fmt.Println("novm must be run as root")
 		os.Exit(-1)
 	}
 }
