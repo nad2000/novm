@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	log "github.com/Sirupsen/logrus"
 	"net/http"
 	"os"
 	"path"
@@ -14,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
@@ -275,7 +276,15 @@ func (db *Nodb) Fetch(url string, params map[string]string) (objID string) {
 
 		objPath := db.File(objID)
 		os.MkdirAll(objPath, os.ModeDir|0755)
-		utils.Untazdir(tf.Name(), objPath)
+		err = utils.Untazdir(tf.Name(), objPath)
+		if err != nil {
+			log.Errorf("File %q appears not to be valid gzipped tar-file: %s", url, err.Error())
+			err = utils.Unpackdir(tf.Name(), objPath)
+			if err != nil {
+				log.Fatalf("File %q expected to be either gzipped tar-file or zip file: %s",
+					url, err.Error())
+			}
+		}
 
 		db.Add(objID, obj)
 
