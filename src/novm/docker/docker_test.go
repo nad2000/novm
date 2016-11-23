@@ -16,7 +16,7 @@ func TestGetAuthToken(t *testing.T) {
 	res.Header = make(http.Header)
 	res.Header.Set(
 		"Www-Authenticate",
-		`Bearer realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:nginx:pull",error="insufficient_scope"`)
+		`Bearer realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:library/nginx:pull",error="insufficient_scope"`)
 	docker.GetAuthToken(&res)
 }
 

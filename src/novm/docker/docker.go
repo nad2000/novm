@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -94,7 +95,6 @@ func newRequest(
 // GetAuthToken attempts to retrieve Www-Authenticate
 // header data for requesting authentication token
 func GetAuthToken(res *http.Response) (token string) {
-	log.SetLevel(log.InfoLevel)
 	header := res.Header.Get("Www-Authenticate")
 	parts := strings.Split(header, " ")
 	if len(parts) < 2 {
@@ -108,7 +108,41 @@ func GetAuthToken(res *http.Response) (token string) {
 		keyValue := strings.Split(p, "=")
 		attributes[keyValue[0]] = strings.Trim(keyValue[1], "\"")
 	}
-	log.Println(attributes)
+
+	url := (attributes["realm"] +
+		"?service=" + url.QueryEscape(attributes["service"]) +
+		"&scope=" + url.QueryEscape(attributes["scope"]))
+
+	client := &http.Client{}
+	req, err := newRequest(url, "GET", nil, "", "")
+
+	if auth != "" {
+		req.Header.Add("Authorization", "Basic "+auth)
+		req.Header.Add("X-Docker-Token", "true")
+	}
+
+	res, err = client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if res.StatusCode/100 != 2 {
+		log.Fatalf("Failed to request %q (Status: %q) while attempting to acuire Docker API authentication token", url, res.Status)
+	}
+	defer res.Body.Close()
+
+	var response map[string]string
+	json.NewDecoder(res.Body).Decode(&response)
+
+	token, ok := response["token"]
+	if !ok {
+		if Username != "" {
+			log.Fatalf("Failed to acquire Docker API authentication token for user %q", Username)
+		} else {
+			log.Fatal("Failed to acquire Docker API authentication token")
+		}
+	}
+
 	return
 }
 
@@ -244,7 +278,7 @@ func ImageInfo(repository string, imageID string) (imageInfo map[string]interfac
 
 // Tags returns all repository tags
 func Tags(repository string) (tags []Tag) {
-	resp, err := http.Get(BaseURL + "repositories/" + repository + "/tags")
+	resp, err := http.Get(BaseURL + "library/" + repository + "/tags")
 	if err != nil {
 		log.Fatal(err)
 	}
