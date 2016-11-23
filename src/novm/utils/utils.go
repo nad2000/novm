@@ -12,12 +12,13 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	log "github.com/Sirupsen/logrus"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // Debug is the debugging attribute for the whole package
@@ -160,11 +161,12 @@ func Untazdir(input, output string) error {
 		if err != nil {
 			return errors.New(fmt.Sprintf("Could not create file %q, got error %q", fileName, err.Error()))
 		}
-		defer outputFile.Close()
 
 		_, err = io.Copy(outputFile, r)
+		outputFile.Close()
+
 		if err != nil {
-			return errors.New(fmt.Sprintf("Failed to copy file content to %q, got error %q", fileName, err.Error()))
+			return fmt.Errorf("Failed to copy file content to %q, got error %q", fileName, err.Error())
 		}
 	}
 

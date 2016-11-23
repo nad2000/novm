@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"os"
+	"os/user"
 	"path"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/control"
 	"github.com/rocksolidlabs/novm/src/novm/nodb"
@@ -75,7 +77,22 @@ func SetRootDir(dirName string) {
 	dockerDB.Open(sysDir("NOVM_DOCKER", "docker"))
 }
 
+// CheckIfRoot checks if we are root if not exits with error
+func CheckIfRoot() {
+	curUser, err := user.Current()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	if curUser.Name != "root" {
+		fmt.Println("novm must be run as root")
+		os.Exit(-1)
+	}
+}
+
 func init() {
+	// We Check if we are root
+	CheckIfRoot()
 
 	SetRootDir("")
 	cobra.OnInitialize(initConfig)

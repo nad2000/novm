@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
-	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/control"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
@@ -210,6 +211,8 @@ func create(cmd *cobra.Command) {
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
+	command.SysProcAttr = &syscall.SysProcAttr{}
+	command.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(0), Gid: uint32(0)}
 	err := command.Run()
 
 	utils.Cleanup()

@@ -123,7 +123,7 @@ func Mkkernel(
 			})
 	}
 	ioutil.WriteFile(path.Join(tempDir, "release"), []byte(release), 0755)
-	utils.Packdir(tempDir, output, nil, nil)
+	utils.Tazdir(tempDir, output, nil, nil)
 
 	absOutput, _ := filepath.Abs(path.Clean(output))
 	return "file://" + absOutput

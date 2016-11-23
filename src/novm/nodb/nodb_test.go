@@ -2,12 +2,13 @@ package nodb_test
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"os"
 	"path"
 	"strconv"
 	"testing"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/nodb"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
@@ -151,7 +152,7 @@ func TestNodbList(t *testing.T) {
 		t.Errorf("Expeced to find `timestamp` in %#v", obj)
 	}
 	timeLimit := time.Now().Unix() - 1
-	if ts, _ := strconv.ParseInt(tsStr, 10, 64); ts < timeLimit {
+	if ts, _ := strconv.ParseFloat(tsStr, 64); int64(ts) < timeLimit {
 		t.Errorf("Expeced that the object was created before TS: %d got %d in %#v",
 			timeLimit, ts, obj)
 	}
