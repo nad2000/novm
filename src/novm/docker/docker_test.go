@@ -3,6 +3,7 @@ package docker_test
 import (
 	"net/http"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/rocksolidlabs/novm/src/novm/docker"
@@ -15,7 +16,7 @@ func TestGetAuthToken(t *testing.T) {
 	res.Header.Set(
 		"Www-Authenticate",
 		`Bearer realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:library/nginx:pull",error="insufficient_scope"`)
-	docker.GetAuthToken(&res, false)
+	docker.GetAuthToken(&res)
 }
 
 // func TestTags(t *testing.T) {
@@ -136,5 +137,41 @@ func TestTagsLive(t *testing.T) {
 	docker.Debug = true
 	docker.Init(nodb.Nodb{}, repo)
 	t.Log(docker.Tags)
+
+}
+
+func TestGetLayerDigestsLive(t *testing.T) {
+
+	repo := os.Getenv("REPOSITORY")
+	if repo == "" {
+		t.Log("For live testing set up REPOSITORY environment variables: <repository[:tag]>[,key=value]")
+		return
+	}
+
+	docker.Debug = true
+	docker.Init(nodb.Nodb{}, repo)
+	digests := docker.GetLayerDigests()
+	t.Log(digests)
+
+}
+
+func TestPullRepositoryLive(t *testing.T) {
+
+	repo := os.Getenv("REPOSITORY")
+	if repo == "" {
+		t.Log("For live testing set up REPOSITORY environment variables: <repository[:tag]>[,key=value]")
+		return
+	}
+
+	docker.Debug = true
+	var db nodb.Nodb
+
+	root := path.Join(os.TempDir(), "TestPullRepositoryLive")
+	db.Open(root)
+
+	t.Logf("Store image in %q", root)
+
+	docker.Init(db, repo)
+	docker.PullRepository()
 
 }

@@ -4,14 +4,18 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/url"
+	"os"
+	"os/exec"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/nodb"
+	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
 var (
@@ -33,6 +37,8 @@ var (
 	Debug bool
 	// Cached tags for the most recently "open" repository
 	Tags []string
+	// ImageId docker image digest value
+	ImageId string
 )
 
 // Init sets up docker API client and initializes operation on the repository:
@@ -43,8 +49,12 @@ var (
 func Init(db nodb.Nodb, repo string) {
 
 	opts := strings.Split(repo, ",")
-	parts := strings.Split(opts[0], ":")
-	Repository, Tag = parts[0], parts[0]
+	if strings.Contains(opts[0], ":") {
+		parts := strings.Split(opts[0], ":")
+		Repository, Tag = parts[0], parts[1]
+	} else {
+		Repository = opts[0]
+	}
 	if !strings.Contains(Repository, "/") {
 		Repository = "library/" + Repository
 	}
@@ -73,6 +83,26 @@ func Init(db nodb.Nodb, repo string) {
 	}
 
 	GetTags()
+
+	if Tag == "" {
+		if len(Tags) > 0 {
+			// If 'tag' was missing in the repo string use "latest"
+			// or the first in the list
+			Tag = Tags[0]
+			for _, tag := range Tags {
+				if tag == "latest" {
+					Tag = "latest"
+					break
+				}
+			}
+			if Debug {
+				log.Infof("Using tag %q for %q", Tag, repo)
+			}
+		} else {
+			log.Fatalf("No tags found for %q", repo)
+		}
+	}
+
 }
 
 // newRequest creats a generic Docker API request
@@ -88,7 +118,7 @@ func newRequest(
 			baseURL = "https://" + endpoint + "/v2/"
 		}
 
-		url = baseURL + url
+		url = baseURL + Repository + "/" + url
 	}
 
 	if method == "" {
@@ -111,7 +141,7 @@ func newRequest(
 
 // GetAuthToken attempts to retrieve Www-Authenticate
 // header data for requesting authentication token
-func GetAuthToken(res *http.Response, authenticate bool) {
+func GetAuthToken(res *http.Response) {
 	header := res.Header.Get("Www-Authenticate")
 	parts := strings.Split(header, " ")
 	if len(parts) < 2 {
@@ -128,12 +158,12 @@ func GetAuthToken(res *http.Response, authenticate bool) {
 
 	url := (attributes["realm"] +
 		"?service=" + url.QueryEscape(attributes["service"]) +
-		"&scope=" + attributes["scope"]) // url.QueryEscape(attributes["scope"]))
+		"&scope=" + url.QueryEscape(attributes["scope"]))
 
 	client := &http.Client{}
 	req, err := newRequest(url, "GET", nil, "")
 
-	if authenticate && auth != "" {
+	if auth != "" {
 		req.Header.Add("Authorization", "Basic "+auth)
 		req.Header.Add("X-Docker-Token", "true")
 	}
@@ -279,29 +309,53 @@ func request(
 
 }
 
-// ImageInfo retrieves the image info
-func ImageInfo(repository string, imageID string) (imageInfo map[string]interface{}) {
+// GetLayerDigests retrieves the list of of layer digests
+// (https://docs.docker.com/registry/spec/api/)
+func GetLayerDigests() []string {
 
-	var endpoint string
+	manifest := GetManifest()
+	digests := make([]string, len(manifest.FsLayers))
+	for i, fsLayer := range manifest.FsLayers {
+		digests[i] = fsLayer.BlobSum
+	}
+	return digests
+}
 
-	token, endpoint = Authenticate("repositories/" + repository + "/images")
+func GetManifest() (manifest struct {
+	Name     string `json:"name"`
+	Tag      string `json:"tag"`
+	FsLayers []struct {
+		BlobSum string `json:"blobSum"`
+	} `json:"fsLayers"`
+}) {
+
 	client := &http.Client{}
-	req, err := newRequest("images/"+imageID+"/json", "GET", nil, endpoint)
+	url := "manifests/" + Tag
+	req, err := newRequest(url, "GET", nil, "")
+
+	if Debug {
+		log.Info("Request: ", req)
+	}
 
 	res, err := client.Do(req)
+
+	dockerContentDigest := res.Header.Get("Docker-Content-Digest")
+	if dockerContentDigest != "" {
+		parts := strings.Split(dockerContentDigest, ":")
+		ImageId = parts[1]
+	}
+
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to fetch image manifest: %s", err.Error())
 	}
 
-	if res.StatusCode/100 != 2 {
-		log.Fatalf("Failed to request %q (Status: %q)", req.URL, res.Status)
+	if Debug {
+		log.Info("Response: ", res)
 	}
 
-	err = json.NewDecoder(res.Body).Decode(&imageInfo)
-	if err != nil {
-		log.Fatal(err)
-	}
+	defer res.Body.Close()
 
+	json.NewDecoder(res.Body).Decode(&manifest)
 	return
 }
 
@@ -309,7 +363,7 @@ func ImageInfo(repository string, imageID string) (imageInfo map[string]interfac
 func GetTags() []string {
 
 	client := &http.Client{}
-	listUrl := Repository + "/tags/list"
+	listUrl := "tags/list"
 	req, err := newRequest(listUrl, "GET", nil, "")
 
 	if Debug {
@@ -329,7 +383,7 @@ func GetTags() []string {
 		if token != "" {
 			log.Fatal("The access not authorized to repository: %s (%s)", Repository, err.Error())
 		} else {
-			GetAuthToken(res, false)
+			GetAuthToken(res)
 			return GetTags()
 		}
 	}
@@ -344,6 +398,84 @@ func GetTags() []string {
 	json.NewDecoder(res.Body).Decode(&tags)
 	Tags = tags.Tags
 	return Tags
+}
+
+// // DownloadImage downloads a docker image
+// func DownloadImage(repository string, imageID string, tf io.Writer) {
+
+// 	var endpoint string
+// 	token, endpoint = Authenticate("repositories/" + repository + "/images")
+
+// 	client := &http.Client{}
+// 	req, err := newRequest("images/"+imageID+"/layer", "GET", nil, endpoint)
+
+// 	res, err := client.Do(req)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	if res.StatusCode/100 != 2 {
+// 		log.Fatalf("Failed to request %q (Status: %q)", req.URL, res.Status)
+// 	}
+
+// 	_, err = io.Copy(tf, res.Body)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
+
+// PullRepository retrieves whole docker repository with specified tag
+func PullRepository() []string {
+
+	client := &http.Client{}
+
+	manifest := GetManifest()
+	imageDir := Db.File(ImageId)
+	if !utils.PathExists(imageDir) {
+		os.MkdirAll(imageDir, os.ModeDir|0755)
+	}
+	if Debug {
+		log.Infof("ImageID: %s Image Directory: %s", ImageId, imageDir)
+	}
+
+	for _, digest := range GetLayerDigests() {
+
+		tf, _ := ioutil.TempFile("", "image")
+		req, err := newRequest("blobs/"+digest, "GET", nil, "")
+		res, err := client.Do(req)
+		if err != nil {
+			log.Fatalf("Failed to retrieve the layer image with digest %q: %s", digest, err)
+		}
+
+		if res.StatusCode/100 != 2 {
+			log.Fatalf("Failed to request %q (Status: %q)", req.URL, res.Status)
+		}
+
+		_, err = io.Copy(tf, res.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		//defer os.Remove(tf.Name())
+		if Debug {
+			log.Infof("Layer %q dowloaded to %q", digest, tf.Name())
+		}
+
+		tf.Close()
+		res.Body.Close()
+
+		// Copy all the files into a single directory.
+		command := exec.Command("fakeroot", "tar", "-C", imageDir, "-xf", tf.Name())
+		err = command.Run()
+		if err != nil {
+			log.Fatalf("Failed to extract layer %q into %q: %s", digest, imageDir, err)
+		}
+
+	}
+
+	// Save the image data:
+	Db.Add(ImageId, manifest)
+
+	return []string{imageDir}
 }
 
 // // Images returns the list of all images in the repository
@@ -455,30 +587,28 @@ func GetTags() []string {
 // }
 
 // PullRepository retrieves whole docker repository with specified tag
-func PullRepository() []string {
-	return []string{}
+//func PullRepository() []string {
+//	return []string{}
 
-	// var (
-	// 	tag     string
-	// 	imageID string
-	// )
+// var (
+// 	tag     string
+// 	imageID string
+// )
 
-	// if strings.Contains(repository, ":") {
-	// 	parts := strings.SplitN(repository, ":", 2)
-	// 	repository, tag = parts[0], parts[1]
-	// 	for _, t := range Tags(repository) {
-	// 		if tag == t.Name {
-	// 			imageID = t.Layer
-	// 		}
-	// 	}
-	// 	if imageID == "" {
-	// 		log.Fatal("Failed to pull the image with tag %q", tag)
-	// 	}
-	// } else {
-	// 	t := Tags(repository)[0]
-	// 	tag, imageID = t.Name, t.Layer
-	// }
+// if strings.Contains(repository, ":") {
+// 	parts := strings.SplitN(repository, ":", 2)
+// 	repository, tag = parts[0], parts[1]
+// 	for _, t := range Tags(repository) {
+// 		if tag == t.Name {
+// 			imageID = t.Layer
+// 		}
+// 	}
+// 	if imageID == "" {
+// 		log.Fatal("Failed to pull the image with tag %q", tag)
+// 	}
+// } else {
+// 	t := Tags(repository)[0]
+// 	tag, imageID = t.Name, t.Layer
+// }
 
-	// return PullImage(repository, imageID)
-
-}
+// return PullImage(repository, imageID)
