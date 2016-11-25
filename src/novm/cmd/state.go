@@ -3,10 +3,11 @@ package cmd
 import (
 	"fmt"
 	"io"
-	log "github.com/Sirupsen/logrus"
 	"os"
 	"strconv"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/devices"
 	"github.com/rocksolidlabs/novm/src/novm/docker"
@@ -152,16 +153,9 @@ func CreateInstance(
 
 	// Add our docker repositories
 	// NOTE: These are also all relative to root.
-	for _, d := range repos {
-		opts := strings.Split(d, ",")
-		repository := opts[0]
-		options := make(map[string]string)
-		for _, arg := range opts[1:] {
-			parts := strings.SplitN(arg, "=", 2)
-			options[parts[0]] = parts[1]
-		}
-		docker.Init(dockerDB, options)
-		read = append(read, docker.PullRepository(repository)...)
+	for _, repo := range repos {
+		docker.Init(dockerDB, repo)
+		read = append(read, docker.PullRepository()...)
 	}
 
 	// The root filesystem:

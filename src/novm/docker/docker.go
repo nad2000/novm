@@ -14,15 +14,11 @@ import (
 	"github.com/rocksolidlabs/novm/src/novm/nodb"
 )
 
-// Tag - docker tag
-type Tag struct {
-	Name  string `json:"name"`
-	Layer string `json:"layer"`
-}
-
 var (
 	// Repository - a docker repository name
 	Repository string
+	// Tag - the specified tag in the repo string: <repository[:tag]>[,key=value]
+	Tag string
 	// Host - docker repository host (default: index.docker.io)
 	Host string
 	// Username - docker repository username
@@ -35,11 +31,29 @@ var (
 	Db nodb.Nodb
 	// Debug - dubugging
 	Debug bool
+	// Cached tags for the most recently "open" repository
+	Tags []string
 )
 
-// Init sets up docker API client
-func Init(db nodb.Nodb, options map[string]string) {
+// Init sets up docker API client and initializes operation on the repository:
+// 0) parses the repository string: <repository[:tag]>[,key=value]
+// 1) performs authentication;
+// 2) retrievs API token;
+// 3) caches tags.
+func Init(db nodb.Nodb, repo string) {
 
+	opts := strings.Split(repo, ",")
+	parts := strings.Split(opts[0], ":")
+	Repository, Tag = parts[0], parts[0]
+	if !strings.Contains(Repository, "/") {
+		Repository = "library/" + Repository
+	}
+
+	options := make(map[string]string)
+	for _, arg := range opts[1:] {
+		parts := strings.SplitN(arg, "=", 2)
+		options[parts[0]] = parts[1]
+	}
 	var baseURL string
 
 	Db = db
@@ -57,6 +71,8 @@ func Init(db nodb.Nodb, options map[string]string) {
 	if Username != "" && Password != "" {
 		auth = base64.StdEncoding.EncodeToString([]byte(Username + ":" + Password))
 	}
+
+	GetTags()
 }
 
 // newRequest creats a generic Docker API request
@@ -285,11 +301,11 @@ func ImageInfo(repository string, imageID string) (imageInfo map[string]interfac
 	return
 }
 
-// Tags returns all repository tags
-func Tags(repository string) []string {
+// GetTags returns all repository tags
+func GetTags() []string {
 
 	client := &http.Client{}
-	listUrl := repository + "/tags/list"
+	listUrl := Repository + "/tags/list"
 	req, err := newRequest(listUrl, "GET", nil, "")
 
 	if Debug {
@@ -307,10 +323,10 @@ func Tags(repository string) []string {
 	}
 	if res.StatusCode == http.StatusUnauthorized {
 		if token != "" {
-			log.Fatal("The access not authorized to repository: %s (%s)", repository, err.Error())
+			log.Fatal("The access not authorized to repository: %s (%s)", Repository, err.Error())
 		} else {
 			GetAuthToken(res)
-			return Tags(repository)
+			return GetTags()
 		}
 	}
 
@@ -322,7 +338,8 @@ func Tags(repository string) []string {
 	}
 
 	json.NewDecoder(res.Body).Decode(&tags)
-	return tags.Tags
+	Tags = tags.Tags
+	return Tags
 }
 
 // // Images returns the list of all images in the repository
@@ -434,7 +451,7 @@ func Tags(repository string) []string {
 // }
 
 // PullRepository retrieves whole docker repository with specified tag
-func PullRepository(repository string) []string {
+func PullRepository() []string {
 	return []string{}
 
 	// var (
