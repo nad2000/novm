@@ -2,6 +2,7 @@ package docker_test
 
 import (
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/rocksolidlabs/novm/src/novm/docker"
@@ -14,15 +15,7 @@ func TestGetAuthToken(t *testing.T) {
 	res.Header.Set(
 		"Www-Authenticate",
 		`Bearer realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:library/nginx:pull",error="insufficient_scope"`)
-	docker.GetAuthToken(&res)
-}
-
-func TestNginxTags(t *testing.T) {
-
-	docker.Debug = true
-	docker.Init(nodb.Nodb{}, map[string]string{})
-	tags := docker.Tags("library/nginx")
-	t.Log(tags)
+	docker.GetAuthToken(&res, false)
 }
 
 // func TestTags(t *testing.T) {
@@ -131,3 +124,17 @@ func TestNginxTags(t *testing.T) {
 // 	docker.DownloadImage(
 // 		"nginx", "56c99fa886e832960de32d147868d3a419a42ef0f9134fb021e8befc497a647e", tf)
 // }
+
+func TestTagsLive(t *testing.T) {
+
+	repo := os.Getenv("REPOSITORY")
+	if repo == "" {
+		t.Log("For live testing set up REPOSITORY environment variables: <repository[:tag]>[,key=value]")
+		return
+	}
+
+	docker.Debug = true
+	docker.Init(nodb.Nodb{}, repo)
+	t.Log(docker.Tags)
+
+}

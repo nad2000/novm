@@ -111,7 +111,7 @@ func newRequest(
 
 // GetAuthToken attempts to retrieve Www-Authenticate
 // header data for requesting authentication token
-func GetAuthToken(res *http.Response) {
+func GetAuthToken(res *http.Response, authenticate bool) {
 	header := res.Header.Get("Www-Authenticate")
 	parts := strings.Split(header, " ")
 	if len(parts) < 2 {
@@ -128,14 +128,18 @@ func GetAuthToken(res *http.Response) {
 
 	url := (attributes["realm"] +
 		"?service=" + url.QueryEscape(attributes["service"]) +
-		"&scope=" + url.QueryEscape(attributes["scope"]))
+		"&scope=" + attributes["scope"]) // url.QueryEscape(attributes["scope"]))
 
 	client := &http.Client{}
 	req, err := newRequest(url, "GET", nil, "")
 
-	if auth != "" {
+	if authenticate && auth != "" {
 		req.Header.Add("Authorization", "Basic "+auth)
 		req.Header.Add("X-Docker-Token", "true")
+	}
+
+	if Debug {
+		log.Info("Request: ", req)
 	}
 
 	res, err = client.Do(req)
@@ -325,7 +329,7 @@ func GetTags() []string {
 		if token != "" {
 			log.Fatal("The access not authorized to repository: %s (%s)", Repository, err.Error())
 		} else {
-			GetAuthToken(res)
+			GetAuthToken(res, false)
 			return GetTags()
 		}
 	}
