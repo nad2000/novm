@@ -155,7 +155,7 @@ func CreateInstance(
 	// NOTE: These are also all relative to root.
 	for _, repo := range repos {
 		docker.Init(dockerDB, repo)
-		read = append(read, docker.PullRepository()...)
+		read = append(read, docker.PullImage())
 	}
 
 	// The root filesystem:

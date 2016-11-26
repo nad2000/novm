@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -37,8 +36,16 @@ var (
 	Debug bool
 	// Cached tags for the most recently "open" repository
 	Tags []string
-	// ImageId docker image digest value
+	// ImageId docker image digest value (the value is set up by GetManifest)
 	ImageId string
+	// Manifest - the image manifest (part of it and it's set up be GetManifest)
+	Manifest struct {
+		Name     string `json:"name"`
+		Tag      string `json:"tag"`
+		FsLayers []struct {
+			BlobSum string `json:"blobSum"`
+		} `json:"fsLayers"`
+	}
 )
 
 // Init sets up docker API client and initializes operation on the repository:
@@ -141,7 +148,9 @@ func newRequest(
 
 // GetAuthToken attempts to retrieve Www-Authenticate
 // header data for requesting authentication token
+// (https://docs.docker.com/registry/spec/auth/token/)
 func GetAuthToken(res *http.Response) {
+
 	header := res.Header.Get("Www-Authenticate")
 	parts := strings.Split(header, " ")
 	if len(parts) < 2 {
@@ -203,131 +212,19 @@ func GetAuthToken(res *http.Response) {
 	return
 }
 
-// Authenticate authenticats client and returns authentiation token
-// and the endpoint to use for subsequent operations.
-// This is a special case where we are authenticating
-// with an index prior to querying the underlying registry.
-func Authenticate(url string) (token string, endpoint string) {
-
-	client := &http.Client{}
-	req, err := newRequest(url, "GET", nil, "")
-
-	if auth != "" {
-		req.Header.Add("Authorization", "Basic "+auth)
-		req.Header.Add("X-Docker-Token", "true")
-	}
-
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if res.StatusCode/100 != 2 {
-		log.Fatalf("Failed to request %q (Status: %q)", url, res.Status)
-	}
-
-	token = res.Header.Get("X-Docker-Token")
-	dockerEndpoints := res.Header.Get("X-Docker-Endpoints")
-	if dockerEndpoints != "" {
-		endpoints := strings.Split(dockerEndpoints, ",")
-		endpoint = endpoints[rand.Intn(len(endpoints))]
-	}
-	return token, endpoint
-}
-
-func request(
-	url string, method string, body string, output io.Writer,
-	response *interface{}, hostName string, authenticate bool) interface{} {
-
-	var (
-		bodyReader *strings.Reader
-		endpoint   string
-	)
-
-	if hostName == "" {
-		hostName = Host
-	}
-
-	url = BaseURL + url
-
-	if method == "" {
-		if body == "" {
-			method = "GET"
-		} else {
-			method = "PUT"
-		}
-	}
-
-	client := &http.Client{}
-
-	if body != "" {
-		bodyReader = strings.NewReader(body)
-	}
-
-	req, err := http.NewRequest(method, url, bodyReader)
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-	if token != "" {
-		req.Header.Add("Authorization", "Token "+token)
-	}
-	if authenticate && auth != "" {
-		req.Header.Add("Authorization", "Basic "+auth)
-		req.Header.Add("X-Docker-Token", "true")
-	}
-
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if res.StatusCode/100 != 2 {
-		log.Fatal("Failed to request %q, %q (Status: %q)", method, url, res.Status)
-	}
-
-	if auth != "" {
-		// This is a special case where we are authenticating
-		// with an index prior to querying the underlying registry.
-		token = res.Header.Get("X-Docker-Token")
-		dockerEndpoints := res.Header.Get("X-Docker-Endpoints")
-		if dockerEndpoints != "" {
-			endpoints := strings.Split(dockerEndpoints, ",")
-			endpoint = endpoints[rand.Intn(len(endpoints))]
-		} else {
-			endpoint = Host
-		}
-		return []string{token, endpoint}
-	}
-
-	if output != nil {
-		io.Copy(output, res.Body)
-
-	} else {
-		json.NewDecoder(res.Body).Decode(response)
-	}
-	res.Body.Close()
-
-	return nil
-
-}
-
 // GetLayerDigests retrieves the list of of layer digests
 // (https://docs.docker.com/registry/spec/api/)
 func GetLayerDigests() []string {
-
-	manifest := GetManifest()
-	digests := make([]string, len(manifest.FsLayers))
-	for i, fsLayer := range manifest.FsLayers {
+	GetManifest()
+	digests := make([]string, len(Manifest.FsLayers))
+	for i, fsLayer := range Manifest.FsLayers {
 		digests[i] = fsLayer.BlobSum
 	}
 	return digests
 }
 
-func GetManifest() (manifest struct {
-	Name     string `json:"name"`
-	Tag      string `json:"tag"`
-	FsLayers []struct {
-		BlobSum string `json:"blobSum"`
-	} `json:"fsLayers"`
-}) {
+// GetManifest fetches the image manifest and its Docker hash ID
+func GetManifest() {
 
 	client := &http.Client{}
 	url := "manifests/" + Tag
@@ -355,7 +252,7 @@ func GetManifest() (manifest struct {
 
 	defer res.Body.Close()
 
-	json.NewDecoder(res.Body).Decode(&manifest)
+	json.NewDecoder(res.Body).Decode(&Manifest)
 	return
 }
 
@@ -400,39 +297,20 @@ func GetTags() []string {
 	return Tags
 }
 
-// // DownloadImage downloads a docker image
-// func DownloadImage(repository string, imageID string, tf io.Writer) {
-
-// 	var endpoint string
-// 	token, endpoint = Authenticate("repositories/" + repository + "/images")
-
-// 	client := &http.Client{}
-// 	req, err := newRequest("images/"+imageID+"/layer", "GET", nil, endpoint)
-
-// 	res, err := client.Do(req)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	if res.StatusCode/100 != 2 {
-// 		log.Fatalf("Failed to request %q (Status: %q)", req.URL, res.Status)
-// 	}
-
-// 	_, err = io.Copy(tf, res.Body)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
-
-// PullRepository retrieves whole docker repository with specified tag
-func PullRepository() []string {
+// PullImage retrieves the image specified tag
+func PullImage() string {
 
 	client := &http.Client{}
 
-	manifest := GetManifest()
+	GetManifest()
 	imageDir := Db.File(ImageId)
 	if !utils.PathExists(imageDir) {
 		os.MkdirAll(imageDir, os.ModeDir|0755)
+	} else {
+		// Image already has been downloaded. Skip it.
+		if Db.Has(ImageId) {
+			return imageDir
+		}
 	}
 	if Debug {
 		log.Infof("ImageID: %s Image Directory: %s", ImageId, imageDir)
@@ -473,142 +351,7 @@ func PullRepository() []string {
 	}
 
 	// Save the image data:
-	Db.Add(ImageId, manifest)
+	Db.Add(ImageId, Manifest)
 
-	return []string{imageDir}
+	return imageDir
 }
-
-// // Images returns the list of all images in the repository
-// func Images(repository string) (images []string) {
-
-// 	resp, err := http.Get(BaseURL + "repositories/" + repository + "/images")
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	defer resp.Body.Close()
-// 	dec := json.NewDecoder(resp.Body)
-
-// 	// read open bracket
-// 	_, err = dec.Token()
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	for dec.More() {
-// 		var img struct {
-// 			ID string
-// 		}
-// 		dec.Decode(&img)
-// 		if img.ID != "" {
-// 			images = append(images, img.ID)
-// 		}
-// 	}
-// 	return
-// }
-
-// // DownloadImage downloads a docker image
-// func DownloadImage(repository string, imageID string, tf io.Writer) {
-
-// 	var endpoint string
-// 	token, endpoint = Authenticate("repositories/" + repository + "/images")
-
-// 	client := &http.Client{}
-// 	req, err := newRequest("images/"+imageID+"/layer", "GET", nil, endpoint)
-
-// 	res, err := client.Do(req)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	if res.StatusCode/100 != 2 {
-// 		log.Fatalf("Failed to request %q (Status: %q)", req.URL, res.Status)
-// 	}
-
-// 	_, err = io.Copy(tf, res.Body)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
-
-// // PullImage retrievs an images and its ancestor
-// // if they have not been already downloaded.
-// func PullImage(repository string, imageID string) []string {
-
-// 	var (
-// 		parent  string
-// 		allDirs []string
-// 	)
-
-// 	// Is this already in our database?
-// 	obj, _ := Db.Get("parent")
-
-// 	if obj != nil {
-// 		parent = string(obj["parent"])
-// 	} else {
-// 		imageInfo := ImageInfo(repository, imageID)
-
-// 		// Do we have a parent?
-// 		parent = imageInfo["parent"].(string)
-
-// 		imageDir := Db.File(imageID)
-// 		if utils.PathExists(imageDir) {
-// 			os.MkdirAll(imageDir, os.ModeDir|0755)
-// 		}
-
-// 		tf, _ := ioutil.TempFile("", "image")
-// 		//defer os.Remove(tf.Name())
-
-// 		// Pull down the data:
-// 		DownloadImage(repository, imageID, tf)
-// 		tf.Close()
-
-// 		// Copy all the files into a single directory.
-// 		command := exec.Command(
-// 			"fakeroot", "tar", "-C", imageDir, "-xf", tf.Name())
-
-// 		err := command.Run()
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-
-// 		// Save the image data:
-// 		Db.Add(imageID, imageInfo)
-// 	}
-
-// 	if parent != "" {
-// 		allDirs = PullImage(repository, parent)
-// 		allDirs = append(allDirs, Db.File(imageID))
-// 	} else {
-// 		allDirs = []string{Db.File(imageID)}
-// 	}
-
-// 	return allDirs
-// }
-
-// PullRepository retrieves whole docker repository with specified tag
-//func PullRepository() []string {
-//	return []string{}
-
-// var (
-// 	tag     string
-// 	imageID string
-// )
-
-// if strings.Contains(repository, ":") {
-// 	parts := strings.SplitN(repository, ":", 2)
-// 	repository, tag = parts[0], parts[1]
-// 	for _, t := range Tags(repository) {
-// 		if tag == t.Name {
-// 			imageID = t.Layer
-// 		}
-// 	}
-// 	if imageID == "" {
-// 		log.Fatal("Failed to pull the image with tag %q", tag)
-// 	}
-// } else {
-// 	t := Tags(repository)[0]
-// 	tag, imageID = t.Name, t.Layer
-// }
-
-// return PullImage(repository, imageID)

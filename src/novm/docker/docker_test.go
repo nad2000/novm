@@ -155,7 +155,7 @@ func TestGetLayerDigestsLive(t *testing.T) {
 
 }
 
-func TestPullRepositoryLive(t *testing.T) {
+func TestPullImageLive(t *testing.T) {
 
 	repo := os.Getenv("REPOSITORY")
 	if repo == "" {
