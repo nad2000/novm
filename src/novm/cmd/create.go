@@ -168,15 +168,18 @@ func create(cmd *cobra.Command) {
 	utils.ClearCloexec(stateFd)
 	tf.Close()
 
+	pid := os.Getpid()
+
 	// Control socket
-	ctrlFileName := path.Join(controlPath, strconv.Itoa(os.Getpid())+".ctrl")
+	ctrlFileName := path.Join(controlPath, strconv.Itoa(pid)+".ctrl")
 	if debug {
 		log.Print("Control file name: ", ctrlFileName)
 	}
 	ctrlFd, _ := control.Bind(ctrlFileName)
 
 	// Add our metadata to the regitry:
-	instanceId := strconv.Itoa(os.Getpid())
+	instanceId := utils.UUID()
+	meta["pid"] = pid
 	instances.Add(instanceId, meta)
 	utils.AddForCleaning(instances.File(instanceId) + ".json")
 	utils.AddForCleaning(instances.File(instanceId))
