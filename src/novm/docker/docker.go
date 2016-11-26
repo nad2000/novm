@@ -55,6 +55,8 @@ var (
 // 3) caches tags.
 func Init(db nodb.Nodb, repo string) {
 
+	token = ""
+
 	opts := strings.Split(repo, ",")
 	if strings.Contains(opts[0], ":") {
 		parts := strings.Split(opts[0], ":")
@@ -81,7 +83,7 @@ func Init(db nodb.Nodb, repo string) {
 	}
 	if baseURL != "" {
 		BaseURL = baseURL
-	} else {
+	} else if BaseURL == "" {
 		BaseURL = "https://" + Host + "/v2/"
 	}
 
@@ -149,13 +151,13 @@ func newRequest(
 // GetAuthToken attempts to retrieve Www-Authenticate
 // header data for requesting authentication token
 // (https://docs.docker.com/registry/spec/auth/token/)
-func GetAuthToken(res *http.Response) {
+func GetAuthToken(res *http.Response) string {
 
 	header := res.Header.Get("Www-Authenticate")
 	parts := strings.Split(header, " ")
 	if len(parts) < 2 {
 		log.Errorf("Wrong Www-Authenticate header: %s", header)
-		return
+		return ""
 	}
 
 	parts = strings.Split(parts[1], ",")
@@ -209,7 +211,7 @@ func GetAuthToken(res *http.Response) {
 		}
 	}
 
-	return
+	return token
 }
 
 // GetLayerDigests retrieves the list of of layer digests
