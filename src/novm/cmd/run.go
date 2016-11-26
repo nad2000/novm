@@ -3,7 +3,6 @@ package cmd
 import (
 	"os"
 	"path"
-	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -19,13 +18,8 @@ var runCmd = &cobra.Command{
 	Long:  `Execute a command inside a novm.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		var objID string
-
 		debugCmd(cmd)
 		terminal := flagBool(cmd, "terminal")
-		id := flagString(cmd, "id")
-		pid := flagInt(cmd, "pid")
-		name := flagString(cmd, "name")
 		env := flagStringSlice(cmd, "env")
 		cwd := flagString(cmd, "cwd")
 		command := args[:]
@@ -35,25 +29,7 @@ var runCmd = &cobra.Command{
 			return
 		}
 
-		if pid > 0 {
-			objID = instances.Find(id, dict{"pid": strconv.Itoa(pid)})
-		} else {
-			objID = instances.Find(id, dict{"name": name})
-		}
-
-		if objID == "" {
-			if pid > 0 {
-				log.Fatalf("Instance with PID %d doesn't exit.", pid)
-			} else {
-				log.Fatalf("Instance with ID %q doesn't exit.", id)
-			}
-		}
-
-		instance, _ := instances.Get(objID)
-		pidStr, ok := instance["pid"]
-		if !ok {
-			log.Fatalf("Missing PID of the instance %q.", objID)
-		}
+		objID, pidStr := instanceIdAndPid(cmd)
 		if !isAlive(pidStr) {
 			log.Fatalf("Instace %d is not running (PID: %s).", objID, pidStr)
 		}

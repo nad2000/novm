@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"strconv"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -186,4 +187,36 @@ func isAlive(pid interface{}) bool {
 	case string:
 		return utils.PathExists(fmt.Sprintf("/proc/%s", pid.(string)))
 	}
+}
+
+// Returns instace ID and PID based on instance flags
+func instanceIdAndPid(cmd *cobra.Command) (string, string) {
+
+	var objID string
+
+	id := flagString(cmd, "id")
+	pid := flagInt(cmd, "pid")
+	name := flagString(cmd, "name")
+
+	if pid > 0 {
+		objID = instances.Find(id, dict{"pid": strconv.Itoa(pid)})
+	} else {
+		objID = instances.Find(id, dict{"name": name})
+	}
+
+	if objID == "" {
+		if pid > 0 {
+			log.Fatalf("Instance with PID %d doesn't exit.", pid)
+		} else {
+			log.Fatalf("Instance with ID %q doesn't exit.", id)
+		}
+	}
+
+	instance, _ := instances.Get(objID)
+	pidStr, ok := instance["pid"]
+	if !ok {
+		log.Fatalf("Missing PID of the instance %q.", objID)
+	}
+
+	return objID, pidStr
 }

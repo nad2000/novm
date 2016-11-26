@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"os"
 	"path"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
@@ -15,11 +16,15 @@ var cleanCmd = &cobra.Command{
 	Long:  `Remove stale instance information.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		debugCmd(cmd)
-		id, name := flagString(cmd, "id"), flagString(cmd, "name")
-		id = instances.Find(id, dict{"name": name})
-		if instances.Remove(id, nil) {
-			os.RemoveAll(path.Join(controlPath, id+".ctrl"))
-			log.Printf("The instance %q removed.", name+id)
+		objID, pidStr := instanceIdAndPid(cmd)
+		if isAlive(pidStr) {
+			log.Fatalf("Instance %q with PID %s is still running.", objID, pidStr)
+		}
+		if instances.Remove(objID, nil) {
+			if pidStr != "" {
+				os.RemoveAll(path.Join(controlPath, objID+".ctrl"))
+			}
+			log.Printf("The instance %q removed.", objID)
 		}
 	},
 }
@@ -27,5 +32,6 @@ var cleanCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(cleanCmd)
 	cleanCmd.Flags().String("id", "", "The instance `ID`.")
+	cleanCmd.Flags().Int("pid", 0, "The instance `PID`.")
 	cleanCmd.Flags().String("name", "", "The instance `NAME`.")
 }
