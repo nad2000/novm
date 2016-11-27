@@ -118,8 +118,8 @@ func Mkkernel(
 		utils.CopyTree(
 			modules,
 			path.Join(tempDir, "modules"),
-			func(name string) bool {
-				return name == "source" || name == "build"
+			func(name string) (bool, error) {
+				return !(name == "source" || name == "build"), nil
 			})
 	}
 	ioutil.WriteFile(path.Join(tempDir, "release"), []byte(release), 0755)
