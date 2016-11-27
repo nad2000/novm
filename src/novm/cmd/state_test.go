@@ -12,9 +12,10 @@ func TestVMCreation(t *testing.T) {
 
 	var output bytes.Buffer
 
-	meta, cmdline := cmd.CreateInstance(&output,
+	instanceID, meta, cmdline := cmd.CreateInstance(&output,
 		"KERNEL", "RELEASE", 4, true, true, false, 0, nil, nil, nil, nil, nil, nil, "NAME", "CMDLINE")
 
+	t.Log("ID:", instanceID)
 	t.Log("META:", utils.JSONDumps(meta))
 	t.Log("CMDLINE:", cmdline)
 	t.Log("STATE:", output.String())

@@ -3,10 +3,10 @@ package cmd
 import (
 	"fmt"
 	"io"
-	log "github.com/Sirupsen/logrus"
 	"os"
-	"strconv"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/devices"
 	"github.com/rocksolidlabs/novm/src/novm/docker"
@@ -18,7 +18,9 @@ func CreateInstance(
 	output io.Writer,
 	kernel string, release string, cpus int, com1 bool, com2 bool, nopci bool, memsize int,
 	nics []string, disks []string, read []string, write []string, packList []string,
-	repos []string, name string, cmdline string) (devCmdline string, meta devices.State) {
+	repos []string, name string, cmdline string) (instanceID string, devCmdline string, meta devices.State) {
+
+	instanceID = utils.UUID()
 
 	if cpus <= 0 {
 		cpus = 1
@@ -166,7 +168,7 @@ func CreateInstance(
 
 	// The root filesystem:
 	rootFs := devices.CreateFs(1+len(nics)+len(disks),
-		"root", instances.File(strconv.Itoa(os.Getpid())), read, write)
+		"root", instances.File(instanceID), read, write)
 	devs = append(devs, rootFs)
 
 	// Add noguest as our init:
@@ -189,6 +191,7 @@ func CreateInstance(
 		"memory": memsize,
 		"kernel": kernel,
 		"ips":    ips,
+		"pid":    os.Getpid(),
 	}
 
 	devCmdline = "-cmdline="
