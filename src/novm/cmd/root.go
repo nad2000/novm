@@ -51,9 +51,12 @@ func Execute() {
 func debugCmd(cmd *cobra.Command) {
 	debug = flagBool(cmd, "debug")
 	verbose = flagBool(cmd, "verbose")
+
 	utils.Debug = debug
 	control.Debug = debug
+
 	if debug {
+		log.SetLevel(log.DebugLevel)
 		title := fmt.Sprintf("Command %q called with flags:", cmd.Name())
 		fmt.Println(title)
 		fmt.Println(strings.Repeat("=", len(title)))

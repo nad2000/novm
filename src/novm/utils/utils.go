@@ -383,17 +383,31 @@ func CopyTree(source string, dest string, filter func(string) (bool, error), kee
 	}
 
 	// ensure dest dir does not already exist
-
-	_, err = os.Open(dest)
-	if !os.IsNotExist(err) {
+	if !keepPath && PathExists(dest) {
 		return fmt.Errorf("Destination %#v already exists", dest)
 	}
 
-	// create dest dir
-
-	err = os.MkdirAll(dest, fi.Mode())
-	if err != nil {
-		return err
+	// create dest dir and its parents if the path should be kept:
+	if keepPath {
+		ddp := dest
+		sdp := "/"
+		for _, p := range strings.Split(source, "/") {
+			sdp = path.Join(sdp, p)
+			ddp = path.Join(ddp, p)
+			if PathExists(ddp) {
+				continue
+			}
+			sdi, err := os.Stat(sdp)
+			if err != nil {
+				log.Fatalf("Failed to retrieve directory %q info: %s", sdp, err.Error())
+			}
+			err = os.MkdirAll(ddp, sdi.Mode())
+		}
+	} else {
+		err = os.MkdirAll(dest, fi.Mode())
+		if err != nil {
+			return err
+		}
 	}
 
 	entries, err := ioutil.ReadDir(source)
@@ -420,7 +434,12 @@ func CopyTree(source string, dest string, filter func(string) (bool, error), kee
 		}
 
 		if entry.IsDir() {
-			err = CopyTree(sfp, dfp, filter, keepPath)
+			if keepPath {
+				err = CopyTree(sfp, dest, filter, true)
+			} else {
+				err = CopyTree(sfp, dfp, filter, false)
+			}
+
 			if err != nil {
 				log.Println(err)
 			}
