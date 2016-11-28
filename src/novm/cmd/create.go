@@ -127,6 +127,7 @@ func create(cmd *cobra.Command) {
 	nics := flagStringArray(cmd, "nic")
 	disks := flagStringArray(cmd, "disk")
 	packs := flagStringSlice(cmd, "pack")
+	packages := flagStringSlice(cmd, "pack")
 	repos := flagStringArray(cmd, "repo")
 	read := flagStringSlice(cmd, "read")
 	write := flagStringSlice(cmd, "write")
@@ -160,7 +161,7 @@ func create(cmd *cobra.Command) {
 	}
 	devCmdline, meta := CreateInstance(
 		tf, kernel, release, cpus, com1, com2, nopci, memsize,
-		nics, disks, read, write, packs, repos, name, cmdline)
+		nics, disks, read, write, packs, packages, repos, name, cmdline)
 	tf.Seek(0, 0)
 
 	// Keep the descriptor:
@@ -235,6 +236,7 @@ func init() {
 	createCmd.Flags().StringArray("nic", nil, "Define a network device (`NIC`).")
 	createCmd.Flags().StringArray("disk", nil, "Define a block device (`DISK`).")
 	createCmd.Flags().StringSlice("pack", nil, "Use a given read `PACK`.")
+	createCmd.Flags().StringSlice("package", nil, "Use a given read `PACKAGE`.")
 	createCmd.Flags().StringArray("repo", nil, "Use a docker repository `REPO`.")
 	createCmd.Flags().StringSlice("read", []string{"/"}, "Define a backing filesystem `READ` tree.")
 	createCmd.Flags().StringSlice("write", nil, "Define a backing filesystem `WRITE` tree.")

@@ -3,10 +3,12 @@ package cmd
 import (
 	"fmt"
 	"io"
-	log "github.com/Sirupsen/logrus"
 	"os"
+	"path"
 	"strconv"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/devices"
 	"github.com/rocksolidlabs/novm/src/novm/docker"
@@ -17,7 +19,7 @@ import (
 func CreateInstance(
 	output io.Writer,
 	kernel string, release string, cpus int, com1 bool, com2 bool, nopci bool, memsize int,
-	nics []string, disks []string, read []string, write []string, packList []string,
+	nics []string, disks []string, read []string, write []string, packList []string, packageList []string,
 	repos []string, name string, cmdline string) (devCmdline string, meta devices.State) {
 
 	if cpus <= 0 {
@@ -173,6 +175,25 @@ func CreateInstance(
 	initFs := devices.CreateFs(2+len(nics)+len(disks),
 		"init", "", []string{"/init=>" + utils.LibExec("noguest")}, nil)
 	devs = append(devs, initFs)
+
+	// Add packages:
+	log.Debug(packageList)
+	for idx, id := range packageList {
+		p, ok := packages.Get(id)
+		if !ok {
+			log.Errorf("Failed to find package %q", id)
+			continue
+		}
+		mountPoint := p["mount"]
+		name := p["name"]
+		root := path.Join(packages.File(id), "ROOT")
+
+		log.Debug("Adding package %q (%q) mounting on %q", name, root, mountPoint)
+
+		packageFs := devices.CreateFs(idx+3+len(nics)+len(disks), id,
+			root, []string{mountPoint}, nil)
+		devs = append(devs, packageFs)
+	}
 	vcpus := make([]devices.State, cpus)
 	for i := 0; i < cpus; i++ {
 		vcpus[i] = devices.State{}
