@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"strconv"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -23,6 +24,7 @@ var (
 	controlPath, cfgFile string
 	instances, packs     nodb.Nodb
 	kernels, dockerDB    nodb.Nodb
+	packages             nodb.Nodb
 	debug                bool
 	verbose              bool
 )
@@ -50,9 +52,12 @@ func Execute() {
 func debugCmd(cmd *cobra.Command) {
 	debug = flagBool(cmd, "debug")
 	verbose = flagBool(cmd, "verbose")
+
 	utils.Debug = debug
 	control.Debug = debug
+
 	if debug {
+		log.SetLevel(log.DebugLevel)
 		title := fmt.Sprintf("Command %q called with flags:", cmd.Name())
 		fmt.Println(title)
 		fmt.Println(strings.Repeat("=", len(title)))
@@ -73,6 +78,7 @@ func SetRootDir(dirName string) {
 	controlPath = path.Join(root, "control")
 	instances.Open(sysDir("NOVM_INSTANCES", "instances"))
 	packs.Open(sysDir("NOVM_PACKS", "packs"))
+	packages.Open(sysDir("NOVM_PACKAGES", "packages"))
 	kernels.Open(sysDir("NOVM_KERNELS", "kernels"))
 	dockerDB.Open(sysDir("NOVM_DOCKER", "docker"))
 }
@@ -186,4 +192,36 @@ func isAlive(pid interface{}) bool {
 	case string:
 		return utils.PathExists(fmt.Sprintf("/proc/%s", pid.(string)))
 	}
+}
+
+// Returns instace ID and PID based on instance flags
+func instanceIdAndPid(cmd *cobra.Command) (string, string) {
+
+	var objID string
+
+	id := flagString(cmd, "id")
+	pid := flagInt(cmd, "pid")
+	name := flagString(cmd, "name")
+
+	if pid > 0 {
+		objID = instances.Find(id, dict{"pid": strconv.Itoa(pid)})
+	} else {
+		objID = instances.Find(id, dict{"name": name})
+	}
+
+	if objID == "" {
+		if pid > 0 {
+			log.Fatalf("Instance with PID %d doesn't exit.", pid)
+		} else {
+			log.Fatalf("Instance with ID %q doesn't exit.", id)
+		}
+	}
+
+	instance, _ := instances.Get(objID)
+	pidStr, ok := instance["pid"]
+	if !ok {
+		log.Fatalf("Missing PID of the instance %q.", objID)
+	}
+
+	return objID, pidStr
 }

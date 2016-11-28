@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"path"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/control"
 
@@ -33,8 +34,6 @@ For example:
 	Run: func(cmd *cobra.Command, args []string) {
 
 		debugCmd(cmd)
-		id := flagString(cmd, "id")
-		name := flagString(cmd, "name")
 		if args == nil {
 			log.Fatal("Invalid command. Expected a VMM command.")
 			return
@@ -50,7 +49,10 @@ For example:
 			params[splitArg[0]] = splitArg[1]
 		}
 
-		objID := instances.Find(id, dict{"name": name})
+		objID, pidStr := instanceIdAndPid(cmd)
+		if !isAlive(pidStr) {
+			log.Fatalf("Instace %d is not running (PID: %s).", objID, pidStr)
+		}
 		ctrlPath := path.Join(controlPath, objID+".ctrl")
 		control.Open(ctrlPath)
 		result, _ := control.RPC(command, params)
@@ -61,5 +63,6 @@ For example:
 func init() {
 	RootCmd.AddCommand(controlCmd)
 	controlCmd.Flags().String("id", "", "a virtual machine `ID`.")
+	controlCmd.Flags().Int("pid", 0, "The instance `PID`.")
 	controlCmd.Flags().String("name", "", "The instance `NAME`.")
 }

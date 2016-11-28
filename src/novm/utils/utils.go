@@ -8,7 +8,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -44,7 +43,7 @@ func Tazdir(input, output string, include, exclude []string) error {
 
 	outputFile, err := os.Create(output)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Could not create tarball file %q, got error %q", outputFile, err.Error()))
+		return fmt.Errorf("Could not create tarball file %q, got error %q", outputFile, err.Error())
 	}
 	defer outputFile.Close()
 
@@ -58,6 +57,12 @@ func Tazdir(input, output string, include, exclude []string) error {
 		input = input + "/"
 	}
 
+	// filter - "filter function"
+	var filter func(string) (bool, error)
+	if include != nil && exclude != nil && len(include) > 0 && len(exclude) > 0 {
+		filter = CreateFilter(include, exclude)
+	}
+
 	return filepath.Walk(input, func(fileName string, fileInfo os.FileInfo, err error) error {
 
 		if err != nil {
@@ -67,20 +72,13 @@ func Tazdir(input, output string, include, exclude []string) error {
 			return err
 		}
 
-		for _, excludeFileName := range exclude {
-			if strings.HasPrefix(fileName, excludeFileName) {
-				return nil
+		if filter != nil {
+			matched, err := filter(fileName)
+			if err != nil || !matched {
+				return err
 			}
 		}
-		if include != nil && len(include) > 0 {
-			for _, includeFileName := range include {
-				if strings.HasPrefix(fileName, includeFileName) {
-					goto Add
-				}
-			}
-			return nil
-		}
-	Add:
+
 		th, err := tar.FileInfoHeader(fileInfo, fileInfo.Name())
 		relativeName := strings.TrimPrefix(fileName, input)
 		if relativeName == "" {
@@ -159,7 +157,7 @@ func Untazdir(input, output string) error {
 
 		outputFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 		if err != nil {
-			return errors.New(fmt.Sprintf("Could not create file %q, got error %q", fileName, err.Error()))
+			return fmt.Errorf("Could not create file %q, got error %q", fileName, err.Error())
 		}
 
 		_, err = io.Copy(outputFile, r)
@@ -334,18 +332,28 @@ func CopyFile(source string, dest string) (err error) {
 		return err
 	}
 	defer sf.Close()
+
+	// Create destination dirctory if it doesn't exist
+	destDir := path.Dir(dest)
+	if !PathExists(destDir) {
+		sdi, err := os.Stat(source)
+		if err == nil {
+			os.MkdirAll(destDir, sdi.Mode())
+		}
+	}
+
 	df, err := os.Create(dest)
 	if err != nil {
 		return err
 	}
 	defer df.Close()
+
 	_, err = io.Copy(df, sf)
 	if err == nil {
 		si, err := os.Stat(source)
-		if err != nil {
+		if err == nil {
 			err = os.Chmod(dest, si.Mode())
 		}
-
 	}
 
 	return
@@ -353,13 +361,16 @@ func CopyFile(source string, dest string) (err error) {
 
 // CopyDir copies recursively whole directory to a new destination
 func CopyDir(source string, dest string) (err error) {
-	return CopyTree(source, dest, nil)
+	return CopyTree(source, dest, nil, false)
 }
 
 // CopyTree recursively copies a directory tree, attempting to preserve permissions.
 // Source directory must exist, destination directory must *not* exist.
 // The matching directories with any in the list are ignored.
-func CopyTree(source string, dest string, ignore func(string) bool) (err error) {
+//
+// if keepPath is true, copying /abc/123/file* to /xyz would end up with /xyz/abc/123/file*
+// instead of /xyz/file*
+func CopyTree(source string, dest string, filter func(string) (bool, error), keepPath bool) (err error) {
 
 	// get properties of source dir
 	fi, err := os.Stat(source)
@@ -372,32 +383,63 @@ func CopyTree(source string, dest string, ignore func(string) bool) (err error) 
 	}
 
 	// ensure dest dir does not already exist
-
-	_, err = os.Open(dest)
-	if !os.IsNotExist(err) {
+	if !keepPath && PathExists(dest) {
 		return fmt.Errorf("Destination %#v already exists", dest)
 	}
 
-	// create dest dir
-
-	err = os.MkdirAll(dest, fi.Mode())
-	if err != nil {
-		return err
+	// create dest dir and its parents if the path should be kept:
+	if keepPath {
+		ddp := dest
+		sdp := "/"
+		for _, p := range strings.Split(source, "/") {
+			sdp = path.Join(sdp, p)
+			ddp = path.Join(ddp, p)
+			if PathExists(ddp) {
+				continue
+			}
+			sdi, err := os.Stat(sdp)
+			if err != nil {
+				log.Fatalf("Failed to retrieve directory %q info: %s", sdp, err.Error())
+			}
+			err = os.MkdirAll(ddp, sdi.Mode())
+		}
+	} else {
+		err = os.MkdirAll(dest, fi.Mode())
+		if err != nil {
+			return err
+		}
 	}
 
 	entries, err := ioutil.ReadDir(source)
 
 	for _, entry := range entries {
-		if ignore != nil {
-			if ignore(entry.Name()) {
+		var sfp, dfp string
+
+		sfp = path.Join(source, entry.Name())
+
+		if filter != nil {
+			matched, err := filter(sfp)
+			if err != nil {
+				return err
+			}
+			if !matched {
 				continue
 			}
 		}
 
-		sfp := path.Join(source, entry.Name())
-		dfp := path.Join(dest, entry.Name())
+		if keepPath {
+			dfp = path.Join(dest, source, entry.Name())
+		} else {
+			dfp = path.Join(dest, entry.Name())
+		}
+
 		if entry.IsDir() {
-			err = CopyTree(sfp, dfp, ignore)
+			if keepPath {
+				err = CopyTree(sfp, dest, filter, true)
+			} else {
+				err = CopyTree(sfp, dfp, filter, false)
+			}
+
 			if err != nil {
 				log.Println(err)
 			}
@@ -501,5 +543,34 @@ func ClearCloexec(fd int) {
 	_, err = Fcntl(uintptr(fd), syscall.F_SETFD, uintptr(flags & ^syscall.FD_CLOEXEC))
 	if err != nil {
 		log.Printf("Failed to remove CLOEXEC flag from file descriptor %d: %v)", fd, err)
+	}
+}
+
+// CreateFilter ceates file filtering function
+func CreateFilter(include, exclude []string) func(name string) (bool, error) {
+
+	return func(name string) (bool, error) {
+
+		for _, excludePattern := range exclude {
+			matched, err := filepath.Match(excludePattern, name)
+			if err != nil {
+				return false, err
+			} else if matched {
+				return false, nil
+			}
+		}
+
+		if include != nil && len(include) > 0 {
+			for _, includePattern := range include {
+				matched, err := filepath.Match(includePattern, name)
+				if err != nil {
+					return false, err
+				} else if matched {
+					return true, nil
+				}
+			}
+		}
+
+		return true, nil
 	}
 }
