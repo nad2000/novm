@@ -24,6 +24,7 @@ var (
 	controlPath, cfgFile string
 	instances, packs     nodb.Nodb
 	kernels, dockerDB    nodb.Nodb
+	packages             nodb.Nodb
 	debug                bool
 	verbose              bool
 )
@@ -77,6 +78,7 @@ func SetRootDir(dirName string) {
 	controlPath = path.Join(root, "control")
 	instances.Open(sysDir("NOVM_INSTANCES", "instances"))
 	packs.Open(sysDir("NOVM_PACKS", "packs"))
+	packages.Open(sysDir("NOVM_PACKAGES", "packages"))
 	kernels.Open(sysDir("NOVM_KERNELS", "kernels"))
 	dockerDB.Open(sysDir("NOVM_DOCKER", "docker"))
 }

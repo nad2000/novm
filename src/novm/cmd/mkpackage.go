@@ -53,9 +53,9 @@ var mkpackageCmd = &cobra.Command{
 
 		meta, err := os.Create(path.Join(dest, "PACKAGE.json"))
 		fmt.Fprintf(meta, `{
-		"name" %q,
-		"mount": %q,
-		"appdir": %q
+	"name": %q,
+	"mount": %q,
+	"appdir": %q
 }`, name, mount, appdir)
 		meta.Close()
 

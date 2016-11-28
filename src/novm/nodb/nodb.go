@@ -230,12 +230,16 @@ LoopObjects:
 func (db *Nodb) Fetch(url string, params map[string]string) (objID string) {
 
 	var (
-		inf io.ReadCloser
-		err error
+		inf  io.ReadCloser
+		err  error
+		name string
 	)
 	obj := make(map[string]interface{})
 	for k, v := range params {
 		obj[k] = v
+		if k == "name" {
+			name = v
+		}
 	}
 	obj["url"] = url
 
@@ -286,9 +290,30 @@ func (db *Nodb) Fetch(url string, params map[string]string) (objID string) {
 			}
 		}
 
+		// Copy package meta info to the DB object meta meta info store
+		log.Debug(objPath)
+		if packagePath := path.Join(objPath, "PACKAGE.json"); utils.PathExists(packagePath) {
+			pf, err := os.Open(packagePath)
+			if err != nil {
+				log.Errorf("Failed to open the meta data file %q: %s", packagePath, err.Error())
+				goto AddObj
+			}
+
+			meta := make(map[string]interface{})
+			err = json.NewDecoder(pf).Decode(&meta)
+			if err != nil {
+				log.Errorf("Failed to decode the meta data file: %q: %s", packagePath, err.Error())
+				goto AddObj
+			}
+			for k, v := range meta {
+				if (k == "name" && name == "" && v.(string) != "") || k != "name" {
+					obj[k] = v
+				}
+			}
+		}
+	AddObj:
 		db.Add(objID, obj)
 
 	}
 	return
-
 }
