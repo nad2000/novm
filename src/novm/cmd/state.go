@@ -189,7 +189,7 @@ func CreateInstance(
 		name := p["name"]
 		root := path.Join(packages.File(id), "ROOT")
 
-		log.Debug("Adding package %q (%q) mounting on %q", name, root, mountPoint)
+		log.Debugf("Adding package %q (%q) mounting on %q", name, root, mountPoint)
 
 		packageFs := devices.CreateFs(idx+3+len(nics)+len(disks), id,
 			root, []string{mountPoint}, nil)

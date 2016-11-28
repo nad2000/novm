@@ -127,7 +127,7 @@ func create(cmd *cobra.Command) {
 	nics := flagStringArray(cmd, "nic")
 	disks := flagStringArray(cmd, "disk")
 	packs := flagStringSlice(cmd, "pack")
-	packages := flagStringSlice(cmd, "pack")
+	packages := flagStringSlice(cmd, "package")
 	repos := flagStringArray(cmd, "repo")
 	read := flagStringSlice(cmd, "read")
 	write := flagStringSlice(cmd, "write")
