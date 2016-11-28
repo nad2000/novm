@@ -191,8 +191,8 @@ func CreateInstance(
 
 		log.Debugf("Adding package %q (%q) mounting on %q", name, root, mountPoint)
 
-		packageFs := devices.CreateFs(idx+3+len(nics)+len(disks), id,
-			root, []string{mountPoint}, nil)
+		packageFs := devices.CreateFs(idx+3+len(nics)+len(disks), "",
+			"", []string{mountPoint + "=>" + root}, nil)
 		devs = append(devs, packageFs)
 	}
 	vcpus := make([]devices.State, cpus)
