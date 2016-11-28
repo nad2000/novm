@@ -332,18 +332,28 @@ func CopyFile(source string, dest string) (err error) {
 		return err
 	}
 	defer sf.Close()
+
+	// Create destination dirctory if it doesn't exist
+	destDir := path.Dir(dest)
+	if !PathExists(destDir) {
+		sdi, err := os.Stat(source)
+		if err == nil {
+			os.MkdirAll(destDir, sdi.Mode())
+		}
+	}
+
 	df, err := os.Create(dest)
 	if err != nil {
 		return err
 	}
 	defer df.Close()
+
 	_, err = io.Copy(df, sf)
 	if err == nil {
 		si, err := os.Stat(source)
-		if err != nil {
+		if err == nil {
 			err = os.Chmod(dest, si.Mode())
 		}
-
 	}
 
 	return
@@ -351,13 +361,16 @@ func CopyFile(source string, dest string) (err error) {
 
 // CopyDir copies recursively whole directory to a new destination
 func CopyDir(source string, dest string) (err error) {
-	return CopyTree(source, dest, nil)
+	return CopyTree(source, dest, nil, false)
 }
 
 // CopyTree recursively copies a directory tree, attempting to preserve permissions.
 // Source directory must exist, destination directory must *not* exist.
 // The matching directories with any in the list are ignored.
-func CopyTree(source string, dest string, filter func(string) (bool, error)) (err error) {
+//
+// if keepPath is true, copying /abc/123/file* to /xyz would end up with /xyz/abc/123/file*
+// instead of /xyz/file*
+func CopyTree(source string, dest string, filter func(string) (bool, error), keepPath bool) (err error) {
 
 	// get properties of source dir
 	fi, err := os.Stat(source)
@@ -386,9 +399,12 @@ func CopyTree(source string, dest string, filter func(string) (bool, error)) (er
 	entries, err := ioutil.ReadDir(source)
 
 	for _, entry := range entries {
+		var sfp, dfp string
+
+		sfp = path.Join(source, entry.Name())
 
 		if filter != nil {
-			matched, err := filter(entry.Name())
+			matched, err := filter(sfp)
 			if err != nil {
 				return err
 			}
@@ -397,10 +413,14 @@ func CopyTree(source string, dest string, filter func(string) (bool, error)) (er
 			}
 		}
 
-		sfp := path.Join(source, entry.Name())
-		dfp := path.Join(dest, entry.Name())
+		if keepPath {
+			dfp = path.Join(dest, source, entry.Name())
+		} else {
+			dfp = path.Join(dest, entry.Name())
+		}
+
 		if entry.IsDir() {
-			err = CopyTree(sfp, dfp, filter)
+			err = CopyTree(sfp, dfp, filter, keepPath)
 			if err != nil {
 				log.Println(err)
 			}

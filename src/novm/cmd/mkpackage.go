@@ -46,16 +46,17 @@ var mkpackageCmd = &cobra.Command{
 			filter = utils.CreateFilter(include, exclude)
 		}
 
-		err := utils.CopyTree(appdir, dest, filter)
+		err := utils.CopyTree(appdir, path.Join(dest, "ROOT"), filter, true)
 		if err != nil {
 			log.Fatal("Failed to prepare a copy of the packcage in the destination directory %q: %s", dest, err.Error())
 		}
 
-		meta, err := os.Create(path.Join(dest, "META.json"))
+		meta, err := os.Create(path.Join(dest, "PACKAGE.json"))
 		fmt.Fprintf(meta, `{
 		"name" %q,
 		"mount": %q,
-}`, name, mount)
+		"appdir": %q
+}`, name, mount, appdir)
 		meta.Close()
 
 		err = utils.Tazdir(dest, output, nil, nil)

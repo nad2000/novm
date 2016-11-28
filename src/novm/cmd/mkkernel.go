@@ -120,7 +120,8 @@ func Mkkernel(
 			path.Join(tempDir, "modules"),
 			func(name string) (bool, error) {
 				return !(name == "source" || name == "build"), nil
-			})
+			},
+			false)
 	}
 	ioutil.WriteFile(path.Join(tempDir, "release"), []byte(release), 0755)
 	utils.Tazdir(tempDir, output, nil, nil)
