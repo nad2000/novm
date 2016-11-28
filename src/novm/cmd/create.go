@@ -159,7 +159,7 @@ func create(cmd *cobra.Command) {
 	} else {
 		os.Remove(tf.Name())
 	}
-	devCmdline, meta := CreateInstance(
+	instanceID, devCmdline, meta := CreateInstance(
 		tf, kernel, release, cpus, com1, com2, nopci, memsize,
 		nics, disks, read, write, packs, packages, repos, name, cmdline)
 	tf.Seek(0, 0)
@@ -169,21 +169,16 @@ func create(cmd *cobra.Command) {
 	utils.ClearCloexec(stateFd)
 	tf.Close()
 
-	pid := os.Getpid()
-
 	// Control socket
-	ctrlFileName := path.Join(controlPath, strconv.Itoa(pid)+".ctrl")
+	ctrlFileName := path.Join(controlPath, strconv.Itoa(os.Getpid())+".ctrl")
 	if debug {
 		log.Print("Control file name: ", ctrlFileName)
 	}
 	ctrlFd, _ := control.Bind(ctrlFileName)
 
-	// Add our metadata to the regitry:
-	instanceId := utils.UUID()
-	meta["pid"] = pid
-	instances.Add(instanceId, meta)
-	utils.AddForCleaning(instances.File(instanceId) + ".json")
-	utils.AddForCleaning(instances.File(instanceId))
+	instances.Add(instanceID, meta)
+	utils.AddForCleaning(instances.File(instanceID) + ".json")
+	utils.AddForCleaning(instances.File(instanceID))
 
 	cmdArgs = append(cmdArgs,
 		"-statefd="+strconv.Itoa(stateFd),
