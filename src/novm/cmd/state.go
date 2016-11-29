@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
+	"path"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -18,8 +18,10 @@ import (
 func CreateInstance(
 	output io.Writer,
 	kernel string, release string, cpus int, com1 bool, com2 bool, nopci bool, memsize int,
-	nics []string, disks []string, read []string, write []string, packList []string,
-	repos []string, name string, cmdline string) (devCmdline string, meta devices.State) {
+	nics []string, disks []string, read []string, write []string, packList []string, packageList []string,
+	repos []string, name string, cmdline string) (instanceID string, devCmdline string, meta devices.State) {
+
+	instanceID = utils.UUID()
 
 	if cpus <= 0 {
 		cpus = 1
@@ -160,13 +162,32 @@ func CreateInstance(
 
 	// The root filesystem:
 	rootFs := devices.CreateFs(1+len(nics)+len(disks),
-		"root", instances.File(strconv.Itoa(os.Getpid())), read, write)
+		"root", instances.File(instanceID), read, write)
 	devs = append(devs, rootFs)
 
 	// Add noguest as our init:
 	initFs := devices.CreateFs(2+len(nics)+len(disks),
 		"init", "", []string{"/init=>" + utils.LibExec("noguest")}, nil)
 	devs = append(devs, initFs)
+
+	// Add packages:
+	log.Debug(packageList)
+	for idx, id := range packageList {
+		p, ok := packages.Get(id)
+		if !ok {
+			log.Errorf("Failed to find package %q", id)
+			continue
+		}
+		mountPoint := p["mount"]
+		name := p["name"]
+		root := path.Join(packages.File(id), "ROOT")
+
+		log.Debugf("Adding package %q (%q) mounting on %q", name, root, mountPoint)
+
+		packageFs := devices.CreateFs(idx+3+len(nics)+len(disks), "",
+			"", []string{mountPoint + "=>" + root}, nil)
+		devs = append(devs, packageFs)
+	}
 	vcpus := make([]devices.State, cpus)
 	for i := 0; i < cpus; i++ {
 		vcpus[i] = devices.State{}
@@ -183,6 +204,7 @@ func CreateInstance(
 		"memory": memsize,
 		"kernel": kernel,
 		"ips":    ips,
+		"pid":    os.Getpid(),
 	}
 
 	devCmdline = "-cmdline="

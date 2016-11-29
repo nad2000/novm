@@ -19,15 +19,17 @@ var listCmd = &cobra.Command{
 // List lists all instances:
 func List(full bool, alive bool) {
 	rval := instances.Show()
-	for pid, v := range rval {
-		if isAlive(pid) {
+	for _, v := range rval {
+
+		pidVal, ok := v["pid"]
+		if ok && isAlive(pidVal) {
 			v["alive"] = "True"
 		} else {
 			v["alive"] = "False"
 		}
 	}
 	utils.PrettyPrintFields(rval,
-		[]string{"id", "name", "timestamp", "cpus", "alive", "ips", "memory"})
+		[]string{"id", "pid", "name", "timestamp", "cpus", "alive", "ips", "memory"})
 }
 
 func init() {
