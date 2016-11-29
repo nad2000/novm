@@ -49,15 +49,15 @@ var (
 )
 
 // Init sets up docker API client and initializes operation on the repository:
-// 0) parses the repository string: <repository[:tag]>[,key=value]
+// 0) parses the image specification string: <repository[:tag]>[,key=value]
 // 1) performs authentication;
 // 2) retrievs API token;
 // 3) caches tags.
-func Init(db nodb.Nodb, repo string) {
+func Init(db nodb.Nodb, image string) {
 
 	token = ""
 
-	opts := strings.Split(repo, ",")
+	opts := strings.Split(image, ",")
 	if strings.Contains(opts[0], ":") {
 		parts := strings.Split(opts[0], ":")
 		Repository, Tag = parts[0], parts[1]
@@ -95,7 +95,7 @@ func Init(db nodb.Nodb, repo string) {
 
 	if Tag == "" {
 		if len(Tags) > 0 {
-			// If 'tag' was missing in the repo string use "latest"
+			// If 'tag' was missing in the image string use "latest"
 			// or the first in the list
 			Tag = Tags[0]
 			for _, tag := range Tags {
@@ -105,10 +105,10 @@ func Init(db nodb.Nodb, repo string) {
 				}
 			}
 			if Debug {
-				log.Infof("Using tag %q for %q", Tag, repo)
+				log.Infof("Using tag %q for %q", Tag, image)
 			}
 		} else {
-			log.Fatalf("No tags found for %q", repo)
+			log.Fatalf("No tags found for %q", image)
 		}
 	}
 
@@ -299,7 +299,7 @@ func GetTags() []string {
 	return Tags
 }
 
-// PullImage retrieves the image specified tag
+// PullImage retrieves the docker image
 func PullImage() string {
 
 	client := &http.Client{}
@@ -317,6 +317,7 @@ func PullImage() string {
 	if Debug {
 		log.Infof("ImageID: %s Image Directory: %s", ImageId, imageDir)
 	}
+	log.Infof(`About to download docker image "%s/%s". It can take a few minutest.`, Repository, Tag)
 
 	for _, digest := range GetLayerDigests() {
 

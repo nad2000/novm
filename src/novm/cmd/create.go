@@ -58,11 +58,11 @@ Write definitions are also provided as a mapping.
 
         /=>temp_dir
 
-Docker repositories are provided as follows.
+Docker images are provided as follows.
 
     <repository[:tag]>[,key=value]
 
-    You should specify at least username, password.`,
+    With key and value pairs you can specify username, password, docker registry host etc.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		nofork := flagBool(cmd, "nofork")
@@ -128,7 +128,7 @@ func create(cmd *cobra.Command) {
 	disks := flagStringArray(cmd, "disk")
 	packs := flagStringSlice(cmd, "pack")
 	packages := flagStringSlice(cmd, "package")
-	repos := flagStringArray(cmd, "repo")
+	images := flagStringArray(cmd, "image")
 	read := flagStringSlice(cmd, "read")
 	write := flagStringSlice(cmd, "write")
 	vmmopt := flagStringSlice(cmd, "vmmopt")
@@ -161,7 +161,7 @@ func create(cmd *cobra.Command) {
 	}
 	instanceID, devCmdline, meta := CreateInstance(
 		tf, kernel, release, cpus, com1, com2, nopci, memsize,
-		nics, disks, read, write, packs, packages, repos, name, cmdline)
+		nics, disks, read, write, packs, packages, images, name, cmdline)
 	tf.Seek(0, 0)
 
 	// Keep the descriptor:
@@ -232,7 +232,7 @@ func init() {
 	createCmd.Flags().StringArray("disk", nil, "Define a block device (`DISK`).")
 	createCmd.Flags().StringSlice("pack", nil, "Use a given read `PACK`.")
 	createCmd.Flags().StringSlice("package", nil, "Use a given read `PACKAGE`.")
-	createCmd.Flags().StringArray("repo", nil, "Use a docker repository `REPO`.")
+	createCmd.Flags().StringArray("image", nil, "Use a docker image `IMAGE`.")
 	createCmd.Flags().StringSlice("read", []string{"/"}, "Define a backing filesystem `READ` tree.")
 	createCmd.Flags().StringSlice("write", nil, "Define a backing filesystem `WRITE` tree.")
 	createCmd.Flags().Bool("nopci", false, "Disable PCI devices?")
