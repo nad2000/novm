@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"strings"
@@ -16,10 +15,9 @@ import (
 
 // CreateInstance creates VM and stores the configuration in the state object
 func CreateInstance(
-	output io.Writer,
 	kernel string, release string, cpus int, com1 bool, com2 bool, nopci bool, memsize int,
 	nics []string, disks []string, read []string, write []string, packList []string, packageList []string,
-	repos []string, name string, cmdline string) (instanceID string, devCmdline string, meta devices.State) {
+	repos []string, name string, cmdline string) (stateFd int, instanceID string, devCmdline string) {
 
 	instanceID = utils.UUID()
 
@@ -201,16 +199,27 @@ func CreateInstance(
 		"devices": devs,
 		"vcpus":   vcpus,
 	}
-	utils.JSONDump(state, output, true)
 
-	meta = map[string]interface{}{
+	stateFileName := instances.File(instanceID) + ".state.json"
+	sf, _ := os.Create(stateFileName)
+
+	if debug {
+		log.Info("Sate stored in: ", stateFileName)
+	}
+	utils.JSONDump(state, sf, true)
+	sf.Seek(0, 0)
+
+	stateFd = int(sf.Fd())
+	utils.ClearCloexec(stateFd)
+
+	instances.Add(instanceID, map[string]interface{}{
 		"name":   name,
 		"cpus":   cpus,
 		"memory": memsize,
 		"kernel": kernel,
 		"ips":    ips,
 		"pid":    os.Getpid(),
-	}
+	})
 
 	devCmdline = "-cmdline="
 	for _, d := range devs {
@@ -224,5 +233,4 @@ func CreateInstance(
 	}
 	devCmdline += cmdline
 	return
-
 }

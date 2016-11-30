@@ -43,6 +43,10 @@ novm leverages the excellent Linux Kernel Virtual Machine (KVM) interface to run
 // Execute adds all child commands to the root command sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+
+	// We Check if we are root
+	CheckIfRoot()
+
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -97,8 +101,6 @@ func CheckIfRoot() {
 }
 
 func init() {
-	// We Check if we are root
-	CheckIfRoot()
 
 	SetRootDir("")
 	cobra.OnInitialize(initConfig)

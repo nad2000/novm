@@ -1,27 +1,28 @@
 package cmd_test
 
 import (
-	"bytes"
 	"testing"
 
+	log "github.com/Sirupsen/logrus"
+
 	"github.com/rocksolidlabs/novm/src/novm/cmd"
-	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
+
+func inti() {
+	cmd.SetRootDir("/tmp/TEST/")
+}
 
 func TestVMCreation(t *testing.T) {
 
-	var output bytes.Buffer
-
-	instanceID, meta, cmdline := cmd.CreateInstance(&output,
-		"KERNEL", "RELEASE", 4, true, true, false, 0, nil, nil, nil, nil, nil, nil, "NAME", "CMDLINE")
+	log.SetLevel(log.DebugLevel)
+	_, instanceID, cmdline := cmd.CreateInstance(
+		"KERNEL", "RELEASE", 4, true, true, false, 0, nil, nil, nil, nil, nil, nil, nil, "NAME", "CMDLINE")
 
 	t.Log("ID:", instanceID)
-	t.Log("META:", utils.JSONDumps(meta))
 	t.Log("CMDLINE:", cmdline)
-	t.Log("STATE:", output.String())
 }
 
-var SAMPLE_STATE string = `{
+const SAMPLE_STATE string = `{
     "devices": [
         {
             "cmdline": null,

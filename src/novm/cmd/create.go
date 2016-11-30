@@ -152,22 +152,9 @@ func create(cmd *cobra.Command) {
 		"-initrd", kernels.File(kernel, "initrd"),
 		"-setup", kernels.File(kernel, "setup"))
 
-	// Provide our state by dumping to a temporary file:
-	tf, _ := ioutil.TempFile("", "state")
-	if debug {
-		log.Print("Sate stored in: ", tf.Name())
-	} else {
-		os.Remove(tf.Name())
-	}
-	instanceID, devCmdline, meta := CreateInstance(
-		tf, kernel, release, cpus, com1, com2, nopci, memsize,
+	stateFd, instanceID, devCmdline := CreateInstance(
+		kernel, release, cpus, com1, com2, nopci, memsize,
 		nics, disks, read, write, packs, packages, repos, name, cmdline)
-	tf.Seek(0, 0)
-
-	// Keep the descriptor:
-	stateFd, _ := syscall.Dup(int(tf.Fd()))
-	utils.ClearCloexec(stateFd)
-	tf.Close()
 
 	// Control socket
 	ctrlFileName := path.Join(controlPath, strconv.Itoa(os.Getpid())+".ctrl")
@@ -176,7 +163,6 @@ func create(cmd *cobra.Command) {
 	}
 	ctrlFd, _ := control.Bind(ctrlFileName)
 
-	instances.Add(instanceID, meta)
 	utils.AddForCleaning(instances.File(instanceID) + ".json")
 	utils.AddForCleaning(instances.File(instanceID))
 
