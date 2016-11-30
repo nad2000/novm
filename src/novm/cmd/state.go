@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"strings"
+	"syscall"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -13,13 +16,31 @@ import (
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
-// CreateInstance creates VM and stores the configuration in the state object
-func CreateInstance(
-	kernel string, release string, cpus int, com1 bool, com2 bool, nopci bool, memsize int,
-	nics []string, disks []string, read []string, write []string, packList []string, packageList []string,
-	repos []string, name string, cmdline string) (stateFd int, instanceID string, devCmdline string) {
+type InstaceParams struct {
+	Kernel, Release, Name, Cmdline   string
+	Cpus, Memsize                    int
+	Com1, Com2, Nopci                bool
+	Nics, Disks, Read, Write, Images []string
+	Repos                            []string
+	Packs                            []string
+	Packages                         []string
+}
 
+// CreateInstance creates VM and stores the configuration in the state object
+func CreateInstance(params InstaceParams) (stateFd int, instanceID string, devCmdline string) {
 	instanceID = utils.UUID()
+	stateFd, devCmdline = ActivateInstance(instanceID, params)
+	return
+}
+
+// ActivateInstance activates an instace with given ID VM
+// and stores the configuration in the state object
+// it attempts to reuse resouces linked to the give ID
+func ActivateInstance(instanceID string, params InstaceParams) (stateFd int, devCmdline string) {
+
+	kernel, release, cpus, com1, com2 := params.Kernel, params.Release, params.Cpus, params.Com1, params.Com2
+	nics, disks, read, write, packList, packageList := params.Nics, params.Disks, params.Read, params.Write, params.Packs, params.Packages
+	repos, name, cmdline, nopci, memsize := params.Repos, params.Name, params.Cmdline, params.Nopci, params.Memsize
 
 	if cpus <= 0 {
 		cpus = 1
@@ -200,17 +221,26 @@ func CreateInstance(
 		"vcpus":   vcpus,
 	}
 
-	stateFileName := instances.File(instanceID) + ".state.json"
-	sf, _ := os.Create(stateFileName)
+	// Provide our state by dumping to a temporary file:
+	sf, _ := ioutil.TempFile("", "state")
 
 	if debug {
-		log.Info("Sate stored in: ", stateFileName)
+		log.Info("Sate stored in: ", sf.Name())
+	} else {
+		os.Remove(sf.Name())
 	}
+
 	utils.JSONDump(state, sf, true)
 	sf.Seek(0, 0)
 
-	stateFd = int(sf.Fd())
+	stateFd, _ = syscall.Dup(int(sf.Fd()))
 	utils.ClearCloexec(stateFd)
+	sf.Close()
+
+	paramFileName := instances.File("." + instanceID + ".params")
+	pf, _ := os.Create(paramFileName)
+	defer pf.Close()
+	json.NewEncoder(pf).Encode(params)
 
 	instances.Add(instanceID, map[string]interface{}{
 		"name":   name,

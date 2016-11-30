@@ -23,12 +23,18 @@ var cleanallCmd = &cobra.Command{
 			instance, _ := instances.Get(id)
 			pid, ok := instance["pid"]
 
-			if ok && !isAlive(pid) {
+			if ok && !isAlive(pid) || !ok {
 				if debug {
-					log.Print("Removing PID: ", pid)
+					if ok {
+						log.Print("Removing PID: ", pid)
+					} else {
+						log.Print("Removing instace: ", id)
+					}
 				}
-				instances.Remove(pid, nil)
-				os.RemoveAll(path.Join(controlPath, pid+".ctrl"))
+				instances.Remove(id, nil)
+				if ok {
+					os.RemoveAll(path.Join(controlPath, pid+".ctrl"))
+				}
 			}
 		}
 		files, _ := ioutil.ReadDir(controlPath)

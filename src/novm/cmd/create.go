@@ -152,9 +152,25 @@ func create(cmd *cobra.Command) {
 		"-initrd", kernels.File(kernel, "initrd"),
 		"-setup", kernels.File(kernel, "setup"))
 
-	stateFd, instanceID, devCmdline := CreateInstance(
-		kernel, release, cpus, com1, com2, nopci, memsize,
-		nics, disks, read, write, packs, packages, repos, name, cmdline)
+	params := InstaceParams{
+		Kernel:   kernel,
+		Release:  release,
+		Cpus:     cpus,
+		Com1:     com1,
+		Com2:     com2,
+		Nopci:    nopci,
+		Memsize:  memsize,
+		Nics:     nics,
+		Disks:    disks,
+		Read:     read,
+		Write:    write,
+		Packs:    packs,
+		Packages: packages,
+		Repos:    repos,
+		Name:     name,
+		Cmdline:  cmdline}
+
+	stateFd, instanceID, devCmdline := CreateInstance(params)
 
 	// Control socket
 	ctrlFileName := path.Join(controlPath, strconv.Itoa(os.Getpid())+".ctrl")
