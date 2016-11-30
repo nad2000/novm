@@ -19,7 +19,7 @@ func CreateInstance(
 	output io.Writer,
 	kernel string, release string, cpus int, com1 bool, com2 bool, nopci bool, memsize int,
 	nics []string, disks []string, read []string, write []string, packList []string, packageList []string,
-	repos []string, name string, cmdline string) (instanceID string, devCmdline string, meta devices.State) {
+	images []string, name string, cmdline string) (instanceID string, devCmdline string, meta devices.State) {
 
 	instanceID = utils.UUID()
 
@@ -153,18 +153,11 @@ func CreateInstance(
 		read = append(read, packs.File(p))
 	}
 
-	// Add our docker repositories
+	// Add our docker images
 	// NOTE: These are also all relative to root.
-	for _, d := range repos {
-		opts := strings.Split(d, ",")
-		repository := opts[0]
-		options := make(map[string]string)
-		for _, arg := range opts[1:] {
-			parts := strings.SplitN(arg, "=", 2)
-			options[parts[0]] = parts[1]
-		}
-		docker.Init(dockerDB, options)
-		read = append(read, docker.PullRepository(repository)...)
+	for _, image := range images {
+		docker.Init(dockerDB, image)
+		read = append(read, docker.PullImage())
 	}
 
 	// Add packages to the read map:

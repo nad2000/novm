@@ -2,9 +2,10 @@ package devices
 
 import (
 	"io/ioutil"
-	log "github.com/Sirupsen/logrus"
 	"os"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
@@ -30,7 +31,7 @@ func CreateFs(index int, tag string, tempDir string, read []string, write []stri
 	}
 
 	// Append our read mapping:
-	readMap := map[string][]string{"/": {"/"}}
+	readMap := map[string][]string{"/": {}}
 	for _, path := range read {
 		spec := strings.Split(path, "=>")
 		if len(spec) == 1 {
