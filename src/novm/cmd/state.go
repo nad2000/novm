@@ -160,19 +160,8 @@ func CreateInstance(
 		read = append(read, docker.PullImage())
 	}
 
-	// The root filesystem:
-	rootFs := devices.CreateFs(1+len(nics)+len(disks),
-		"root", instances.File(instanceID), read, write)
-	devs = append(devs, rootFs)
-
-	// Add noguest as our init:
-	initFs := devices.CreateFs(2+len(nics)+len(disks),
-		"init", "", []string{"/init=>" + utils.LibExec("noguest")}, nil)
-	devs = append(devs, initFs)
-
-	// Add packages:
-	log.Debug(packageList)
-	for idx, id := range packageList {
+	// Add packages to the read map:
+	for _, id := range packageList {
 		p, ok := packages.Get(id)
 		if !ok {
 			log.Errorf("Failed to find package %q", id)
@@ -184,10 +173,19 @@ func CreateInstance(
 
 		log.Debugf("Adding package %q (%q) mounting on %q", name, root, mountPoint)
 
-		packageFs := devices.CreateFs(idx+3+len(nics)+len(disks), "",
-			"", []string{mountPoint + "=>" + root}, nil)
-		devs = append(devs, packageFs)
+		read = append(read, mountPoint+"=>"+root)
 	}
+
+	// The root filesystem:
+	rootFs := devices.CreateFs(1+len(nics)+len(disks),
+		"root", instances.File(instanceID), read, write)
+	devs = append(devs, rootFs)
+
+	// Add noguest as our init:
+	initFs := devices.CreateFs(2+len(nics)+len(disks),
+		"init", "", []string{"/init=>" + utils.LibExec("noguest")}, nil)
+	devs = append(devs, initFs)
+
 	vcpus := make([]devices.State, cpus)
 	for i := 0; i < cpus; i++ {
 		vcpus[i] = devices.State{}
