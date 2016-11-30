@@ -25,6 +25,7 @@ func List(full bool, alive bool) {
 		if ok && isAlive(pidVal) {
 			v["alive"] = "True"
 		} else {
+			v["pid"] = ""
 			v["alive"] = "False"
 		}
 	}
