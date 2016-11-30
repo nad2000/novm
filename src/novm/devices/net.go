@@ -195,13 +195,13 @@ func CreateNic(index int, options map[string]string) (state State, ip string) {
 	// Make sure the interface is up
 	link, err := netlink.LinkByName(tapName)
 	if err != nil {
-		log.Fatalf("Error getting tuntap interface: %s", err)
+		log.Fatal("Error getting tuntap interface: ", err.Error())
 	}
 	err = netlink.LinkSetUp(link)
 	if err != nil {
-		log.Fatalf("Error getting tuntap interface: %s", err)
+		log.Fatal("Error getting tuntap interface: ", err.Error())
 	} else {
-		log.Println("Completed setup of tuntap interface: %s", tapName)
+		log.Info("Completed setup of tuntap interface: ", tapName)
 	}
 
 	// Start our dnsmasq.

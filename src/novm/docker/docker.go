@@ -34,10 +34,10 @@ var (
 	Db nodb.Nodb
 	// Debug - dubugging
 	Debug bool
-	// Cached tags for the most recently "open" repository
+	// Tags - cached tags for the most recently "open" repository
 	Tags []string
-	// ImageId docker image digest value (the value is set up by GetManifest)
-	ImageId string
+	// ImageID docker image digest value (the value is set up by GetManifest)
+	ImageID string
 	// Manifest - the image manifest (part of it and it's set up be GetManifest)
 	Manifest struct {
 		Name     string `json:"name"`
@@ -241,7 +241,7 @@ func GetManifest() {
 	dockerContentDigest := res.Header.Get("Docker-Content-Digest")
 	if dockerContentDigest != "" {
 		parts := strings.Split(dockerContentDigest, ":")
-		ImageId = parts[1]
+		ImageID = parts[1]
 	}
 
 	if err != nil {
@@ -262,8 +262,8 @@ func GetManifest() {
 func GetTags() []string {
 
 	client := &http.Client{}
-	listUrl := "tags/list"
-	req, err := newRequest(listUrl, "GET", nil, "")
+	listURL := "tags/list"
+	req, err := newRequest(listURL, "GET", nil, "")
 
 	if Debug {
 		log.Info("Request: ", req)
@@ -280,7 +280,7 @@ func GetTags() []string {
 	}
 	if res.StatusCode == http.StatusUnauthorized {
 		if token != "" {
-			log.Fatal("The access not authorized to repository: %s (%s)", Repository, err.Error())
+			log.Fatal(`The access to the image "%s/%s"  not authorized to repository`, Repository, Tag)
 		} else {
 			GetAuthToken(res)
 			return GetTags()
@@ -305,17 +305,15 @@ func PullImage() string {
 	client := &http.Client{}
 
 	GetManifest()
-	imageDir := Db.File(ImageId)
+	imageDir := Db.File(ImageID)
 	if !utils.PathExists(imageDir) {
 		os.MkdirAll(imageDir, os.ModeDir|0755)
 	} else {
 		// Image already has been downloaded. Skip it.
-		if Db.Has(ImageId) {
-			return imageDir
-		}
+		return imageDir
 	}
 	if Debug {
-		log.Infof("ImageID: %s Image Directory: %s", ImageId, imageDir)
+		log.Infof("ImageID: %s Image Directory: %s", ImageID, imageDir)
 	}
 	log.Infof(`About to download docker image "%s/%s". It can take a few minutest.`, Repository, Tag)
 
@@ -354,7 +352,7 @@ func PullImage() string {
 	}
 
 	// Save the image data:
-	Db.Add(ImageId, Manifest)
+	Db.Add(ImageID, Manifest)
 
 	return imageDir
 }
