@@ -16,14 +16,6 @@ import (
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
-<<<<<<< HEAD
-// CreateInstance creates VM and stores the configuration in the state object
-func CreateInstance(
-	output io.Writer,
-	kernel string, release string, cpus int, com1 bool, com2 bool, nopci bool, memsize int,
-	nics []string, disks []string, read []string, write []string, packList []string, packageList []string,
-	images []string, name string, cmdline string) (instanceID string, devCmdline string, meta devices.State) {
-=======
 type InstaceParams struct {
 	Kernel, Release, Name, Cmdline   string
 	Cpus, Memsize                    int
@@ -33,11 +25,10 @@ type InstaceParams struct {
 	Packs                            []string
 	Packages                         []string
 }
->>>>>>> acbf201fcf1881854c6d434257aad04cab0d180d
 
 // CreateInstance creates VM and stores the configuration in the state object
 func CreateInstance(params InstaceParams) (stateFd int, instanceID string, devCmdline string) {
-	instanceID = utils.UUID()
+	instanceID = utils.NewID()
 	stateFd, devCmdline = ActivateInstance(instanceID, params)
 	return
 }
