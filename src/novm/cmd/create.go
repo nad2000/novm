@@ -121,26 +121,32 @@ func create(cmd *cobra.Command) {
 	if cmdline != "" {
 		cmdline += " "
 	}
-	cpus := flagInt(cmd, "cpus")
-	memsize := flagInt(cmd, "memsize")
+	terminal := flagBool(cmd, "terminal")
 	init := flagBool(cmd, "init")
-	nics := flagStringArray(cmd, "nic")
-	disks := flagStringArray(cmd, "disk")
-	packs := flagStringSlice(cmd, "pack")
-	packages := flagStringSlice(cmd, "package")
-	images := flagStringArray(cmd, "image")
-	read := flagStringSlice(cmd, "read")
-	write := flagStringSlice(cmd, "write")
 	vmmopt := flagStringSlice(cmd, "vmmopt")
 	cwd := flagString(cmd, "cwd")
-	nopci := flagBool(cmd, "nopci")
-	com1 := flagBool(cmd, "com1")
-	com2 := flagBool(cmd, "com2")
-	terminal := flagBool(cmd, "terminal")
+	remove := flagBool(cmd, "rm")
 
 	_ = cwd
 	_ = terminal
 
+	params := InstaceParams{
+		Name:     name,
+		Kernel:   kernel,
+		Release:  release,
+		Cpus:     flagInt(cmd, "cpus"),
+		Com1:     flagBool(cmd, "com1"),
+		Com2:     flagBool(cmd, "com2"),
+		Nopci:    flagBool(cmd, "nopci"),
+		Memsize:  flagInt(cmd, "memsize"),
+		Nics:     flagStringArray(cmd, "nic"),
+		Disks:    flagStringArray(cmd, "disk"),
+		Read:     flagStringSlice(cmd, "read"),
+		Write:    flagStringSlice(cmd, "write"),
+		Packs:    flagStringSlice(cmd, "pack"),
+		Packages: flagStringSlice(cmd, "package"),
+		Images:   flagStringArray(cmd, "image"),
+		Cmdline:  cmdline}
 	cmdArgs := make([]string, 0, 10)
 	if init {
 		cmdArgs = append(cmdArgs, "-init")
@@ -152,25 +158,7 @@ func create(cmd *cobra.Command) {
 		"-initrd", kernels.File(kernel, "initrd"),
 		"-setup", kernels.File(kernel, "setup"))
 
-	params := InstaceParams{
-		Kernel:   kernel,
-		Release:  release,
-		Cpus:     cpus,
-		Com1:     com1,
-		Com2:     com2,
-		Nopci:    nopci,
-		Memsize:  memsize,
-		Nics:     nics,
-		Disks:    disks,
-		Read:     read,
-		Write:    write,
-		Packs:    packs,
-		Packages: packages,
-		Images:   images,
-		Name:     name,
-		Cmdline:  cmdline}
-
-	stateFd, instanceID, devCmdline := CreateInstance(params)
+	stateFd, instanceID, devCmdline := CreateInstance(params, remove)
 
 	// Control socket
 	ctrlFileName := path.Join(controlPath, strconv.Itoa(os.Getpid())+".ctrl")
@@ -246,4 +234,5 @@ func init() {
 	createCmd.Flags().StringSlice("env", nil, "Specify an environment variable `ENV`.")
 	createCmd.Flags().String("cwd", "", "The process working directory `CWD`.")
 	createCmd.Flags().Bool("terminal", false, "Change the terminal mode.")
+	createCmd.Flags().Bool("rm", false, "Remove instance after termination.")
 }
