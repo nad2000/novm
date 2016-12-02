@@ -21,7 +21,6 @@ type InstaceParams struct {
 	Cpus, Memsize                    int
 	Com1, Com2, Nopci                bool
 	Nics, Disks, Read, Write, Images []string
-	Repos                            []string
 	Packs                            []string
 	Packages                         []string
 }
@@ -40,7 +39,7 @@ func ActivateInstance(instanceID string, params InstaceParams) (stateFd int, dev
 
 	kernel, release, cpus, com1, com2 := params.Kernel, params.Release, params.Cpus, params.Com1, params.Com2
 	nics, disks, read, write, packList, packageList := params.Nics, params.Disks, params.Read, params.Write, params.Packs, params.Packages
-	repos, name, cmdline, nopci, memsize := params.Repos, params.Name, params.Cmdline, params.Nopci, params.Memsize
+	images, name, cmdline, nopci, memsize := params.Images, params.Name, params.Cmdline, params.Nopci, params.Memsize
 
 	if cpus <= 0 {
 		cpus = 1

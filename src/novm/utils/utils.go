@@ -32,13 +32,11 @@ func UUID() string {
 	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 }
 
-// NewID creats a random ID (UUID w/o hyphens)
+// NewID creats a random ID 40 character long string
 func NewID() string {
-	b := make([]byte, 16)
+	b := make([]byte, 20)
 	rand.Read(b)
-	b[6] = (b[6] & 0x0f) | 0x40
-	b[8] = (b[8] & 0x3f) | 0x80
-	objID = fmt.Sprintf("%x", b)
+	return fmt.Sprintf("%x", b)
 }
 
 // PathExists tests the existence of a path
