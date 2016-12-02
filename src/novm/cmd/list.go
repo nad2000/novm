@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"io/ioutil"
+
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 
 	"github.com/spf13/cobra"
@@ -16,16 +18,25 @@ var listCmd = &cobra.Command{
 	},
 }
 
+// InstancePid returns instace's PID if it is running
+func InstancePid(instanceID string) (pidStr string) {
+	pidFileName := instances.File("." + instanceID + ".pid")
+	if utils.PathExists(pidFileName) {
+		pid, _ := ioutil.ReadFile(pidFileName)
+		pidStr = string(pid)
+	}
+	return
+}
+
 // List lists all instances:
 func List(full bool, alive bool) {
 	rval := instances.Show()
-	for _, v := range rval {
+	for id, v := range rval {
 
-		pidVal, ok := v["pid"]
-		if ok && isAlive(pidVal) {
+		if pidStr := InstancePid(id); isAlive(pidStr) {
+			v["pid"] = pidStr
 			v["alive"] = "True"
 		} else {
-			v["pid"] = ""
 			v["alive"] = "False"
 		}
 	}

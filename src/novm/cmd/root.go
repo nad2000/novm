@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/user"
 	"path"
-	"strconv"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -206,7 +205,7 @@ func instanceIdAndPid(cmd *cobra.Command) (string, string) {
 	name := flagString(cmd, "name")
 
 	if pid > 0 {
-		objID = instances.Find(id, dict{"pid": strconv.Itoa(pid)})
+		objID = instances.FindIDbyPid(pid)
 	} else {
 		objID = instances.Find(id, dict{"name": name})
 	}
@@ -219,9 +218,8 @@ func instanceIdAndPid(cmd *cobra.Command) (string, string) {
 		}
 	}
 
-	instance, _ := instances.Get(objID)
-	pidStr, ok := instance["pid"]
-	if !ok {
+	pidStr := InstancePid(objID)
+	if pidStr == "" {
 		log.Fatalf("Missing PID of the instance %q.", objID)
 	}
 

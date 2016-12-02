@@ -32,6 +32,13 @@ func UUID() string {
 	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 }
 
+// NewID creats a random ID 40 character long string
+func NewID() string {
+	b := make([]byte, 20)
+	rand.Read(b)
+	return fmt.Sprintf("%x", b)
+}
+
 // PathExists tests the existence of a path
 func PathExists(path string) bool {
 	_, err := os.Stat(path)

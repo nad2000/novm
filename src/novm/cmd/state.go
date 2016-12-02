@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -16,40 +17,30 @@ import (
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
-<<<<<<< HEAD
-// CreateInstance creates VM and stores the configuration in the state object
-func CreateInstance(
-	output io.Writer,
-	kernel string, release string, cpus int, com1 bool, com2 bool, nopci bool, memsize int,
-	nics []string, disks []string, read []string, write []string, packList []string, packageList []string,
-	images []string, name string, cmdline string) (instanceID string, devCmdline string, meta devices.State) {
-=======
 type InstaceParams struct {
 	Kernel, Release, Name, Cmdline   string
 	Cpus, Memsize                    int
 	Com1, Com2, Nopci                bool
 	Nics, Disks, Read, Write, Images []string
-	Repos                            []string
 	Packs                            []string
 	Packages                         []string
 }
->>>>>>> acbf201fcf1881854c6d434257aad04cab0d180d
 
 // CreateInstance creates VM and stores the configuration in the state object
-func CreateInstance(params InstaceParams) (stateFd int, instanceID string, devCmdline string) {
-	instanceID = utils.UUID()
-	stateFd, devCmdline = ActivateInstance(instanceID, params)
+func CreateInstance(params InstaceParams, remove bool) (stateFd int, instanceID string, devCmdline string) {
+	instanceID = utils.NewID()
+	stateFd, devCmdline = ActivateInstance(instanceID, params, remove)
 	return
 }
 
 // ActivateInstance activates an instace with given ID VM
 // and stores the configuration in the state object
 // it attempts to reuse resouces linked to the give ID
-func ActivateInstance(instanceID string, params InstaceParams) (stateFd int, devCmdline string) {
+func ActivateInstance(instanceID string, params InstaceParams, remove bool) (stateFd int, devCmdline string) {
 
 	kernel, release, cpus, com1, com2 := params.Kernel, params.Release, params.Cpus, params.Com1, params.Com2
 	nics, disks, read, write, packList, packageList := params.Nics, params.Disks, params.Read, params.Write, params.Packs, params.Packages
-	repos, name, cmdline, nopci, memsize := params.Repos, params.Name, params.Cmdline, params.Nopci, params.Memsize
+	images, name, cmdline, nopci, memsize := params.Images, params.Name, params.Cmdline, params.Nopci, params.Memsize
 
 	if cpus <= 0 {
 		cpus = 1
@@ -241,8 +232,8 @@ func ActivateInstance(instanceID string, params InstaceParams) (stateFd int, dev
 
 	paramFileName := instances.File("." + instanceID + ".params")
 	pf, _ := os.Create(paramFileName)
-	defer pf.Close()
 	json.NewEncoder(pf).Encode(params)
+	pf.Close()
 
 	instances.Add(instanceID, map[string]interface{}{
 		"name":   name,
@@ -250,8 +241,19 @@ func ActivateInstance(instanceID string, params InstaceParams) (stateFd int, dev
 		"memory": memsize,
 		"kernel": kernel,
 		"ips":    ips,
-		"pid":    os.Getpid(),
 	})
+
+	pidFileName := instances.File("." + instanceID + ".pid")
+	pidf, _ := os.Create(pidFileName)
+	pidf.WriteString(strconv.Itoa(os.Getpid()))
+	pidf.Close()
+	utils.AddForCleaning(pidFileName)
+
+	if remove {
+		utils.AddForCleaning(instances.File(instanceID + ".json"))
+		utils.AddForCleaning(instances.File(instanceID))
+		utils.AddForCleaning(paramFileName)
+	}
 
 	devCmdline = "-cmdline="
 	for _, d := range devs {

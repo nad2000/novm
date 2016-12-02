@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -314,6 +315,26 @@ func (db *Nodb) Fetch(url string, params map[string]string) (objID string) {
 	AddObj:
 		db.Add(objID, obj)
 
+	}
+	return
+}
+
+// FindIDbyPid instance ID by PID. This is applicable only to instance DB
+func (db *Nodb) FindIDbyPid(pid int) (instanceID string) {
+	if pid <= 0 {
+		return
+	}
+	pidStr := strconv.Itoa(pid)
+	files, err := filepath.Glob(path.Join(db.root, ".*.pid"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, fn := range files {
+		pid, _ := ioutil.ReadFile(fn)
+		if string(pid) == pidStr {
+			instanceID = strings.TrimSuffix(path.Base(fn)[1:], ".pid")
+			break
+		}
 	}
 	return
 }
