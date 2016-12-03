@@ -5,6 +5,7 @@ import (
 
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -31,6 +32,7 @@ func InstancePid(instanceID string) (pidStr string) {
 // List lists all instances:
 func List(full bool, alive bool) {
 	rval := instances.Show()
+	log.Info(rval)
 	for id, v := range rval {
 
 		if pidStr := InstancePid(id); isAlive(pidStr) {
@@ -40,6 +42,7 @@ func List(full bool, alive bool) {
 			v["alive"] = "False"
 		}
 	}
+	log.Info(rval)
 	utils.PrettyPrintFields(rval,
 		[]string{"id", "pid", "name", "timestamp", "cpus", "alive", "ips", "memory"})
 }

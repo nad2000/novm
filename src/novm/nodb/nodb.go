@@ -70,7 +70,7 @@ func (db *Nodb) List() (list []string) {
 	list = make([]string, 0, len(files))
 	for _, fi := range files {
 		fileName := fi.Name()
-		if strings.HasSuffix(fileName, ".json") || strings.Contains(db.root, "instances") {
+		if strings.HasSuffix(fileName, ".json") {
 			list = append(list, strings.TrimSuffix(fileName, ".json"))
 		}
 	}
@@ -192,16 +192,27 @@ func (db *Nodb) Remove(objID interface{}, params map[string]string) (ok bool) {
 
 // Find finds an object and returns its ID
 func (db *Nodb) Find(id interface{}, params map[string]string) (found string) {
-	objID := toobjID(id)
-	if objID != "" {
-		if !utils.PathExists(db.File(objID+".json")) &&
-			!(strings.Contains(db.root, "instances") && utils.PathExists(db.File(objID))) {
-			return ""
-		}
-		return objID
-	}
 
 	var timestamp float64
+
+	objID := toobjID(id)
+
+	if objID != "" {
+		if len(objID) == 40 {
+			if !utils.PathExists(db.File(objID+".json")) &&
+				!(strings.Contains(db.root, "instances") &&
+					utils.PathExists(db.File(objID))) {
+				objID = ""
+			}
+			return objID
+		} else {
+			files, _ := filepath.Glob(path.Join(db.root, objID+"*.json"))
+			if len(files) == 0 {
+				goto LoopObjects
+			}
+			return strings.TrimSuffix(path.Base(files[0]), ".json")
+		}
+	}
 
 LoopObjects:
 	for _, objID := range db.List() {

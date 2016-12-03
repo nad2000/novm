@@ -116,7 +116,20 @@ func formatEntryList(field string, values interface{}) ([]string, int) {
 	var maxWidth int
 	size := reflect.ValueOf(values).Len()
 	formatedValues := make([]string, size)
-	if strings.Contains(field, "time") {
+	if field == "id" {
+		// Truncate the ID field
+		switch values.(type) {
+		case []interface{}:
+			for idx, v := range values.([]interface{}) {
+				formatedValues[idx] = fmt.Sprintf("%v", v)[:6]
+			}
+		case []string:
+			for idx, v := range values.([]string) {
+				formatedValues[idx] = v[:12]
+			}
+		}
+		return formatedValues, 12
+	} else if strings.Contains(field, "time") {
 		maxWidth = 31
 		for _, v := range values.([]interface{}) {
 			if l := len(Str2TsStr(v)); l > maxWidth {
@@ -126,6 +139,7 @@ func formatEntryList(field string, values interface{}) ([]string, int) {
 	} else {
 		maxWidth = maxLength(values, len(field))
 	}
+
 	switch values.(type) {
 	case []interface{}:
 		for idx, v := range values.([]interface{}) {
