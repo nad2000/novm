@@ -17,30 +17,31 @@ import (
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
-type InstaceParams struct {
+// InstanceConfig stores parameters the instance was created with
+type InstanceConfig struct {
 	Kernel, Release, Name, Cmdline   string
 	Cpus, Memsize                    int
-	Com1, Com2, Nopci                bool
+	Com1, Com2, Nopci, Init          bool
 	Nics, Disks, Read, Write, Images []string
-	Packs                            []string
+	Packs, Vmmopt                    []string
 	Packages                         []string
 }
 
 // CreateInstance creates VM and stores the configuration in the state object
-func CreateInstance(params InstaceParams, remove bool) (stateFd int, instanceID string, devCmdline string) {
+func CreateInstance(config InstanceConfig, remove bool) (stateFd int, instanceID string, devCmdline string) {
 	instanceID = utils.NewID()
-	stateFd, devCmdline = ActivateInstance(instanceID, params, remove)
+	stateFd, devCmdline = ActivateInstance(instanceID, config, remove)
 	return
 }
 
 // ActivateInstance activates an instace with given ID VM
 // and stores the configuration in the state object
 // it attempts to reuse resouces linked to the give ID
-func ActivateInstance(instanceID string, params InstaceParams, remove bool) (stateFd int, devCmdline string) {
+func ActivateInstance(instanceID string, config InstanceConfig, remove bool) (stateFd int, devCmdline string) {
 
-	kernel, release, cpus, com1, com2 := params.Kernel, params.Release, params.Cpus, params.Com1, params.Com2
-	nics, disks, read, write, packList, packageList := params.Nics, params.Disks, params.Read, params.Write, params.Packs, params.Packages
-	images, name, cmdline, nopci, memsize := params.Images, params.Name, params.Cmdline, params.Nopci, params.Memsize
+	kernel, release, cpus, com1, com2 := config.Kernel, config.Release, config.Cpus, config.Com1, config.Com2
+	nics, disks, read, write, packList, packageList := config.Nics, config.Disks, config.Read, config.Write, config.Packs, config.Packages
+	images, name, cmdline, nopci, memsize := config.Images, config.Name, config.Cmdline, config.Nopci, config.Memsize
 
 	if cpus <= 0 {
 		cpus = 1
@@ -230,9 +231,9 @@ func ActivateInstance(instanceID string, params InstaceParams, remove bool) (sta
 	utils.ClearCloexec(stateFd)
 	sf.Close()
 
-	paramFileName := instances.File("." + instanceID + ".params")
-	pf, _ := os.Create(paramFileName)
-	json.NewEncoder(pf).Encode(params)
+	configFileName := instances.File("." + instanceID + ".config")
+	pf, _ := os.Create(configFileName)
+	json.NewEncoder(pf).Encode(config)
 	pf.Close()
 
 	instances.Add(instanceID, map[string]interface{}{
@@ -252,7 +253,7 @@ func ActivateInstance(instanceID string, params InstaceParams, remove bool) (sta
 	if remove {
 		utils.AddForCleaning(instances.File(instanceID + ".json"))
 		utils.AddForCleaning(instances.File(instanceID))
-		utils.AddForCleaning(paramFileName)
+		utils.AddForCleaning(configFileName)
 	}
 
 	devCmdline = "-cmdline="
