@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -72,14 +71,7 @@ func start(cmd *cobra.Command) {
 		log.Fatalf("Specified instance ID=%q, name=%q doesn't exit", id, name)
 	}
 
-	configFileName := instances.File("." + instanceID + ".config")
-	if !utils.PathExists(configFileName) {
-		log.Fatal("The instance %q configeter file %q is missing.", instanceID, configFileName)
-	}
-	var config InstanceConfig
-	pf, _ := os.Open(configFileName)
-	json.NewDecoder(pf).Decode(&config)
-	pf.Close()
+	config := GetInstanceConfig(instanceID)
 
 	cmdArgs := make([]string, 0, 10)
 	if config.Init {
@@ -151,5 +143,5 @@ func init() {
 	startCmd.Flags().String("name", "", "The instance `NAME`.")
 	startCmd.Flags().String("id", "", "The instance `ID`.")
 	startCmd.Flags().Bool("nofork", false, "Don't fork into the background.")
-	startCmd.Flags().Bool("rm", false, "Remove instance after termination.")
+	startCmd.Flags().Bool("rm", false, "Remove the instance after the termination.")
 }

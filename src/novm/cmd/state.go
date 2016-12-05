@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -16,16 +15,6 @@ import (
 	"github.com/rocksolidlabs/novm/src/novm/docker"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
-
-// InstanceConfig stores parameters the instance was created with
-type InstanceConfig struct {
-	Kernel, Release, Name, Cmdline   string
-	Cpus, Memsize                    int
-	Com1, Com2, Nopci, Init          bool
-	Nics, Disks, Read, Write, Images []string
-	Packs, Vmmopt                    []string
-	Packages                         []string
-}
 
 // CreateInstance creates VM and stores the configuration in the state object
 func CreateInstance(config InstanceConfig, remove bool) (stateFd int, instanceID string, devCmdline string) {
@@ -231,10 +220,7 @@ func ActivateInstance(instanceID string, config InstanceConfig, remove bool) (st
 	utils.ClearCloexec(stateFd)
 	sf.Close()
 
-	configFileName := instances.File("." + instanceID + ".config")
-	pf, _ := os.Create(configFileName)
-	json.NewEncoder(pf).Encode(config)
-	pf.Close()
+	configFileName := config.Save(instanceID)
 
 	instances.Add(instanceID, map[string]interface{}{
 		"name":   name,

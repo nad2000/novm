@@ -234,5 +234,5 @@ func init() {
 	createCmd.Flags().StringSlice("env", nil, "Specify an environment variable `ENV`.")
 	createCmd.Flags().String("cwd", "", "The process working directory `CWD`.")
 	createCmd.Flags().Bool("terminal", false, "Change the terminal mode.")
-	createCmd.Flags().Bool("rm", false, "Remove instance after termination.")
+	createCmd.Flags().Bool("rm", false, "Remove the instance after the termination.")
 }

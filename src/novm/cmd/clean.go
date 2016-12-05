@@ -16,7 +16,7 @@ var cleanCmd = &cobra.Command{
 	Long:  `Remove stale instance information.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		debugCmd(cmd)
-		objID, pidStr := instanceIdAndPid(cmd)
+		objID, pidStr := instanceIDAndPid(cmd)
 		if isAlive(pidStr) {
 			log.Fatalf("Instance %q with PID %s is still running.", objID, pidStr)
 		}

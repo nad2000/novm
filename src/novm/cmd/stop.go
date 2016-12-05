@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"path"
 	"strconv"
 	"syscall"
 	"time"
@@ -20,7 +21,7 @@ var stopCmd = &cobra.Command{
 
 		debugCmd(cmd)
 
-		objID, pidStr := instanceIdAndPid(cmd)
+		objID, pidStr := instanceIDAndPid(cmd)
 		if !isAlive(pidStr) {
 			log.Fatalf("Instace %d is not running (PID: %s).", objID, pidStr)
 		}
@@ -38,15 +39,25 @@ var stopCmd = &cobra.Command{
 			waits += 1
 			os.Stderr.WriteString(".")
 		}
+
 		if isAlive(pidStr) {
 			syscall.Kill(pid, syscall.SIGKILL)
 		}
 
 	Done:
+
 		if waits > 0 {
 			os.Stderr.WriteString("\n")
 		}
 
+		if flagBool(cmd, "rm") {
+			if instances.Remove(objID, nil) {
+				if pidStr != "" {
+					os.RemoveAll(path.Join(controlPath, objID+".ctrl"))
+				}
+				log.Printf("The instance %q removed.", objID)
+			}
+		}
 	},
 }
 
@@ -55,4 +66,5 @@ func init() {
 	stopCmd.Flags().String("id", "", "The instance `ID`.")
 	stopCmd.Flags().Int("pid", 0, "The instance `PID`.")
 	stopCmd.Flags().String("name", "", "The instance `NAME`.")
+	stopCmd.Flags().Bool("rm", false, "Remove the instance after the termination.")
 }

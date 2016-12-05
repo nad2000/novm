@@ -28,6 +28,9 @@ type Nodb struct {
 }
 
 func toobjID(id interface{}) string {
+	if id == nil {
+		return ""
+	}
 	switch id.(type) {
 	default:
 		log.Fatalf("Incorrect ID (%#v) type: %T", id, id)
@@ -187,6 +190,13 @@ func (db *Nodb) Remove(objID interface{}, params map[string]string) (ok bool) {
 			return false
 		}
 	}
+
+	// Remove any file related to the instance
+	files, _ := filepath.Glob(path.Join(db.root, "*"+id+"*"))
+	for _, fn := range files {
+		log.Debugf("Removing %q", fn)
+		os.RemoveAll(fn)
+	}
 	return true
 }
 
@@ -205,13 +215,13 @@ func (db *Nodb) Find(id interface{}, params map[string]string) (found string) {
 				objID = ""
 			}
 			return objID
-		} else {
-			files, _ := filepath.Glob(path.Join(db.root, objID+"*.json"))
-			if len(files) == 0 {
-				goto LoopObjects
-			}
-			return strings.TrimSuffix(path.Base(files[0]), ".json")
 		}
+
+		files, _ := filepath.Glob(path.Join(db.root, objID+"*.json"))
+		if len(files) == 0 {
+			goto LoopObjects
+		}
+		return strings.TrimSuffix(path.Base(files[0]), ".json")
 	}
 
 LoopObjects:

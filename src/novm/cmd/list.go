@@ -9,9 +9,10 @@ import (
 )
 
 var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "-- List running instances.",
-	Long:  `List running instances.`,
+	Use:     "ls",
+	Aliases: []string{"list"},
+	Short:   "-- List running instances.",
+	Long:    `List running instances.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		debugCmd(cmd)
 		List(flagBool(cmd, "full"), flagBool(cmd, "alive"))

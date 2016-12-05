@@ -191,12 +191,15 @@ func isAlive(pid interface{}) bool {
 	case int:
 		return utils.PathExists(fmt.Sprintf("/proc/%d", pid.(int)))
 	case string:
+		if pid.(string) == "" {
+			return false
+		}
 		return utils.PathExists(fmt.Sprintf("/proc/%s", pid.(string)))
 	}
 }
 
 // Returns instace ID and PID based on instance flags
-func instanceIdAndPid(cmd *cobra.Command) (string, string) {
+func instanceIDAndPid(cmd *cobra.Command) (string, string) {
 
 	var objID string
 
@@ -214,14 +217,15 @@ func instanceIdAndPid(cmd *cobra.Command) (string, string) {
 		if pid > 0 {
 			log.Fatalf("Instance with PID %d doesn't exit.", pid)
 		} else {
-			log.Fatalf("Instance with ID %q doesn't exit.", id)
+			if name != "" && id == "" {
+				log.Fatalf("Instance  %q doesn't exit.", name)
+			} else {
+				log.Fatalf("Instance with ID %q doesn't exit.", id)
+			}
 		}
 	}
 
 	pidStr := InstancePid(objID)
-	if pidStr == "" {
-		log.Fatalf("Missing PID of the instance %q.", objID)
-	}
 
 	return objID, pidStr
 }
