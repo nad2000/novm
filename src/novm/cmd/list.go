@@ -9,9 +9,10 @@ import (
 )
 
 var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "-- List running instances.",
-	Long:  `List running instances.`,
+	Use:     "ls",
+	Aliases: []string{"list"},
+	Short:   "-- List running instances.",
+	Long:    `List running instances.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		debugCmd(cmd)
 		List(flagBool(cmd, "full"), flagBool(cmd, "alive"))
@@ -33,7 +34,7 @@ func List(full bool, alive bool) {
 	rval := instances.Show()
 	for id, v := range rval {
 
-		if pidStr := InstancePid(id); isAlive(pidStr) {
+		if pidStr := InstancePid(id); pidStr != "" && isAlive(pidStr) {
 			v["pid"] = pidStr
 			v["alive"] = "True"
 		} else {

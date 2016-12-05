@@ -29,7 +29,7 @@ var runCmd = &cobra.Command{
 			return
 		}
 
-		objID, pidStr := instanceIdAndPid(cmd)
+		objID, pidStr := instanceIDAndPid(cmd)
 		if !isAlive(pidStr) {
 			log.Fatalf("Instace %d is not running (PID: %s).", objID, pidStr)
 		}

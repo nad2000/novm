@@ -49,7 +49,7 @@ For example:
 			params[splitArg[0]] = splitArg[1]
 		}
 
-		objID, pidStr := instanceIdAndPid(cmd)
+		objID, pidStr := instanceIDAndPid(cmd)
 		if !isAlive(pidStr) {
 			log.Fatalf("Instace %d is not running (PID: %s).", objID, pidStr)
 		}

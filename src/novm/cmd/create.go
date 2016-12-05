@@ -130,10 +130,12 @@ func create(cmd *cobra.Command) {
 	_ = cwd
 	_ = terminal
 
-	params := InstaceParams{
+	config := InstanceConfig{
 		Name:     name,
 		Kernel:   kernel,
 		Release:  release,
+		Vmmopt:   vmmopt,
+		Init:     init,
 		Cpus:     flagInt(cmd, "cpus"),
 		Com1:     flagBool(cmd, "com1"),
 		Com2:     flagBool(cmd, "com2"),
@@ -158,17 +160,15 @@ func create(cmd *cobra.Command) {
 		"-initrd", kernels.File(kernel, "initrd"),
 		"-setup", kernels.File(kernel, "setup"))
 
-	stateFd, instanceID, devCmdline := CreateInstance(params, remove)
+	stateFd, _, devCmdline := CreateInstance(config, remove)
 
 	// Control socket
 	ctrlFileName := path.Join(controlPath, strconv.Itoa(os.Getpid())+".ctrl")
+	//utils.AddForCleaning(ctrlFileName)
 	if debug {
 		log.Print("Control file name: ", ctrlFileName)
 	}
 	ctrlFd, _ := control.Bind(ctrlFileName)
-
-	utils.AddForCleaning(instances.File(instanceID) + ".json")
-	utils.AddForCleaning(instances.File(instanceID))
 
 	cmdArgs = append(cmdArgs,
 		"-statefd="+strconv.Itoa(stateFd),
@@ -234,5 +234,5 @@ func init() {
 	createCmd.Flags().StringSlice("env", nil, "Specify an environment variable `ENV`.")
 	createCmd.Flags().String("cwd", "", "The process working directory `CWD`.")
 	createCmd.Flags().Bool("terminal", false, "Change the terminal mode.")
-	createCmd.Flags().Bool("rm", false, "Remove instance after termination.")
+	createCmd.Flags().Bool("rm", false, "Remove the instance after the termination.")
 }

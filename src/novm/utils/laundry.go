@@ -1,8 +1,9 @@
 package utils
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"os"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // laundry - "laundry list" of files and/or directories
@@ -12,6 +13,9 @@ var laundry = []string{}
 // AddForCleaning adds the path to the "laundry list".
 // The file or directory will get removed before exit.
 func AddForCleaning(path string) {
+	if Debug {
+		log.Debug("Adding to the clearing list: ", path)
+	}
 	laundry = append(laundry, path)
 }
 
