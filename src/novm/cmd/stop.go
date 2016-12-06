@@ -22,8 +22,30 @@ var stopCmd = &cobra.Command{
 		debugCmd(cmd)
 
 		objID, pidStr := instanceIDAndPid(cmd)
+
+		if objID == "" {
+			if len(args) < 1 {
+				log.Fatal("Missing instance ID, PID, or name")
+			}
+			objID = instances.Find(args[0], nil)
+			if objID == "" {
+				pid, err := strconv.Atoi(args[0])
+				if err != nil {
+					objID = instances.Find("", dict{"name": args[0]})
+					if objID == "" {
+						log.Fatal("Failed to find instance.")
+					}
+				}
+				objID = instances.FindIDbyPid(pid)
+			}
+		}
+
+		if pidStr == "" {
+			pidStr = InstancePid(objID)
+		}
+
 		if !isAlive(pidStr) {
-			log.Fatalf("Instace %d is not running (PID: %s).", objID, pidStr)
+			log.Fatalf("Instace %q is not running (PID: %s).", objID, pidStr)
 		}
 
 		log.Info("Sending SIGTERM to VM process ", pidStr)

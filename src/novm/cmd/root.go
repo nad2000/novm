@@ -207,6 +207,10 @@ func instanceIDAndPid(cmd *cobra.Command) (string, string) {
 	pid := flagInt(cmd, "pid")
 	name := flagString(cmd, "name")
 
+	if id == "" && pid == 0 && name == "" {
+		return "", ""
+	}
+
 	if pid > 0 {
 		objID = instances.FindIDbyPid(pid)
 	} else {

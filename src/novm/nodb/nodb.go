@@ -194,7 +194,6 @@ func (db *Nodb) Remove(objID interface{}, params map[string]string) (ok bool) {
 	// Remove any file related to the instance
 	files, _ := filepath.Glob(path.Join(db.root, "*"+id+"*"))
 	for _, fn := range files {
-		log.Debugf("Removing %q", fn)
 		os.RemoveAll(fn)
 	}
 	return true
@@ -313,7 +312,6 @@ func (db *Nodb) Fetch(url string, params map[string]string) (objID string) {
 		}
 
 		// Copy package meta info to the DB object meta meta info store
-		log.Debug(objPath)
 		if packagePath := path.Join(objPath, "PACKAGE.json"); utils.PathExists(packagePath) {
 			pf, err := os.Open(packagePath)
 			if err != nil {
