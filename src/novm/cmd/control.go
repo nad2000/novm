@@ -51,7 +51,7 @@ For example:
 
 		objID, pidStr := instanceIDAndPid(cmd)
 		if !isAlive(pidStr) {
-			log.Fatalf("Instace %d is not running (PID: %s).", objID, pidStr)
+			log.Fatalf("Instace %q is not running (PID: %s).", objID, pidStr)
 		}
 		ctrlPath := path.Join(controlPath, objID+".ctrl")
 		control.Open(ctrlPath)

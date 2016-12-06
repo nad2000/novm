@@ -85,6 +85,7 @@ Docker images are provided as follows.
 			}
 			// Reset to NODB root for the child process:
 			SetRootDir("")
+
 		}
 		create(cmd)
 	},
@@ -110,7 +111,8 @@ func create(cmd *cobra.Command) {
 		}
 		kernel = availableKernels[0]
 	} else {
-		if !utils.StringIsIn(kernel, availableKernels) {
+		kernel = kernels.Find(kernel, nil)
+		if kernel == "" {
 			log.Fatalf("Kernel '%s' not found!", kernel)
 		}
 	}
