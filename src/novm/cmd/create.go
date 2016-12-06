@@ -67,6 +67,7 @@ Docker images are provided as follows.
 
 		nofork := flagBool(cmd, "nofork")
 
+		create(cmd)
 		if !nofork {
 			// detaches the current program by forking and exiting the parent:
 			r1, _, err1 := syscall.RawSyscall(syscall.SYS_FORK, 0, 0, 0)
@@ -87,7 +88,6 @@ Docker images are provided as follows.
 			SetRootDir("")
 
 		}
-		create(cmd)
 	},
 }
 
