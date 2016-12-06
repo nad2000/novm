@@ -201,14 +201,19 @@ func create(cmd *cobra.Command) {
 	command := exec.Command(novmm, cmdArgs...)
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
+	command.Stderr = os.Stdout
 	command.SysProcAttr = &syscall.SysProcAttr{}
 	command.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(0), Gid: uint32(0)}
-	err := command.Run()
+	err := command.Start()
+	if err != nil {
+		log.Errorf("Error starting NOVMM process: %v", err)
+		os.Exit(1)
+	}
 
+	err = command.Wait()
 	utils.Cleanup()
 	if err != nil {
-		log.Print(err)
+		log.Errorf("NOVMM finished with error: %v", err)
 		os.Exit(1)
 	}
 }
