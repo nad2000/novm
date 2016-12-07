@@ -929,10 +929,9 @@ func (file *File) unlock() {
 	defer func() {
 		if r := recover(); r != nil {
 			var ok bool
-			err, ok = r.(error)
+			err, ok := r.(error)
 			if !ok {
-				fmt.Printf("Error during p9 file unlock operation: read path: %s, write path: %s", file.read_path, file.write_path)
-				err = fmt.Errorf("pkg: %v", r)
+				fmt.Printf("Error during p9 file unlock operation: read path: %s, write path: %s, error: %s", file.read_path, file.write_path, err)
 			}
 		}
 	}()
