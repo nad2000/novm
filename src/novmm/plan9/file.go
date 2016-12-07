@@ -644,6 +644,16 @@ func (file *File) rename(
 
 func (file *File) lockWrite(fs *Fs) error {
 
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			err, ok := r.(error)
+			if !ok {
+				fmt.Printf("Error during p9 file lockWrite operation: read path: %s, write path: %s, error: %s", file.read_path, file.write_path, err)
+			}
+		}
+	}()
+
 	file.RWMutex.RLock()
 	if file.write_fd != -1 {
 		fs.touchLru(file)
