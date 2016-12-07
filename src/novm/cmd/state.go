@@ -32,6 +32,8 @@ func ActivateInstance(instanceID string, config InstanceConfig, remove bool) (st
 	nics, disks, read, write, packList, packageList := config.Nics, config.Disks, config.Read, config.Write, config.Packs, config.Packages
 	images, name, cmdline, nopci, memsize := config.Images, config.Name, config.Cmdline, config.Nopci, config.Memsize
 
+	devices.Debug = debug
+
 	if cpus <= 0 {
 		cpus = 1
 	}
