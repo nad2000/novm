@@ -15,7 +15,6 @@
 package plan9
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -411,7 +410,6 @@ func (file *File) remove(
 	path string) error {
 
 	file.RWMutex.Lock()
-	defer file.RWMutex.Unlock()
 
 	// Unlink what's there.
 	err := file.unlink()
@@ -445,6 +443,8 @@ func (file *File) remove(
 	// We're deleted.
 	file.write_exists = true
 	file.write_deleted = true
+
+	file.RWMutex.Unlock()
 
 	return nil
 }
@@ -567,7 +567,6 @@ func (file *File) rename(
 	new_path string) error {
 
 	fs.filesLock.Lock()
-	defer fs.filesLock.Unlock()
 
 	other_file, ok := fs.files[new_path]
 	if ok && other_file.exists() {
@@ -639,20 +638,12 @@ func (file *File) rename(
 	// even explicitly ignore the result. Ugh.
 	setdelattr(orig_write_path)
 
+	fs.filesLock.Unlock()
+
 	return nil
 }
 
 func (file *File) lockWrite(fs *Fs) error {
-
-	defer func() {
-		if r := recover(); r != nil {
-			var ok bool
-			err, ok := r.(error)
-			if !ok {
-				fmt.Printf("Error during p9 file lockWrite operation: read path: %s, write path: %s, error: %s", file.read_path, file.write_path, err)
-			}
-		}
-	}()
 
 	file.RWMutex.RLock()
 	if file.write_fd != -1 {
@@ -777,7 +768,6 @@ func (file *File) lockRead(fs *Fs) error {
 
 func (file *File) flush() {
 	file.RWMutex.Lock()
-	defer file.RWMutex.Unlock()
 
 	// Close the file if still opened.
 	if file.read_fd != -1 {
@@ -793,21 +783,13 @@ func (file *File) flush() {
 
 	file.read_fd = -1
 	file.write_fd = -1
+
+	file.RWMutex.Unlock()
 }
 
 func (file *File) dir(
 	name string,
 	locked bool) (*Dir, error) {
-
-	defer func() {
-		if r := recover(); r != nil {
-			var ok bool
-			err, ok := r.(error)
-			if !ok {
-				fmt.Printf("Error during p9 dir function: name: %s, locked: %v, read path: %s, write path: %s, error: %s", name, locked, file.read_path, file.write_path, err)
-			}
-		}
-	}()
 
 	if locked {
 		file.RWMutex.RLock()
@@ -946,15 +928,6 @@ func (file *File) children(fs *Fs, dirpath string) ([]*Dir, error) {
 }
 
 func (file *File) unlock() {
-	defer func() {
-		if r := recover(); r != nil {
-			var ok bool
-			err, ok := r.(error)
-			if !ok {
-				fmt.Printf("Error during p9 file unlock operation: read path: %s, write path: %s, error: %s", file.read_path, file.write_path, err)
-			}
-		}
-	}()
 	file.RWMutex.RUnlock()
 }
 
