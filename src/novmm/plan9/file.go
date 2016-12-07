@@ -462,6 +462,8 @@ func (file *File) makeTree(
 	// Make all the super directories.
 	basedir := filepath.Dir(path)
 
+	fmt.Printf("makeTree file: %+v, fs: %+v, path: %s, basedir: %s", file, fs, path, basedir)
+
 	if basedir != "." {
 		parent, err := fs.lookup(basedir)
 		if err != nil {
@@ -472,7 +474,6 @@ func (file *File) makeTree(
 		// a valid mode set at some point.
 		// We ignore this error, as this
 		// may actually return Eexist.
-		fmt.Printf("Creating fs: %+v, baseDir: %+v, mode: %+v", fs, basedir, parent.mode)
 		parent.create(fs, basedir, parent.mode)
 		parent.DecRef(fs, basedir)
 	}
