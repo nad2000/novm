@@ -462,8 +462,6 @@ func (file *File) makeTree(
 	// Make all the super directories.
 	basedir := filepath.Dir(path)
 
-	fmt.Printf("makeTree file: %+v, fs: %+v, path: %s, basedir: %s", file, fs, path, basedir)
-
 	if basedir != "." {
 		parent, err := fs.lookup(basedir)
 		if err != nil {
@@ -800,6 +798,16 @@ func (file *File) flush() {
 func (file *File) dir(
 	name string,
 	locked bool) (*Dir, error) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			err, ok := r.(error)
+			if !ok {
+				fmt.Printf("Error during p9 dir function: name: %s, locked: %v, read path: %s, write path: %s, error: %s", name, locked, file.read_path, file.write_path, err)
+			}
+		}
+	}()
 
 	if locked {
 		file.RWMutex.RLock()
