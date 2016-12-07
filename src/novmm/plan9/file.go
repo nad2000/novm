@@ -926,7 +926,16 @@ func (file *File) children(fs *Fs, dirpath string) ([]*Dir, error) {
 }
 
 func (file *File) unlock() {
-	fmt.Printf("File to unlock read: %s, write: %s, mutex: %+v", file.read_path, file.write_path, file.RWMutex)
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			err, ok = r.(error)
+			if !ok {
+				fmt.Printf("Error during p9 file unlock operation: read path: %s, write path: %s", file.read_path, file.write_path)
+				err = fmt.Errorf("pkg: %v", r)
+			}
+		}
+	}()
 	file.RWMutex.RUnlock()
 }
 
