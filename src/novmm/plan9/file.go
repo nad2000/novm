@@ -15,6 +15,7 @@
 package plan9
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -925,6 +926,7 @@ func (file *File) children(fs *Fs, dirpath string) ([]*Dir, error) {
 }
 
 func (file *File) unlock() {
+	fmt.Printf("File to unlock read: %s, write: %s, mutex: %+v", file.read_path, file.write_path, file.RWMutex)
 	file.RWMutex.RUnlock()
 }
 
