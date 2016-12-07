@@ -472,6 +472,7 @@ func (file *File) makeTree(
 		// a valid mode set at some point.
 		// We ignore this error, as this
 		// may actually return Eexist.
+		fmt.Printf("Creating fs: %+v, baseDir: %+v, mode: %+v", fs, basedir, parent.mode)
 		parent.create(fs, basedir, parent.mode)
 		parent.DecRef(fs, basedir)
 	}
