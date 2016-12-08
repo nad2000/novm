@@ -67,7 +67,6 @@ Docker images are provided as follows.
 
 		nofork := flagBool(cmd, "nofork")
 
-		create(cmd)
 		if !nofork {
 			// detaches the current program by forking and exiting the parent:
 			r1, _, err1 := syscall.RawSyscall(syscall.SYS_FORK, 0, 0, 0)
@@ -87,6 +86,7 @@ Docker images are provided as follows.
 			// Reset to NODB root for the child process:
 			SetRootDir("")
 		}
+		create(cmd)
 	},
 }
 
@@ -200,7 +200,7 @@ func create(cmd *cobra.Command) {
 	command := exec.Command(novmm, cmdArgs...)
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
-	command.Stderr = os.Stdout
+	command.Stderr = os.Stderr
 	command.SysProcAttr = &syscall.SysProcAttr{}
 	command.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(0), Gid: uint32(0)}
 
