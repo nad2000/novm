@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"C"
 	"archive/tar"
 	"archive/zip"
 	"bytes"
@@ -19,9 +20,15 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 )
+import "strconv"
 
 // Debug is the debugging attribute for the whole package
 var Debug bool
+
+const (
+	F_GETPATH = 0x32
+	PATH_MAX  = 4096
+)
 
 // UUID creates a unique UUID
 func UUID() string {
@@ -522,7 +529,7 @@ func StringIsIn(a string, list []string) bool {
 }
 
 // Fcntl manipulates file descriptors
-func Fcntl(fd uintptr, cmd int, arg uintptr) (val int, err error) {
+func Fcntl(fd int, cmd int, arg uintptr) (val int, err error) {
 	r, _, e := syscall.Syscall(syscall.SYS_FCNTL, uintptr(fd), uintptr(cmd), arg)
 	val = int(r)
 	if e != 0 {
@@ -543,11 +550,11 @@ func Fcntl(fd uintptr, cmd int, arg uintptr) (val int, err error) {
 // ClearCloexec removes FD_CLOEXEC ("Close on Exit") flag from the file
 // specified with a file descriptor.
 func ClearCloexec(fd int) {
-	flags, err := Fcntl(uintptr(fd), syscall.F_GETFD, uintptr(0))
+	flags, err := Fcntl(fd, syscall.F_GETFD, uintptr(0))
 	if err != nil {
 		log.Printf("Failed to get flags for file descriptor %d: %v)", fd, err)
 	}
-	_, err = Fcntl(uintptr(fd), syscall.F_SETFD, uintptr(flags & ^syscall.FD_CLOEXEC))
+	_, err = Fcntl(fd, syscall.F_SETFD, uintptr(flags & ^syscall.FD_CLOEXEC))
 	if err != nil {
 		log.Printf("Failed to remove CLOEXEC flag from file descriptor %d: %v)", fd, err)
 	}
@@ -580,4 +587,9 @@ func CreateFilter(include, exclude []string) func(name string) (bool, error) {
 
 		return true, nil
 	}
+}
+
+// FdName returns the file of the given FD
+func FdName(fd int) (string, error) {
+	return os.Readlink("/proc/self/fd/" + strconv.Itoa(fd))
 }
