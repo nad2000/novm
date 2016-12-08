@@ -33,6 +33,12 @@
 			"revisionTime": "2016-11-11T14:46:59Z"
 		},
 		{
+			"checksumSHA1": "srhgxg9WOxS1TSPYvGDXRpRhdhg=",
+			"path": "github.com/cloudfoundry/gosigar/psnotify",
+			"revision": "c32d31af94b0e9d3b2877e49c1a581ad5a793343",
+			"revisionTime": "2016-06-02T19:12:07Z"
+		},
+		{
 			"checksumSHA1": "p1k7Godkd1CtdqxSLeG549XNHs4=",
 			"path": "github.com/creack/termios/raw",
 			"revision": "88d0029e36a108c959d6f8fc63c393f591b0302b",
