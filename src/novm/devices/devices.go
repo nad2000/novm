@@ -3,8 +3,9 @@ package devices
 import (
 	"fmt"
 	"io/ioutil"
-	log "github.com/Sirupsen/logrus"
 	"syscall"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
@@ -137,6 +138,9 @@ func CreateUserMemory(size int, fd int) State {
 		fd, _ = syscall.Dup(int(tf.Fd()))
 		utils.ClearCloexec(fd)
 		tf.Close()
+		if Debug {
+			log.Debugf("User memory created in %q, FD: %d", tf.Name(), fd)
+		}
 	}
 
 	// No size given? Default to file size:
@@ -151,6 +155,9 @@ func CreateUserMemory(size int, fd int) State {
 
 	// Truncate the file:
 	syscall.Ftruncate(fd, int64(size))
+	if Debug {
+		log.Debug("User memory truncated to: ", size)
+	}
 
 	return State{
 		"name":    utils.UUID(),

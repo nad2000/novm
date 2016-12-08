@@ -86,7 +86,6 @@ Docker images are provided as follows.
 			}
 			// Reset to NODB root for the child process:
 			SetRootDir("")
-
 		}
 	},
 }
@@ -201,9 +200,23 @@ func create(cmd *cobra.Command) {
 	command := exec.Command(novmm, cmdArgs...)
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
-	command.Stderr = os.Stdout
+	command.Stderr = os.Stderr
 	command.SysProcAttr = &syscall.SysProcAttr{}
 	command.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(0), Gid: uint32(0)}
+
+	if debug {
+		f, _ := os.Open("/proc/self/fd/")
+		list, _ := f.Readdirnames(-1)
+		f.Close()
+		for _, fdStr := range list {
+			name, err := os.Readlink("/proc/self/fd/" + fdStr)
+			if err != nil {
+				log.Error(err)
+			}
+			log.Infof("FD %s: %q", fdStr, name)
+		}
+	}
+
 	err := command.Start()
 	if err != nil {
 		log.Errorf("Error starting NOVMM process: %v", err)

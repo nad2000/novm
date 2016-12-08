@@ -213,11 +213,12 @@ func TestCopyDir(t *testing.T) {
 
 func TestCopyTree(t *testing.T) {
 
+	defer removeTestTree()
 	src := createTestTreeWithName("CopyTree")
 	dst := path.Join(rootPath, "copy_of_CopyTree")
-	utils.CopyTree(src, dst, func(name string) bool {
-		return name == "aaa" || name == "bbb"
-	})
+	utils.CopyTree(src, dst, func(name string) (bool, error) {
+		return name == "aaa" || name == "bbb", nil
+	}, false)
 	if !utils.PathExists(dst) {
 		t.Errorf("Destination file is missing: %#v", dst)
 		t.FailNow()
@@ -286,5 +287,25 @@ func TestJSONDumps(t *testing.T) {
 	if outputData2 != expectedOutput2 {
 		t.Errorf("Object:\n%+v\nserialized into:\n%v\nExpected:\n%v",
 			obj2, outputData2, expectedOutput2)
+	}
+}
+
+func TestFdName(t *testing.T) {
+
+	if !utils.PathExists(rootPath) {
+		os.MkdirAll(rootPath, os.ModeDir|0755)
+	}
+	defer removeTestTree()
+
+	fileName := path.Join(rootPath, "TestFdName.test")
+	f, err := os.Create(fileName)
+	if err != nil {
+		t.Error(err)
+	}
+	if fdName, err := utils.FdName(int(f.Fd())); fdName != fileName {
+		if err != nil {
+			t.Log(err)
+		}
+		t.Errorf("File name mismatch. Exepcted: %q, got: %q", fileName, fdName)
 	}
 }
