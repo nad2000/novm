@@ -170,8 +170,7 @@ func RPC(name string, params map[string]string) (interface{}, error) {
 }
 
 // Run runs a remote command on VM
-func Run(command []string, env []string, cwd string, terminal bool) (
-	rawMsg interface{}, err error, exitCode int) {
+func Run(command []string, env []string, cwd string, terminal bool) (err error, exitCode int) {
 
 	var (
 		line        string
