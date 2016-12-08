@@ -38,11 +38,10 @@ var runCmd = &cobra.Command{
 		control.Open(ctrlPath)
 		defer control.Close()
 
-		result, err, exitCode := control.Run(command, env, cwd, terminal)
+		err, exitCode := control.Run(command, env, cwd, terminal)
 		if err != nil {
 			log.Print(err)
 		}
-		printResult(cmd, result)
 		if exitCode != 0 {
 			os.Exit(exitCode)
 		}
