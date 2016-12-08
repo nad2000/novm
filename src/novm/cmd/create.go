@@ -6,13 +6,13 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path"
 	"strconv"
 	"strings"
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/cloudfoundry/gosigar/psnotify"
 
 	"github.com/rocksolidlabs/novm/src/novm/control"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
@@ -67,7 +67,6 @@ Docker images are provided as follows.
 
 		nofork := flagBool(cmd, "nofork")
 
-		create(cmd)
 		if !nofork {
 			// detaches the current program by forking and exiting the parent:
 			r1, _, err1 := syscall.RawSyscall(syscall.SYS_FORK, 0, 0, 0)
@@ -87,18 +86,13 @@ Docker images are provided as follows.
 			// Reset to NODB root for the child process:
 			SetRootDir("")
 		}
+
+		create(cmd)
+
 	},
 }
 
 func create(cmd *cobra.Command) {
-
-	signals := make(chan os.Signal, 2)
-	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-signals
-		utils.Cleanup()
-		os.Exit(0)
-	}()
 
 	debugCmd(cmd)
 	name := flagString(cmd, "name")
@@ -223,10 +217,39 @@ func create(cmd *cobra.Command) {
 		os.Exit(1)
 	}
 
-	err = command.Wait()
-	utils.Cleanup()
+	watcher, err := psnotify.NewWatcher()
 	if err != nil {
-		log.Errorf("NOVMM finished with error: %v", err)
+		log.Print(err)
+		os.Exit(1)
+	}
+
+	// Process events
+	go func() {
+		for {
+			select {
+			case ev := <-watcher.Exit:
+				// cleanup tmp files on exit
+				utils.Cleanup()
+				fmt.Println("exit event:", ev)
+				os.Exit(0)
+			case err := <-watcher.Error:
+				// cleanup and log errors
+				utils.Cleanup()
+				fmt.Println("error:", err)
+				os.Exit(1)
+			}
+		}
+	}()
+
+	err = watcher.Watch(command.Process.Pid, psnotify.PROC_EVENT_ALL)
+	if err != nil {
+		log.Errorf("Error watching NOVMM process: %s", err)
+		os.Exit(1)
+	}
+
+	err = command.Wait()
+	if err != nil {
+		log.Errorf("Error returned on NOVMM process exit: %s", err)
 		os.Exit(1)
 	}
 }

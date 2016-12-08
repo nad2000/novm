@@ -547,11 +547,11 @@ func (file *File) create(
 
 		err = file.fillType(file.write_path)
 		if err != nil {
-			file.unlock()
+			file.RWMutex.Unlock()
 			return err
 		}
 
-		file.unlock()
+		file.RWMutex.Unlock()
 	}
 
 	if did_exist {
@@ -925,10 +925,6 @@ func (file *File) children(fs *Fs, dirpath string) ([]*Dir, error) {
 
 	// We're good.
 	return results, nil
-}
-
-func (file *File) unlock() {
-	file.RWMutex.RUnlock()
 }
 
 func (file *File) IncRef(fs *Fs) {

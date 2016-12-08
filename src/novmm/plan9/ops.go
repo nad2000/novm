@@ -337,14 +337,14 @@ func (fs *Fs) readFilePost(
 	fid *Fid,
 	count uint32) {
 
-	fid.file.unlock()
+	fid.file.RWMutex.RUnlock()
 }
 
 func (fs *Fs) readFileFail(
 	fid *Fid,
 	count uint32) {
 
-	fid.file.unlock()
+	fid.file.RWMutex.RUnlock()
 }
 
 func (fs *Fs) writeFile(
@@ -360,14 +360,14 @@ func (fs *Fs) writeFilePost(
 	fid *Fid,
 	count uint32) {
 
-	fid.file.unlock()
+	//fid.file.RWMutex.RUnlock()
 }
 
 func (fs *Fs) writeFileFail(
 	fid *Fid,
 	count uint32) {
 
-	fid.file.unlock()
+	//fid.file.RWMutex.RUnlock()
 }
 
 func (fs *Fs) clunk(fid *Fid) error {
@@ -418,14 +418,14 @@ func (fs *Fs) wstat(fid *Fid, next *Dir) (*Dir, error) {
 	// Grab underlying information.
 	cur, err := fs.stat(fid)
 	if err != nil {
-		fid.file.unlock()
+		fid.file.RWMutex.RUnlock()
 		return nil, err
 	}
 
 	if next.Muidnum != math.MaxUint32 &&
 		next.Muidnum != cur.Muidnum {
 		// Not supported.
-		fid.file.unlock()
+		fid.file.RWMutex.RUnlock()
 		return nil, Enotimpl
 	}
 
@@ -434,7 +434,7 @@ func (fs *Fs) wstat(fid *Fid, next *Dir) (*Dir, error) {
 
 func (fs *Fs) wstatPost(fid *Fid, cur *Dir, next *Dir) error {
 
-	defer fid.file.unlock()
+	defer fid.file.RWMutex.RUnlock()
 
 	// Rename the file.
 	if next.Name != "" &&
@@ -499,5 +499,5 @@ func (fs *Fs) wstatPost(fid *Fid, cur *Dir, next *Dir) error {
 }
 
 func (fs *Fs) wstatFail(fid *Fid, cur *Dir, next *Dir) {
-	fid.file.unlock()
+	fid.file.RWMutex.RUnlock()
 }
