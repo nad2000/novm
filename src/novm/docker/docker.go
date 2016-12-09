@@ -17,6 +17,14 @@ import (
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
+type ImageManifest struct {
+	Name     string `json:"name"`
+	Tag      string `json:"tag"`
+	FsLayers []struct {
+		BlobSum string `json:"blobSum"`
+	} `json:"fsLayers"`
+}
+
 var (
 	// Repository - a docker repository name
 	Repository string
@@ -39,13 +47,7 @@ var (
 	// ImageID docker image digest value (the value is set up by GetManifest)
 	ImageID string
 	// Manifest - the image manifest (part of it and it's set up be GetManifest)
-	Manifest struct {
-		Name     string `json:"name"`
-		Tag      string `json:"tag"`
-		FsLayers []struct {
-			BlobSum string `json:"blobSum"`
-		} `json:"fsLayers"`
-	}
+	Manifest ImageManifest
 )
 
 // Init sets up docker API client and initializes operation on the repository:
@@ -55,7 +57,9 @@ var (
 // 3) caches tags.
 func Init(db nodb.Nodb, image string) {
 
+	ImageID = ""
 	token = ""
+	Manifest = ImageManifest{}
 
 	opts := strings.Split(image, ",")
 	if strings.Contains(opts[0], ":") {
@@ -91,9 +95,8 @@ func Init(db nodb.Nodb, image string) {
 		auth = base64.StdEncoding.EncodeToString([]byte(Username + ":" + Password))
 	}
 
-	GetTags()
-
 	if Tag == "" {
+		GetTags()
 		if len(Tags) > 0 {
 			// If 'tag' was missing in the image string use "latest"
 			// or the first in the list
@@ -110,6 +113,8 @@ func Init(db nodb.Nodb, image string) {
 		} else {
 			log.Fatalf("No tags found for %q", image)
 		}
+	} else {
+		GetManifest()
 	}
 
 }
@@ -217,7 +222,9 @@ func GetAuthToken(res *http.Response) string {
 // GetLayerDigests retrieves the list of of layer digests
 // (https://docs.docker.com/registry/spec/api/)
 func GetLayerDigests() []string {
-	GetManifest()
+	if ImageID == "" {
+		GetManifest()
+	}
 	digests := make([]string, len(Manifest.FsLayers))
 	for i, fsLayer := range Manifest.FsLayers {
 		digests[i] = fsLayer.BlobSum
@@ -226,7 +233,7 @@ func GetLayerDigests() []string {
 }
 
 // GetManifest fetches the image manifest and its Docker hash ID
-func GetManifest() {
+func GetManifest() (err error) {
 
 	client := &http.Client{}
 	url := "manifests/" + Tag
@@ -237,6 +244,14 @@ func GetManifest() {
 	}
 
 	res, err := client.Do(req)
+	if res.StatusCode == http.StatusUnauthorized {
+		if token != "" {
+			log.Fatal(`The access to the image "%s/%s"  not authorized to repository`, Repository, Tag)
+		} else {
+			GetAuthToken(res)
+			return GetManifest()
+		}
+	}
 
 	dockerContentDigest := res.Header.Get("Docker-Content-Digest")
 	if dockerContentDigest != "" {
@@ -254,7 +269,7 @@ func GetManifest() {
 
 	defer res.Body.Close()
 
-	json.NewDecoder(res.Body).Decode(&Manifest)
+	err = json.NewDecoder(res.Body).Decode(&Manifest)
 	return
 }
 
@@ -302,39 +317,47 @@ func GetTags() []string {
 // PullImage retrieves the docker image
 func PullImage() string {
 
+	var err error
+
 	client := &http.Client{}
 
-	GetManifest()
+	if ImageID == "" {
+		GetManifest()
+	}
 	imageDir := Db.File(ImageID)
 	if !utils.PathExists(imageDir) {
 		os.MkdirAll(imageDir, os.ModeDir|0755)
-	} else {
+	} else if utils.PathExists(imageDir + ".json") {
 		// Image already has been downloaded. Skip it.
 		return imageDir
 	}
 	if Debug {
 		log.Infof("ImageID: %s Image Directory: %s", ImageID, imageDir)
 	}
-	log.Infof(`About to download docker image "%s/%s". It can take a few minutest.`, Repository, Tag)
+	log.Infof(`About to download docker image "%s/%s". It can take a few minutes.`, Repository, Tag)
 
 	for _, digest := range GetLayerDigests() {
 
+		log.Debug("Start downloading layer: ", digest)
 		tf, _ := ioutil.TempFile("", "image")
 		req, err := newRequest("blobs/"+digest, "GET", nil, "")
 		res, err := client.Do(req)
 		if err != nil {
-			log.Fatalf("Failed to retrieve the layer image with digest %q: %s", digest, err)
+			log.Errorf("Failed to retrieve the layer image with digest %q: %s", digest, err)
+			break
 		}
 
 		if res.StatusCode/100 != 2 {
-			log.Fatalf("Failed to request %q (Status: %q)", req.URL, res.Status)
+			log.Errorf("Failed to request %q (Status: %q)", req.URL, res.Status)
+			break
 		}
 
 		_, err = io.Copy(tf, res.Body)
 		if err != nil {
-			log.Fatal(err)
+			log.Error("Failed to save the layer file: ", err)
+			break
 		}
-		//defer os.Remove(tf.Name())
+		defer os.Remove(tf.Name())
 		if Debug {
 			log.Infof("Layer %q dowloaded to %q", digest, tf.Name())
 		}
@@ -346,13 +369,18 @@ func PullImage() string {
 		command := exec.Command("fakeroot", "tar", "-C", imageDir, "-xf", tf.Name())
 		err = command.Run()
 		if err != nil {
-			log.Fatalf("Failed to extract layer %q into %q: %s", digest, imageDir, err)
+			log.Errorf("Failed to extract layer %q into %q: %s", digest, imageDir, err)
+			break
 		}
 
 	}
 
+	if err != nil {
+		os.RemoveAll(imageDir)
+		return ""
+	}
+
 	// Save the image data:
 	Db.Add(ImageID, Manifest)
-
 	return imageDir
 }

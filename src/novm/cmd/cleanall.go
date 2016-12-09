@@ -20,19 +20,17 @@ var cleanallCmd = &cobra.Command{
 		debugCmd(cmd)
 		for _, id := range instances.List() {
 
-			instance, _ := instances.Get(id)
-			pid, ok := instance["pid"]
-
-			if ok && !isAlive(pid) || !ok {
+			pid := InstancePid(id)
+			if !isAlive(pid) || pid == "" {
 				if debug {
-					if ok {
+					if pid != "" {
 						log.Print("Removing PID: ", pid)
 					} else {
 						log.Print("Removing instace: ", id)
 					}
 				}
 				instances.Remove(id, nil)
-				if ok {
+				if pid != "" {
 					os.RemoveAll(path.Join(controlPath, pid+".ctrl"))
 				}
 			}
