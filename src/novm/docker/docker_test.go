@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/rocksolidlabs/novm/src/novm/docker"
@@ -28,7 +29,7 @@ func TestGetAuthToken(t *testing.T) {
 		"Www-Authenticate",
 		`Bearer realm="`+
 			ts.URL+
-			`/token",service="registry.docker.io",scope="repository:library/nginx:pull",error="insufficient_scope"`)
+			`/token",service="registry.docker.io",scope="imagesitory:library/nginx:pull",error="insufficient_scope"`)
 	token := docker.GetAuthToken(&res)
 
 	if token != "ABC123" {
@@ -69,40 +70,63 @@ func TestTags(t *testing.T) {
 
 func TestTagsLive(t *testing.T) {
 
-	repo := os.Getenv("IMAGE")
-	if repo == "" {
-		t.Log("For live testing set up IMAGE environment variables: <repository[:tag]>[,key=value]")
+	image := os.Getenv("IMAGE")
+	if image == "" {
+		t.Log("For live testing set up IMAGE environment variables: <imagesitory[:tag]>[,key=value]")
 		return
 	}
 
 	docker.Debug = true
 	docker.BaseURL = ""
-	docker.Init(nodb.Nodb{}, repo)
+	docker.Init(nodb.Nodb{}, image)
+	docker.GetTags()
 	t.Log(docker.Tags)
 
 }
 
 func TestGetLayerDigestsLive(t *testing.T) {
 
-	repo := os.Getenv("IMAGE")
-	if repo == "" {
-		t.Log("For live testing set up IMAGE environment variables: <repository[:tag]>[,key=value]")
+	image := os.Getenv("IMAGE")
+	if image == "" {
+		t.Log("For live testing set up IMAGE environment variables: <imagesitory[:tag]>[,key=value]")
 		return
 	}
 
 	docker.Debug = true
 	docker.BaseURL = ""
-	docker.Init(nodb.Nodb{}, repo)
+	docker.Init(nodb.Nodb{}, image)
 	digests := docker.GetLayerDigests()
 	t.Log(digests)
 
 }
 
+func TestInitLive(t *testing.T) {
+
+	image := os.Getenv("IMAGE")
+	if image == "" {
+		t.Log("For live testing set up IMAGE environment variables: <imagesitory[:tag]>[,key=value]")
+		return
+	}
+
+	docker.Debug = true
+	docker.BaseURL = ""
+	docker.Init(nodb.Nodb{}, image)
+	// a tag is given
+	if strings.Contains(image, ":") {
+		if docker.ImageID == "" {
+			t.Error("Expected to get images hash.")
+		}
+		t.Log(docker.Manifest)
+	} else {
+		t.Log(docker.Tags)
+	}
+}
+
 func TestPullImageLive(t *testing.T) {
 
-	repo := os.Getenv("IMAGE")
-	if repo == "" {
-		t.Log("For live testing set up IMAGE environment variables: <repository[:tag]>[,key=value]")
+	image := os.Getenv("IMAGE")
+	if image == "" {
+		t.Log("For live testing set up IMAGE environment variables: <imagesitory[:tag]>[,key=value]")
 		return
 	}
 
@@ -110,12 +134,12 @@ func TestPullImageLive(t *testing.T) {
 	docker.BaseURL = ""
 	var db nodb.Nodb
 
-	root := path.Join(os.TempDir(), "TestPullRepositoryLive")
+	root := path.Join(os.TempDir(), "TestPullimagesitoryLive")
 	db.Open(root)
 
 	t.Logf("Store image in %q", root)
 
-	docker.Init(db, repo)
+	docker.Init(db, image)
 	docker.PullImage()
 
 }
