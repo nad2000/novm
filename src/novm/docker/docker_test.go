@@ -69,9 +69,9 @@ func TestTags(t *testing.T) {
 
 func TestTagsLive(t *testing.T) {
 
-	repo := os.Getenv("REPOSITORY")
+	repo := os.Getenv("IMAGE")
 	if repo == "" {
-		t.Log("For live testing set up REPOSITORY environment variables: <repository[:tag]>[,key=value]")
+		t.Log("For live testing set up IMAGE environment variables: <repository[:tag]>[,key=value]")
 		return
 	}
 
@@ -84,9 +84,9 @@ func TestTagsLive(t *testing.T) {
 
 func TestGetLayerDigestsLive(t *testing.T) {
 
-	repo := os.Getenv("REPOSITORY")
+	repo := os.Getenv("IMAGE")
 	if repo == "" {
-		t.Log("For live testing set up REPOSITORY environment variables: <repository[:tag]>[,key=value]")
+		t.Log("For live testing set up IMAGE environment variables: <repository[:tag]>[,key=value]")
 		return
 	}
 
@@ -100,9 +100,9 @@ func TestGetLayerDigestsLive(t *testing.T) {
 
 func TestPullImageLive(t *testing.T) {
 
-	repo := os.Getenv("REPOSITORY")
+	repo := os.Getenv("IMAGE")
 	if repo == "" {
-		t.Log("For live testing set up REPOSITORY environment variables: <repository[:tag]>[,key=value]")
+		t.Log("For live testing set up IMAGE environment variables: <repository[:tag]>[,key=value]")
 		return
 	}
 
