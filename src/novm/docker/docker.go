@@ -338,8 +338,13 @@ func PullImage() string {
 
 	for _, digest := range GetLayerDigests() {
 
-		log.Debug("Start downloading layer: ", digest)
-		tf, _ := ioutil.TempFile("", "image")
+		log.Debug("Started downloading layer: ", digest)
+		tf, err := ioutil.TempFile("", "image")
+		if err != nil {
+			log.Error("Failed to create a temporary file: ", err)
+			break
+		}
+		log.Debug("Downloading inot: ", tf.Name())
 		req, err := newRequest("blobs/"+digest, "GET", nil, "")
 		res, err := client.Do(req)
 		if err != nil {
@@ -372,7 +377,6 @@ func PullImage() string {
 			log.Errorf("Failed to extract layer %q into %q: %s", digest, imageDir, err)
 			break
 		}
-
 	}
 
 	if err != nil {
