@@ -328,7 +328,7 @@ func PullImage() string {
 	if Debug {
 		log.Infof("ImageID: %s Image Directory: %s", ImageID, imageDir)
 	}
-	log.Infof(`About to download docker image "%s/%s". It can take a few minutes.`, Repository, Tag)
+	log.Infof(`About to download docker image "%s/%s". It might take a few minutes.`, Repository, Tag)
 
 	for _, digest := range GetLayerDigests() {
 
