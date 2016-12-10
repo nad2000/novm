@@ -12,13 +12,17 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
+
 	"github.com/cloudfoundry/gosigar/psnotify"
 
 	"github.com/rocksolidlabs/novm/src/novm/control"
+	"github.com/rocksolidlabs/novm/src/novm/docker"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 
 	"github.com/spf13/cobra"
 )
+
+var dockerImageDirectories []string
 
 // createCmd represents the create command
 var createCmd = &cobra.Command{
@@ -65,9 +69,14 @@ Docker images are provided as follows.
     With key and value pairs you can specify username, password, docker registry host etc.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
+		debugCmd(cmd)
 		nofork := flagBool(cmd, "nofork")
+		images := flagStringArray(cmd, "image")
+		if len(images) > 0 {
+			dockerImageDirectories = docker.PullImages(dockerDB, images)
+		}
 
-		create(cmd)
+		instanceID := utils.NewID()
 		if !nofork {
 			// detaches the current program by forking and exiting the parent:
 			r1, _, err1 := syscall.RawSyscall(syscall.SYS_FORK, 0, 0, 0)
@@ -87,12 +96,12 @@ Docker images are provided as follows.
 			// Reset to NODB root for the child process:
 			SetRootDir("")
 		}
+		create(cmd, instanceID)
 	},
 }
 
-func create(cmd *cobra.Command) {
+func create(cmd *cobra.Command, instanceID string) {
 
-	debugCmd(cmd)
 	name := flagString(cmd, "name")
 	kernel := flagString(cmd, "kernel")
 	availableKernels := kernels.List()
@@ -153,7 +162,7 @@ func create(cmd *cobra.Command) {
 		"-initrd", kernels.File(kernel, "initrd"),
 		"-setup", kernels.File(kernel, "setup"))
 
-	stateFd, _, devCmdline := CreateInstance(config, remove)
+	stateFd, devCmdline := ActivateInstance(instanceID, config, remove)
 
 	// Control socket
 	ctrlFileName := path.Join(controlPath, strconv.Itoa(os.Getpid())+".ctrl")
@@ -184,7 +193,8 @@ func create(cmd *cobra.Command) {
 		log.Print("Executing: ", novmm, " ", strings.Join(cmdArgs[0:], " "))
 	}
 
-	if debug {
+	nofork := flagBool(cmd, "nofork")
+	if nofork && debug {
 		fmt.Print("Press 'Enter' to continue...")
 		bufio.NewReader(os.Stdin).ReadBytes('\n')
 	}
@@ -195,19 +205,6 @@ func create(cmd *cobra.Command) {
 	command.Stderr = os.Stderr
 	command.SysProcAttr = &syscall.SysProcAttr{}
 	command.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(0), Gid: uint32(0)}
-
-	if debug {
-		f, _ := os.Open("/proc/self/fd/")
-		list, _ := f.Readdirnames(-1)
-		f.Close()
-		for _, fdStr := range list {
-			name, err := os.Readlink("/proc/self/fd/" + fdStr)
-			if err != nil {
-				log.Error(err)
-			}
-			log.Infof("FD %s: %q", fdStr, name)
-		}
-	}
 
 	err := command.Start()
 	if err != nil {

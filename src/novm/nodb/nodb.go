@@ -181,13 +181,14 @@ func (db *Nodb) Remove(objID interface{}, params map[string]string) (ok bool) {
 	}
 
 	err := os.RemoveAll(db.File(id + ".json"))
+	ok = true
 
 	db.list = nil
 	if fileName := db.File(id); utils.PathExists(fileName) {
 		err = os.RemoveAll(fileName)
 		if err != nil {
 			log.Fatal(err)
-			return false
+			ok = false
 		}
 	}
 
@@ -196,7 +197,7 @@ func (db *Nodb) Remove(objID interface{}, params map[string]string) (ok bool) {
 	for _, fn := range files {
 		os.RemoveAll(fn)
 	}
-	return true
+	return
 }
 
 // Find finds an object and returns its ID
