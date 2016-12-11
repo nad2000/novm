@@ -64,7 +64,7 @@ Write definitions are also provided as a mapping.
 
 Docker images are provided as follows.
 
-    <repository[:tag]>[,key=value]
+	<images hash> or <repository[:tag]>[,key=value]
 
     With key and value pairs you can specify username, password, docker registry host etc.`,
 	Run: func(cmd *cobra.Command, args []string) {
