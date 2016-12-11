@@ -12,7 +12,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/devices"
-	"github.com/rocksolidlabs/novm/src/novm/docker"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 )
 
@@ -30,7 +29,7 @@ func ActivateInstance(instanceID string, config InstanceConfig, remove bool) (st
 
 	kernel, release, cpus, com1, com2 := config.Kernel, config.Release, config.Cpus, config.Com1, config.Com2
 	nics, disks, read, write, packList, packageList := config.Nics, config.Disks, config.Read, config.Write, config.Packs, config.Packages
-	images, name, cmdline, nopci, memsize := config.Images, config.Name, config.Cmdline, config.Nopci, config.Memsize
+	name, cmdline, nopci, memsize := config.Name, config.Cmdline, config.Nopci, config.Memsize
 
 	devices.Debug = debug
 
@@ -166,9 +165,10 @@ func ActivateInstance(instanceID string, config InstanceConfig, remove bool) (st
 
 	// Add our docker images
 	// NOTE: These are also all relative to root.
-	for _, image := range images {
-		docker.Init(dockerDB, image)
-		read = append(read, docker.PullImage())
+	// NOTE: dockerImageDirectories - list of docker images directies, that
+	// where fetched before executing instance creation
+	if dockerImageDirectories != nil {
+		read = append(read, dockerImageDirectories...)
 	}
 
 	// Add packages to the read map:

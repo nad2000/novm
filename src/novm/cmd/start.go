@@ -14,6 +14,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/rocksolidlabs/novm/src/novm/control"
+	"github.com/rocksolidlabs/novm/src/novm/docker"
 	"github.com/rocksolidlabs/novm/src/novm/utils"
 
 	"github.com/spf13/cobra"
@@ -27,6 +28,10 @@ var startCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		nofork := flagBool(cmd, "nofork")
+		images := flagStringArray(cmd, "image")
+		if len(images) > 0 {
+			dockerImageDirectories = docker.PullImages(dockerDB, images)
+		}
 
 		if !nofork {
 			// detaches the current program by forking and exiting the parent:

@@ -176,16 +176,17 @@ func GetAuthToken(res *http.Response) string {
 		"?service=" + url.QueryEscape(attributes["service"]) +
 		"&scope=" + url.QueryEscape(attributes["scope"]))
 
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+		},
+	}
+
 	req, err := newRequest(url, "GET", nil, "")
 
 	if auth != "" {
 		req.Header.Add("Authorization", "Basic "+auth)
 		req.Header.Add("X-Docker-Token", "true")
-	}
-
-	if Debug {
-		log.Info("Request: ", req)
 	}
 
 	res, err = client.Do(req)
@@ -203,10 +204,6 @@ func GetAuthToken(res *http.Response) string {
 
 	var ok bool
 	token, ok = response["token"]
-
-	if Debug {
-		log.Infof("Acquired authentication token: %q", token)
-	}
 
 	if !ok {
 		if Username != "" {
@@ -235,13 +232,13 @@ func GetLayerDigests() []string {
 // GetManifest fetches the image manifest and its Docker hash ID
 func GetManifest() (err error) {
 
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+		},
+	}
 	url := "manifests/" + Tag
 	req, err := newRequest(url, "GET", nil, "")
-
-	if Debug {
-		log.Info("Request: ", req)
-	}
 
 	res, err := client.Do(req)
 	if res.StatusCode == http.StatusUnauthorized {
@@ -263,10 +260,6 @@ func GetManifest() (err error) {
 		log.Fatalf("Failed to fetch image manifest: %s", err.Error())
 	}
 
-	if Debug {
-		log.Info("Response: ", res)
-	}
-
 	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&Manifest)
@@ -276,13 +269,13 @@ func GetManifest() (err error) {
 // GetTags returns all repository tags
 func GetTags() []string {
 
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+		},
+	}
 	listURL := "tags/list"
 	req, err := newRequest(listURL, "GET", nil, "")
-
-	if Debug {
-		log.Info("Request: ", req)
-	}
 
 	res, err := client.Do(req)
 
@@ -290,9 +283,6 @@ func GetTags() []string {
 		log.Fatal(err)
 	}
 
-	if Debug {
-		log.Info("Response: ", res)
-	}
 	if res.StatusCode == http.StatusUnauthorized {
 		if token != "" {
 			log.Fatal(`The access to the image "%s/%s"  not authorized to repository`, Repository, Tag)
@@ -319,7 +309,11 @@ func PullImage() string {
 
 	var err error
 
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+		},
+	}
 
 	if ImageID == "" {
 		GetManifest()
@@ -338,12 +332,15 @@ func PullImage() string {
 
 	for _, digest := range GetLayerDigests() {
 
-		log.Debug("Start downloading layer: ", digest)
-		tf, _ := ioutil.TempFile("", "image")
+		tf, err := ioutil.TempFile("", "image")
+		if err != nil {
+			log.Error("Failed to create a temporary file: ", err)
+			break
+		}
 		req, err := newRequest("blobs/"+digest, "GET", nil, "")
 		res, err := client.Do(req)
 		if err != nil {
-			log.Errorf("Failed to retrieve the layer image with digest %q: %s", digest, err)
+			log.Errorf("Failed to retrieve the layer image with digest %q: %s", digest, err.Error())
 			break
 		}
 
@@ -372,7 +369,6 @@ func PullImage() string {
 			log.Errorf("Failed to extract layer %q into %q: %s", digest, imageDir, err)
 			break
 		}
-
 	}
 
 	if err != nil {
@@ -383,4 +379,15 @@ func PullImage() string {
 	// Save the image data:
 	Db.Add(ImageID, Manifest)
 	return imageDir
+}
+
+// PullImages retrieves the docker images given in the list
+func PullImages(db nodb.Nodb, images []string) []string {
+	Db = db
+	imageDirs := make([]string, len(images))
+	for i, image := range images {
+		Init(db, image)
+		imageDirs[i] = PullImage()
+	}
+	return imageDirs
 }
