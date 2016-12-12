@@ -170,7 +170,7 @@ func RPC(name string, params map[string]string) (interface{}, error) {
 }
 
 // Run runs a remote command on VM
-func Run(command []string, env []string, cwd string, terminal bool) (err error, exitCode int) {
+func Run(cmd []string, env []string, cwd string, terminal bool) (err error, exitCode int) {
 
 	var (
 		line        string
@@ -184,6 +184,8 @@ func Run(command []string, env []string, cwd string, terminal bool) (err error, 
 	if cwd == "" {
 		cwd = "/"
 	}
+
+	command := strings.Split(cmd[0], " ")
 
 	_, err = conn.Write([]byte("NOVM RUN\n"))
 	if err != nil {

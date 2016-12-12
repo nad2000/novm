@@ -121,7 +121,7 @@ rpm: dist
 	  --define="%architecture $(RPM_ARCH)" \
 	  --define="%summary $(SUMMARY)" \
 	  --define="%url $(URL)" \
-	  packagers/rsim.spec
+	  packagers/novm.spec
 	@mv rpmbuild/RPMS/$(RPM_ARCH)/*.rpm .
 .PHONY: rpm
 

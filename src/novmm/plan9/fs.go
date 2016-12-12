@@ -16,7 +16,6 @@ package plan9
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"sync"
 	"syscall"
@@ -324,7 +323,6 @@ func (fs *Fs) Handle(req Buffer, resp Buffer, debug bool) error {
 			if err == nil {
 				fs.writeFilePost(fid, uint32(length))
 			} else {
-				fmt.Printf("Error writing file: fid: %+v, err: %s", fid, err)
 				fs.writeFileFail(fid, uint32(length))
 			}
 		}

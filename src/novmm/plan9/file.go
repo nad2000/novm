@@ -410,6 +410,7 @@ func (file *File) remove(
 	path string) error {
 
 	file.RWMutex.Lock()
+	defer file.RWMutex.Unlock()
 
 	// Unlink what's there.
 	err := file.unlink()
@@ -443,8 +444,6 @@ func (file *File) remove(
 	// We're deleted.
 	file.write_exists = true
 	file.write_deleted = true
-
-	file.RWMutex.Unlock()
 
 	return nil
 }
@@ -547,11 +546,11 @@ func (file *File) create(
 
 		err = file.fillType(file.write_path)
 		if err != nil {
-			file.RWMutex.Unlock()
+			file.unlock()
 			return err
 		}
 
-		file.RWMutex.Unlock()
+		file.unlock()
 	}
 
 	if did_exist {
@@ -567,6 +566,7 @@ func (file *File) rename(
 	new_path string) error {
 
 	fs.filesLock.Lock()
+	defer fs.filesLock.Unlock()
 
 	other_file, ok := fs.files[new_path]
 	if ok && other_file.exists() {
@@ -637,8 +637,6 @@ func (file *File) rename(
 	// really nothing we can do at this point. We
 	// even explicitly ignore the result. Ugh.
 	setdelattr(orig_write_path)
-
-	fs.filesLock.Unlock()
 
 	return nil
 }
@@ -768,6 +766,7 @@ func (file *File) lockRead(fs *Fs) error {
 
 func (file *File) flush() {
 	file.RWMutex.Lock()
+	defer file.RWMutex.Unlock()
 
 	// Close the file if still opened.
 	if file.read_fd != -1 {
@@ -783,8 +782,6 @@ func (file *File) flush() {
 
 	file.read_fd = -1
 	file.write_fd = -1
-
-	file.RWMutex.Unlock()
 }
 
 func (file *File) dir(
@@ -925,6 +922,10 @@ func (file *File) children(fs *Fs, dirpath string) ([]*Dir, error) {
 
 	// We're good.
 	return results, nil
+}
+
+func (file *File) unlock() {
+	file.RWMutex.RUnlock()
 }
 
 func (file *File) IncRef(fs *Fs) {
