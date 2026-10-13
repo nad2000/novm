@@ -1,7 +1,7 @@
 build:
     image: build
     environment:
-        - PACKAGECLOUD_TOKEN=eee1f3063fd05df504e7790501c81cc19c054ae50f2fbcde
+        - PACKAGECLOUD_TOKEN=<TOKEN REMOVED>
         - DRONE_COMMIT_SHORT=$${COMMIT:7}
     commands:
         - git config --global user.email "phenixrizen@gmail.com"
@@ -18,7 +18,7 @@ build:
 
 notify:
     slack:
-        webhook_url: https://hooks.slack.com/services/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
+        webhook_url: https://hooks.slack.com/services/<KEYS REMOVED>
         channel: build
         username: drone
         on_started: true
